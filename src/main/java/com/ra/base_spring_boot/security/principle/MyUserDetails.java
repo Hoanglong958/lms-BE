@@ -33,10 +33,10 @@ public class MyUserDetails implements UserDetails
     }
 
     @Override
-    public String getUsername()
-    {
-        return this.user.getUsername();
+    public String getUsername() {
+        return this.user.getEmail();
     }
+
 
     @Override
     public boolean isAccountNonExpired()

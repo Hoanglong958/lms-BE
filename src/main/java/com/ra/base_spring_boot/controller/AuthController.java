@@ -4,8 +4,12 @@ import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.FormLogin;
 import com.ra.base_spring_boot.dto.req.FormRegister;
 import com.ra.base_spring_boot.services.IAuthService;
+import com.ra.base_spring_boot.dto.req.ChangePasswordRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.core.Authentication;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -52,4 +56,30 @@ public class AuthController
         );
     }
 
+    /**
+     * @param request ChangePasswordRequest
+     * @apiNote handle change password with { oldPassword , newPassword }
+     */
+    @PutMapping("/change-password")
+    public ResponseEntity<?> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            Authentication authentication
+    ) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("JWT is missing or expired");
+        }
+
+        String username = authentication.getName();
+
+        authService.changePassword(username, request.getOldPassword(), request.getNewPassword());
+
+        return ResponseEntity.ok("Password changed successfully");
+    }
+
+
+
 }
+
+
+

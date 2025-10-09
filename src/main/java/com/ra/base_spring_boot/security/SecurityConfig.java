@@ -29,21 +29,18 @@ import java.util.List;
 @EnableWebSecurity
 @EnableMethodSecurity
 @RequiredArgsConstructor
-public class SecurityConfig
-{
+public class SecurityConfig {
     private final MyUserDetailsService userDetailsService;
     private final JwtEntryPoint jwtEntryPoint;
     private final AccessDenied accessDenied;
     private final JwtTokenFilter jwtTokenFilter;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception
-    {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .cors(cf -> cf.configurationSource(request ->
-                {
+                .cors(cf -> cf.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.setAllowedOrigins(List.of("http://localhost:5173")); // phụ thuộc vào port clents
+                    config.setAllowedOrigins(List.of("http://localhost:5173"));
                     config.setAllowedMethods(List.of("*"));
                     config.setAllowCredentials(true);
                     config.setAllowedHeaders(List.of("*"));
@@ -51,32 +48,42 @@ public class SecurityConfig
                     return config;
                 }))
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(
-                        url -> url
-                                .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.toString())
-                                .requestMatchers("/api/v1/user/**").hasAuthority(RoleName.ROLE_USER.toString())
-                                .anyRequest().permitAll()
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/register"
+                        ).permitAll()
+
+                        .requestMatchers("/api/v1/admin/**")
+                        .hasAuthority(RoleName.ROLE_ADMIN.toString())
+
+                        .requestMatchers("/api/v1/user/**")
+                        .hasAnyAuthority(
+                                RoleName.ROLE_TEACHER.toString(),
+                                RoleName.ROLE_STUDENT.toString(),
+                                RoleName.ROLE_COMPANY.toString()
+                        )
+
+                        // Các request khác
+                        .anyRequest().authenticated()
+                )
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(jwtEntryPoint)
+                        .accessDeniedHandler(accessDenied)
                 )
                 .authenticationProvider(authenticationProvider())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(
-                        exception -> exception
-                                .authenticationEntryPoint(jwtEntryPoint)
-                                .accessDeniedHandler(accessDenied)
-                )
                 .addFilterAfter(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder()
-    {
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public AuthenticationProvider authenticationProvider()
-    {
+    public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setPasswordEncoder(passwordEncoder());
         provider.setUserDetailsService(userDetailsService);
@@ -84,8 +91,7 @@ public class SecurityConfig
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration auth) throws Exception
-    {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration auth) throws Exception {
         return auth.getAuthenticationManager();
     }
 }

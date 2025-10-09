@@ -2,9 +2,8 @@ spring:
   application:
     name: base_spring_boot
   datasource:
-    url: jdbc:mysql://localhost:3307/base_core?createDatabaseIfNotExist=true
+    url: jdbc:mysql://127.0.0.1:3306/Lms?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
     username: root
-    password: 123456
   jooq:
     sql-dialect: org.hibernate.dialect.MySQL8Dialect
   jpa:
@@ -20,7 +19,9 @@ spring:
 
 jwt:
   secret:
-    key: Ascmkkqdnmsdfrtgsyuhidj21ue120938219321ndsad
+    key: VGhpcy1pcy1hLXN1cGVyLXNlY3VyZS1sb25nLXNlY3JldC1rZXktMTIzNDU2Nzg5MA
   expired:
-    access: 864000
+    access: 3600000
 
+server:
+  port: 8081

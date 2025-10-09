@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.services.impl;
 
+import com.ra.base_spring_boot.dto.req.ChangePasswordRequest;
 import com.ra.base_spring_boot.dto.req.FormLogin;
 import com.ra.base_spring_boot.dto.req.FormRegister;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
@@ -22,6 +23,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.swing.event.ChangeEvent;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,19 +39,67 @@ public class AuthServiceImpl implements IAuthService
     private final JwtProvider jwtProvider;
 
     @Override
-    public void register(FormRegister formRegister)
-    {
+    public void register(FormRegister formRegister) {
+        // Kiểm tra username/email trùng
+        if (userRepository.existsByUsername(formRegister.getUsername())) {
+            throw new HttpBadRequest("Username đã tồn tại");
+        }
+
+        if (userRepository.existsByEmail(formRegister.getEmail())) {
+            throw new HttpBadRequest("Email đã tồn tại");
+        }
+
+        // Lấy role từ formRegister
         Set<Role> roles = new HashSet<>();
-        roles.add(roleService.findByRoleName(RoleName.ROLE_USER));
+
+        String inputRole = formRegister.getRole() != null ? formRegister.getRole().toUpperCase() : "ROLE_STUDENT";
+
+        switch (inputRole) {
+            case "ROLE_ADMIN":
+            case "ADMIN":
+                roles.add(roleService.findByRoleName(RoleName.ROLE_ADMIN));
+                break;
+            case "ROLE_COMPANY":
+            case "COMPANY":
+                roles.add(roleService.findByRoleName(RoleName.ROLE_COMPANY));
+                break;
+            case "ROLE_TEACHER":
+            case "TEACHER":
+                roles.add(roleService.findByRoleName(RoleName.ROLE_TEACHER));
+                break;
+            case "ROLE_STUDENT":
+            case "STUDENT":
+            default:
+                roles.add(roleService.findByRoleName(RoleName.ROLE_STUDENT));
+                break;
+        }
+
+        // Tạo user mới
         User user = User.builder()
                 .fullName(formRegister.getFullName())
                 .username(formRegister.getUsername())
+                .email(formRegister.getEmail())
+                .phone(formRegister.getPhone())
                 .password(passwordEncoder.encode(formRegister.getPassword()))
                 .status(true)
                 .roles(roles)
                 .build();
+
         userRepository.save(user);
     }
+    @Override
+    public void changePassword(String username, String oldPassword, String newPassword) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new HttpBadRequest("User not found"));
+
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new HttpBadRequest("Old password is incorrect");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
 
     @Override
     public JwtResponse login(FormLogin formLogin)

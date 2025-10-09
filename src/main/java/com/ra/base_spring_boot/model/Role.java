@@ -18,3 +18,5 @@ public class Role extends BaseObject
     @Enumerated(EnumType.STRING)
     private RoleName roleName;
 }
+
+
