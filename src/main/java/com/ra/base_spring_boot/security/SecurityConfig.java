@@ -1,6 +1,5 @@
 package com.ra.base_spring_boot.security;
 
-import com.ra.base_spring_boot.model.constants.RoleName;
 import com.ra.base_spring_boot.security.exception.AccessDenied;
 import com.ra.base_spring_boot.security.exception.JwtEntryPoint;
 import com.ra.base_spring_boot.security.jwt.JwtTokenFilter;
@@ -53,8 +52,8 @@ public class SecurityConfig
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(
                         url -> url
-                                .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.toString())
-                                .requestMatchers("/api/v1/user/**").hasAuthority(RoleName.ROLE_USER.toString())
+                                .requestMatchers("/api/v1/admin/**").hasAuthority("ROLE_ADMIN")
+                                .requestMatchers("/api/v1/user/**").hasAuthority("ROLE_USER")
                                 .anyRequest().permitAll()
                 )
                 .authenticationProvider(authenticationProvider())
@@ -89,3 +88,4 @@ public class SecurityConfig
         return auth.getAuthenticationManager();
     }
 }
+
