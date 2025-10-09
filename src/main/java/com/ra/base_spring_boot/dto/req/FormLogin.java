@@ -11,6 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class FormLogin
 {
-    private String username;
+    private String email;
     private String password;
 }

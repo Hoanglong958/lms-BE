@@ -2,11 +2,11 @@ spring:
   application:
     name: base_spring_boot
   datasource:
-    url: jdbc:mysql://localhost:3306/lms?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3307/base_core?createDatabaseIfNotExist=true
     username: root
-    password: hanh3010
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
+    password: 123456
+  jooq:
+    sql-dialect: org.hibernate.dialect.MySQL8Dialect
   jpa:
     hibernate:
       naming:
@@ -16,9 +16,13 @@ spring:
     show-sql: true
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
         show_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
+
+server:
+  port: 3010
 
 jwt:
   secret:

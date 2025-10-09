@@ -1,24 +1,24 @@
 package com.ra.base_spring_boot.security.principle;
 
-import com.ra.base_spring_boot.model.User;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.ra.base_spring_boot.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.List;
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Data
-@Builder
 public class MyUserDetails implements UserDetails
 {
-    private User user;
-    private Collection<? extends GrantedAuthority> authorities;
+    private final User user;
+    private final Collection<? extends GrantedAuthority> authorities;
+
+    public MyUserDetails(User user, Collection<? extends GrantedAuthority> authorities) {
+        this.user = user;
+        this.authorities = authorities;
+    }
+
+    public User getUser() {
+        return user;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities()
@@ -35,7 +35,7 @@ public class MyUserDetails implements UserDetails
     @Override
     public String getUsername()
     {
-        return this.user.getUsername();
+        return this.user.getEmail();
     }
 
     @Override
@@ -59,6 +59,7 @@ public class MyUserDetails implements UserDetails
     @Override
     public boolean isEnabled()
     {
-        return true;
+        return Boolean.TRUE.equals(this.user.getStatus());
     }
 }
+
