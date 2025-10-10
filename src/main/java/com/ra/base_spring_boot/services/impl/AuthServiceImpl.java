@@ -22,7 +22,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import javax.swing.event.ChangeEvent;
 import java.util.HashSet;
 import java.util.Set;
@@ -40,10 +39,6 @@ public class AuthServiceImpl implements IAuthService
 
     @Override
     public void register(FormRegister formRegister) {
-        // Kiểm tra username/email trùng
-        if (userRepository.existsByUsername(formRegister.getUsername())) {
-            throw new HttpBadRequest("Username đã tồn tại");
-        }
 
         if (userRepository.existsByEmail(formRegister.getEmail())) {
             throw new HttpBadRequest("Email đã tồn tại");
@@ -77,7 +72,7 @@ public class AuthServiceImpl implements IAuthService
         // Tạo user mới
         User user = User.builder()
                 .fullName(formRegister.getFullName())
-                .username(formRegister.getUsername())
+                .username(formRegister.getEmail())
                 .email(formRegister.getEmail())
                 .phone(formRegister.getPhone())
                 .password(passwordEncoder.encode(formRegister.getPassword()))

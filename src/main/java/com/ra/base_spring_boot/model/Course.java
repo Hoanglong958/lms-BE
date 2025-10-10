@@ -4,20 +4,31 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "Courses")
+@Table(name = "courses")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Course {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long course_id;
+    @Column(name = "course_id") // ✅ khớp với DB
+    private Long id;
 
-    private String title;
-    private String description;
+    @Column(length = 255)
     private String category;
 
+    @Column(length = 255)
+    private String description;
+
+    @Column(length = 255)
+    private String title;
+
     @ManyToOne
-    @JoinColumn(name = "teacher_id")
+    @JoinColumn(name = "teacher_id") // ✅ trùng với DB
     private User teacher;
+
+    @Column(length = 255)
+    private String name;
 }

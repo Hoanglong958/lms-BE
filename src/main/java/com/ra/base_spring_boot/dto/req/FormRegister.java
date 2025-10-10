@@ -15,9 +15,6 @@ public class FormRegister {
     private String fullName;
 
     @NotBlank(message = "Không được để trống")
-    private String username;
-
-    @NotBlank(message = "Không được để trống")
     private String password;
 
     @NotBlank(message = "Không được để trống")
