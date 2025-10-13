@@ -14,7 +14,4 @@ public class CourseRequestDTO {
     private String title;
     private String description;
     private String category;
-
-    public boolean getTeacherId() {
-    }
 }

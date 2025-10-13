@@ -22,28 +22,21 @@ public class CourseServiceImpl implements ICourseService {
 
     @Override
     public CourseResponseDTO create(CourseRequestDTO dto) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User teacher = null;
+        if (auth != null && auth.getPrincipal() instanceof User) {
+            teacher = (User) auth.getPrincipal();
+        }
+
         Course course = new Course();
         course.setName(dto.getName());
         course.setTitle(dto.getTitle());
         course.setDescription(dto.getDescription());
         course.setCategory(dto.getCategory());
-
-        // ✅ Nếu ADMIN tạo, chọn giáo viên theo teacherId
-        if (dto.getTeacherId() != null) {
-            User teacher = userRepository.findById(dto.getTeacherId())
-                    .orElseThrow(() -> new RuntimeException("Teacher not found"));
-            course.setTeacher(teacher);
-        } else {
-            // ✅ Nếu là TEACHER tự tạo, lấy từ tài khoản hiện tại
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            MyUserDetails userDetails = (MyUserDetails) auth.getPrincipal();
-            User currentUser = userRepository.findById(userDetails.getId())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-            course.setTeacher(currentUser);
-        }
+        course.setTeacher(teacher);
 
         Course saved = courseRepository.save(course);
-        return mapper.map(saved, CourseResponseDTO.class);
+        return toDto(saved);
     }
 
     @Override
