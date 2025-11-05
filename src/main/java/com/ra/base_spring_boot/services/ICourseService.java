@@ -1,15 +1,14 @@
 package com.ra.base_spring_boot.services;
 
-import com.ra.base_spring_boot.dto.req.CourseCreateReq;
-import com.ra.base_spring_boot.dto.req.CourseUpdateReq;
-import com.ra.base_spring_boot.dto.resp.CourseResp;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import com.ra.base_spring_boot.dto.Course.CourseRequestDTO;
+import com.ra.base_spring_boot.dto.Course.CourseResponseDTO;
+
+import java.util.List;
 
 public interface ICourseService {
-    CourseResp create(CourseCreateReq req);
-    CourseResp get(Integer id);
-    Page<CourseResp> search(String keyword, Pageable pageable);
-    CourseResp update(Integer id, CourseUpdateReq req);
-    void delete(Integer id);
+    CourseResponseDTO create(CourseRequestDTO dto);
+    CourseResponseDTO update(Long id, CourseRequestDTO dto);
+    void delete(Long id);
+    CourseResponseDTO findById(Long id);
+    List<CourseResponseDTO> findAll();
 }

@@ -1,96 +1,82 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.dto.req.CourseCreateReq;
-import com.ra.base_spring_boot.dto.req.CourseUpdateReq;
-import com.ra.base_spring_boot.dto.resp.CourseResp;
-import com.ra.base_spring_boot.entity.Course;
+import com.ra.base_spring_boot.dto.Course.CourseRequestDTO;
+import com.ra.base_spring_boot.dto.Course.CourseResponseDTO;
+import com.ra.base_spring_boot.exception.HttpBadRequest;
+import com.ra.base_spring_boot.model.Course;
+import com.ra.base_spring_boot.model.constants.CourseLevel;
 import com.ra.base_spring_boot.repository.ICourseRepository;
-import com.ra.base_spring_boot.repository.IEntityUserRepository;
 import com.ra.base_spring_boot.services.ICourseService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class CourseServiceImpl implements ICourseService {
 
     private final ICourseRepository courseRepository;
-    private final IEntityUserRepository userRepository;
 
-    private CourseResp mapToResp(Course c) {
-        return CourseResp.builder()
-                .id(c.getCourseId())
-                .title(c.getTitle())
-                .description(c.getDescription())
-                .category(c.getCategory())
-                .teacherId(c.getTeacher() != null ? c.getTeacher().getUserId() : null)
-                .teacherUsername(c.getTeacher() != null ? c.getTeacher().getName() : null)
+    @Override
+    public CourseResponseDTO create(CourseRequestDTO dto) {
+        Course course = Course.builder()
+                .title(dto.getTitle())
+                .description(dto.getDescription())
+                .instructorName(dto.getInstructorName())
+                .level(CourseLevel.valueOf(dto.getLevel().toUpperCase()))
+                .createdAt(LocalDateTime.now())
+                .build();
+        courseRepository.save(course);
+        return toDto(course);
+    }
+
+    @Override
+    public CourseResponseDTO update(Long id, CourseRequestDTO dto) {
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học với id = " + id));
+
+        course.setTitle(dto.getTitle());
+        course.setDescription(dto.getDescription());
+        course.setInstructorName(dto.getInstructorName());
+        course.setCreatedAt(LocalDateTime.now());
+        course.setLevel(CourseLevel.valueOf(dto.getLevel().toUpperCase()));
+
+        courseRepository.save(course);
+        return toDto(course);
+    }
+
+    @Override
+    public void delete(Long id) {
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học với id = " + id));
+        courseRepository.delete(course);
+    }
+
+    @Override
+    public CourseResponseDTO findById(Long id) {
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học với id = " + id));
+        return toDto(course);
+    }
+
+    @Override
+    public List<CourseResponseDTO> findAll() {
+        return courseRepository.findAll()
+                .stream()
+                .map(this::toDto)
+                .toList();
+    }
+
+    private CourseResponseDTO toDto(Course course) {
+        return CourseResponseDTO.builder()
+                .id(course.getId())
+                .title(course.getTitle())
+                .description(course.getDescription())
+                .instructorName(course.getInstructorName())
+                .level(course.getLevel().name())
+                .createdAt(course.getCreatedAt())
                 .build();
     }
-
-    @Override
-    @Transactional
-    public CourseResp create(CourseCreateReq req) {
-        var teacher = userRepository.findById(req.getTeacherId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found"));
-        var c = new Course();
-        c.setTitle(req.getTitle());
-        c.setDescription(req.getDescription());
-        c.setCategory(req.getCategory());
-        c.setTeacher(teacher);
-        c = courseRepository.save(c);
-        return mapToResp(c);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public CourseResp get(Integer id) {
-        var c = courseRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found"));
-        return mapToResp(c);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<CourseResp> search(String keyword, Pageable pageable) {
-        if (keyword == null || keyword.isBlank()) {
-            var page = courseRepository.findAll(pageable);
-            return page.map(this::mapToResp);
-        }
-        var page = courseRepository.findByTitleContainingIgnoreCaseOrCategoryContainingIgnoreCase(keyword, keyword, pageable);
-        return page.map(this::mapToResp);
-    }
-
-    @Override
-    @Transactional
-    public CourseResp update(Integer id, CourseUpdateReq req) {
-        var c = courseRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found"));
-        if (req.getTitle() != null) c.setTitle(req.getTitle());
-        if (req.getDescription() != null) c.setDescription(req.getDescription());
-        if (req.getCategory() != null) c.setCategory(req.getCategory());
-        if (req.getTeacherId() != null) {
-            var teacher = userRepository.findById(req.getTeacherId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found"));
-            c.setTeacher(teacher);
-        }
-        c = courseRepository.save(c);
-        return mapToResp(c);
-    }
-
-    @Override
-    @Transactional
-    public void delete(Integer id) {
-        if (!courseRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found");
-        }
-        courseRepository.deleteById(id);
-    }
 }
-
