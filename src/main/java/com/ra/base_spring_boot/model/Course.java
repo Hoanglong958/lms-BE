@@ -1,34 +1,38 @@
 package com.ra.base_spring_boot.model;
 
+import com.ra.base_spring_boot.model.constants.CourseLevel;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "courses")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Course {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "course_id") // ✅ khớp với DB
     private Long id;
 
-    @Column(length = 255)
-    private String category;
-
-    @Column(length = 255)
-    private String description;
-
-    @Column(length = 255)
+    @Column(nullable = false, length = 200)
     private String title;
 
-    @ManyToOne
-    @JoinColumn(name = "teacher_id") // ✅ trùng với DB
-    private User teacher;
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
-    @Column(length = 255)
-    private String name;
+    @Column(length = 100)
+    private String instructorName;
+
+    private LocalDateTime create_At;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private CourseLevel level = CourseLevel.BEGINNER;
+
+    @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    private LocalDateTime createdAt = LocalDateTime.now();
 }

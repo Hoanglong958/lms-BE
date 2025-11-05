@@ -27,7 +27,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // Cho phép dùng @PreAuthorize ở Controller
+@EnableMethodSecurity(prePostEnabled = true) // ✅ Cho phép dùng @PreAuthorize
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -39,78 +39,61 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                // ✅ Cho phép frontend gọi API
+                // ✅ Cấu hình CORS
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.setAllowedOrigins(List.of("http://localhost:5173")); // origin frontend
-                    config.addAllowedOriginPattern("*"); // Cho phép test từ nhiều domain
+                    config.setAllowedOrigins(List.of("http://localhost:5173"));
+                    config.addAllowedOriginPattern("*");
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                    config.setAllowCredentials(true);
                     config.setAllowedHeaders(List.of("*"));
+                    config.setAllowCredentials(true);
                     config.setExposedHeaders(List.of("Authorization"));
                     return config;
                 }))
-
-                // ✅ Tắt CSRF cho API
+                // ❌ Tắt CSRF vì API dùng JWT
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // ✅ Cấu hình quyền truy cập
+                // 🛡️ Cấu hình quyền truy cập
                 .authorizeHttpRequests(auth -> auth
-                        // Public routes
                         .requestMatchers(
-                                "/api/v1/auth/login",
-                                "/api/v1/auth/register",
+                                "/api/v1/auth/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html"
+                                "/swagger-ui.html",
+                                "/docs/**",
+                                "/ws/**"
                         ).permitAll()
 
-                        // Các API yêu cầu đăng nhập
-                        .requestMatchers(
-                                "/api/v1/courses/**",
-                                "/api/v1/chapters/**",
-                                "/api/v1/lessons/**"
-                        ).authenticated()
+                        // ✅ Dùng authority thay vì role để nhất quán với token
+                        .requestMatchers("/api/v1/admin/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/api/v1/user/**").hasAuthority("ROLE_USER")
+                        .requestMatchers("/api/v1/courses/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_INSTRUCTOR")
+                        .requestMatchers("/api/v1/questions/**").hasAuthority("ROLE_ADMIN")
 
-                        // Khu vực ADMIN
-                        .requestMatchers("/api/v1/admin/**")
-                        .hasAuthority(RoleName.ROLE_ADMIN.toString())
-
-                        // Khu vực USER (giáo viên, học sinh, công ty)
-                        .requestMatchers("/api/v1/user/**")
-                        .hasAnyAuthority(
-                                RoleName.ROLE_TEACHER.toString(),
-                                RoleName.ROLE_STUDENT.toString(),
-                                RoleName.ROLE_COMPANY.toString()
-                        )
-
-                        // Mọi request khác: yêu cầu đăng nhập
+                        // Các request khác yêu cầu đăng nhập
                         .anyRequest().authenticated()
                 )
 
-                // ✅ Stateless session (vì dùng JWT)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                // ✅ Cấu hình exception khi không có quyền
+                // ⚠️ Xử lý lỗi xác thực và từ chối truy cập
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(jwtEntryPoint)
                         .accessDeniedHandler(accessDenied)
                 )
 
-                // ✅ Thêm JWT Filter trước UsernamePasswordAuthenticationFilter
+                // ✅ Cấu hình xác thực & JWT filter
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
 
                 .build();
     }
 
-    // ✅ Mã hoá mật khẩu
+    // ✅ Bean mã hóa mật khẩu
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // ✅ Provider dùng MyUserDetailsService
+    // ✅ Provider xác thực dùng UserDetailsService
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -119,7 +102,7 @@ public class SecurityConfig {
         return provider;
     }
 
-    // ✅ AuthenticationManager để login
+    // ✅ AuthenticationManager để dùng trong AuthController
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration auth) throws Exception {
         return auth.getAuthenticationManager();

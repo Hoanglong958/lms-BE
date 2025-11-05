@@ -1,18 +1,17 @@
 package com.ra.base_spring_boot.repository;
 
 import com.ra.base_spring_boot.model.User;
-import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
 public interface IUserRepository extends JpaRepository<User, Long> {
+    // ✅ Dùng email để đăng nhập
     Optional<User> findByEmail(String email);
 
-    Optional<User> findByUsername(String username);
+    // ✅ Dùng cho quên mật khẩu
+    Optional<User> findByResetToken(String token);
 
-
-    boolean existsByUsername(@NotBlank(message = "Không được để trống") String username);
-
-    boolean existsByEmail(@NotBlank(message = "Không được để trống") String email);
+    // ✅ Kiểm tra email tồn tại (đăng ký)
+    boolean existsByEmail(String email);
 }

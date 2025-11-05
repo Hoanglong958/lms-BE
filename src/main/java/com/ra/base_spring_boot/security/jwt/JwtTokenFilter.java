@@ -33,51 +33,53 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        log.info("🔍 [JwtTokenFilter] Filtering request: {}", request.getRequestURI());
+        String path = request.getRequestURI();
+
+        if (isPublicEndpoint(path)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         try {
             String token = getTokenFromRequest(request);
-            log.info("📦 [JwtTokenFilter] Token from request: {}", token);
 
             if (token != null) {
                 String username = jwtProvider.extractUsername(token);
-                log.info("👤 [JwtTokenFilter] Username extracted from token: {}", username);
 
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                log.info("✅ [JwtTokenFilter] Loaded user details: {}", userDetails.getUsername());
+                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                boolean isValid = jwtProvider.validateToken(token, userDetails);
-                log.info("🧩 [JwtTokenFilter] Token valid: {}", isValid);
+                    if (jwtProvider.validateToken(token, userDetails)) {
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(
+                                        userDetails,
+                                        null,
+                                        userDetails.getAuthorities()
+                                );
 
-                if (isValid) {
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities()
-                            );
-
-                    authentication.setDetails(
-                            new WebAuthenticationDetailsSource().buildDetails(request)
-                    );
-
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                    log.info("🔐 [JwtTokenFilter] Authentication set for user: {}", username);
-                } else {
-                    log.warn("🚫 [JwtTokenFilter] Token validation failed for user: {}", username);
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        log.info("✅ Authenticated user: {} with roles {}", username, userDetails.getAuthorities());
+                    }
                 }
-            } else {
-                log.warn("⚠️ [JwtTokenFilter] No JWT token found in request headers");
             }
+
         } catch (ExpiredJwtException e) {
-            log.error("⏰ [JwtTokenFilter] JWT expired: {}", e.getMessage());
+            log.error("⏰ Token expired: {}", e.getMessage());
         } catch (MalformedJwtException | SignatureException e) {
-            log.error("❌ [JwtTokenFilter] Invalid JWT: {}", e.getMessage());
+            log.error("❌ Invalid token format/signature: {}", e.getMessage());
         } catch (Exception e) {
-            log.error("💥 [JwtTokenFilter] Cannot set user authentication: {}", e.getMessage());
+            log.error("💥 Error validating token: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isPublicEndpoint(String path) {
+        return path.startsWith("/api/v1/auth/")
+                || path.startsWith("/v3/api-docs")
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/docs");
     }
 
     private String getTokenFromRequest(HttpServletRequest request) {
