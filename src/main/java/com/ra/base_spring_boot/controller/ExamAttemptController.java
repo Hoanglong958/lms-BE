@@ -1,0 +1,75 @@
+package com.ra.base_spring_boot.controller;
+
+import com.ra.base_spring_boot.dto.ExamAttempt.ExamAttemptResponseDTO;
+import com.ra.base_spring_boot.dto.ExamAttempt.StartAttemptRequestDTO;
+import com.ra.base_spring_boot.services.IExamAttemptService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/exam-attempts")
+@RequiredArgsConstructor
+@Tag(name = "ExamAttempt", description = "Quản lý lượt làm bài thi (exam attempts)")
+public class ExamAttemptController {
+
+    private final IExamAttemptService attemptService;
+
+    // USER: Bắt đầu lượt làm
+    @PostMapping("/start")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER','ROLE_ADMIN')")
+    @Operation(summary = "Bắt đầu lượt làm bài thi")
+    public ResponseEntity<ExamAttemptResponseDTO> start(@RequestBody StartAttemptRequestDTO req) {
+        return ResponseEntity.ok(attemptService.startAttempt(req.getExamId(), req.getUserId()));
+    }
+
+    // USER: Nộp bài
+    @PostMapping("/{id}/submit")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER','ROLE_ADMIN')")
+    @Operation(summary = "Nộp bài thi")
+    public ResponseEntity<ExamAttemptResponseDTO> submit(@PathVariable Long id) {
+        return ResponseEntity.ok(attemptService.submitAttempt(id));
+    }
+
+    /**
+     * ADMIN: Chấm điểm lượt làm
+     */
+    @PostMapping("/{id}/grade")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Chấm điểm lượt làm (Admin)")
+    public ResponseEntity<ExamAttemptResponseDTO> grade(@PathVariable Long id) {
+        return ResponseEntity.ok(attemptService.gradeAttempt(id));
+    }
+    // ADMIN: Danh sách toàn bộ
+    @GetMapping
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<List<ExamAttemptResponseDTO>> getAll() {
+        return ResponseEntity.ok(attemptService.getAll());
+    }
+
+    // ADMIN: Chi tiết theo id
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<ExamAttemptResponseDTO> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(attemptService.getById(id));
+    }
+
+    // ADMIN: Theo exam
+    @GetMapping("/by-exam/{examId}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<List<ExamAttemptResponseDTO>> getByExam(@PathVariable Long examId) {
+        return ResponseEntity.ok(attemptService.getByExam(examId));
+    }
+
+    // ADMIN: Theo user
+    @GetMapping("/by-user/{userId}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<List<ExamAttemptResponseDTO>> getByUser(@PathVariable Long userId) {
+        return ResponseEntity.ok(attemptService.getByUser(userId));
+    }
+}

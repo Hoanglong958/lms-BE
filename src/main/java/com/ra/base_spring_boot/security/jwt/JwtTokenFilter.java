@@ -33,21 +33,24 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        log.info("🔍 [JwtTokenFilter] Filtering request: {}", request.getRequestURI());
+        String path = request.getRequestURI();
+
+        // ✅ Bỏ qua các endpoint public (không yêu cầu JWT)
+        if (isPublicEndpoint(path)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        log.info("🔍 [JwtTokenFilter] Checking JWT for request: {}", path);
 
         try {
             String token = getTokenFromRequest(request);
-            log.info("📦 [JwtTokenFilter] Token from request: {}", token);
-
             if (token != null) {
                 String username = jwtProvider.extractUsername(token);
-                log.info("👤 [JwtTokenFilter] Username extracted from token: {}", username);
+                log.info("👤 Username extracted from token: {}", username);
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                log.info("✅ [JwtTokenFilter] Loaded user details: {}", userDetails.getUsername());
-
                 boolean isValid = jwtProvider.validateToken(token, userDetails);
-                log.info("🧩 [JwtTokenFilter] Token valid: {}", isValid);
 
                 if (isValid) {
                     UsernamePasswordAuthenticationToken authentication =
@@ -56,30 +59,41 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                                     null,
                                     userDetails.getAuthorities()
                             );
-
-                    authentication.setDetails(
-                            new WebAuthenticationDetailsSource().buildDetails(request)
-                    );
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                    log.info("🔐 [JwtTokenFilter] Authentication set for user: {}", username);
+                    log.info("✅ Authentication set for user: {}", username);
                 } else {
-                    log.warn("🚫 [JwtTokenFilter] Token validation failed for user: {}", username);
+                    log.warn("🚫 Token validation failed for user: {}", username);
                 }
             } else {
-                log.warn("⚠️ [JwtTokenFilter] No JWT token found in request headers");
+                log.warn("⚠️ No JWT token found in request headers");
             }
         } catch (ExpiredJwtException e) {
-            log.error("⏰ [JwtTokenFilter] JWT expired: {}", e.getMessage());
+            log.error("⏰ JWT expired: {}", e.getMessage());
         } catch (MalformedJwtException | SignatureException e) {
-            log.error("❌ [JwtTokenFilter] Invalid JWT: {}", e.getMessage());
+            log.error("❌ Invalid JWT: {}", e.getMessage());
         } catch (Exception e) {
-            log.error("💥 [JwtTokenFilter] Cannot set user authentication: {}", e.getMessage());
+            log.error("💥 Cannot set user authentication: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);
     }
 
+    /**
+     * ✅ Các endpoint public được phép truy cập mà không cần token
+     */
+    private boolean isPublicEndpoint(String path) {
+        return path.equals("/api/v1/auth/login")
+                || path.equals("/api/v1/auth/register")
+                || path.equals("/api/v1/auth/forgot-password")
+                || path.equals("/api/v1/auth/reset-password");
+    }
+
+    /**
+     * ✅ Lấy JWT token từ header Authorization
+     * Dạng hợp lệ: Bearer <jwt_token>
+     */
     private String getTokenFromRequest(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {

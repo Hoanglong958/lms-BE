@@ -1,51 +1,39 @@
 package com.ra.base_spring_boot.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.ra.base_spring_boot.model.base.BaseObject;
+import com.ra.base_spring_boot.model.constants.RoleName;
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDate;
-import java.util.Set;
+import java.time.LocalDateTime;
 
 @Entity
-@NoArgsConstructor
-@AllArgsConstructor
+@Table(name = "users")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
-@Table(name = "users") // 👈 ánh xạ đúng bảng Users trong DB
-public class User extends BaseObject {
+public class User {
 
-    @Column(name = "full_name")
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     private String fullName;
-    private String username;
-
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
-    private String phone;
-
-    private LocalDate dob;
-
-    private String avatar;
-
-    @JsonIgnore
-    @Column(nullable = false)
     private String password;
 
-    private Boolean status = true;
 
-    // ⚙️ Role trong DB bạn lưu dưới dạng string ('STUDENT', 'TEACHER', ...)
     @Enumerated(EnumType.STRING)
-    private RoleType role; // RoleType là enum bạn sẽ tạo trong constants
+    private RoleName role;
 
-    // ⚙️ Nếu project base vẫn cần roles cho security => giữ lại mối quan hệ này
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "user_role",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles;
+    private Boolean isActive;
+
+    private LocalDateTime createdAt;
+
+    // ✅ Thêm các trường phục vụ reset mật khẩu
+    private String resetToken;
+    private LocalDateTime resetTokenExpiry;
 }

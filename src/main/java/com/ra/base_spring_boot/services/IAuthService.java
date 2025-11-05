@@ -1,8 +1,6 @@
 package com.ra.base_spring_boot.services;
 
-import com.ra.base_spring_boot.dto.req.ChangePasswordRequest;
-import com.ra.base_spring_boot.dto.req.FormLogin;
-import com.ra.base_spring_boot.dto.req.FormRegister;
+import com.ra.base_spring_boot.dto.req.*;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
 
 public interface IAuthService
@@ -12,6 +10,10 @@ public interface IAuthService
 
     JwtResponse login(FormLogin formLogin);
 
-    void changePassword(String username, String oldPassword , String newPassword);
+    void changePassword(String username, ChangePasswordRequest request);
+
+    void forgotPassword(ForgotPasswordRequest request);
+    void resetPassword(ResetPasswordRequest request);
+
 
 }

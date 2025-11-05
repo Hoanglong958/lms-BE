@@ -2,20 +2,26 @@ spring:
   application:
     name: base_spring_boot
   datasource:
-    url: jdbc:mysql://127.0.0.1:3306/Lms?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/lms_rikki?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
     username: root
-  jooq:
-    sql-dialect: org.hibernate.dialect.MySQL8Dialect
+    password: hanh3010
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
+      ddl-auto: update
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
         implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
-      ddl-auto: update
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
         show_sql: true
+    open-in-view: false
+
+springdoc:
+  swagger-ui:
+    path: /docs
 
 jwt:
   secret:
@@ -24,4 +30,14 @@ jwt:
     access: 3600000
 
 server:
-  port: 8081
+  port: 3900
+
+external:
+  api:
+    base-url: https://example.com
+    connect-timeout: 5000
+    read-timeout: 10000
+
+logging:
+  level:
+    org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsManagerConfigurer: ERROR

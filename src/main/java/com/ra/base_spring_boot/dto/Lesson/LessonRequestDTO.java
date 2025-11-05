@@ -1,9 +1,7 @@
 package com.ra.base_spring_boot.dto.Lesson;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.ra.base_spring_boot.model.constants.LessonType;
+import lombok.*;
 
 @Data
 @NoArgsConstructor
@@ -11,6 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class LessonRequestDTO {
     private String title;
-    private String content;
-    private Long chapterId;
+    private LessonType type;
+    private Integer orderIndex;
+    private Long sessionId;
 }

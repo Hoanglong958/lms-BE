@@ -4,14 +4,13 @@ import com.ra.base_spring_boot.dto.Course.CourseRequestDTO;
 import com.ra.base_spring_boot.dto.Course.CourseResponseDTO;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.Course;
-import com.ra.base_spring_boot.model.User;
+import com.ra.base_spring_boot.model.constants.CourseLevel;
 import com.ra.base_spring_boot.repository.ICourseRepository;
 import com.ra.base_spring_boot.services.ICourseService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -22,48 +21,43 @@ public class CourseServiceImpl implements ICourseService {
 
     @Override
     public CourseResponseDTO create(CourseRequestDTO dto) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User teacher = null;
-        if (auth != null && auth.getPrincipal() instanceof User) {
-            teacher = (User) auth.getPrincipal();
-        }
-
-        Course course = new Course();
-        course.setName(dto.getName());
-        course.setTitle(dto.getTitle());
-        course.setDescription(dto.getDescription());
-        course.setCategory(dto.getCategory());
-        course.setTeacher(teacher);
-
-        Course saved = courseRepository.save(course);
-        return toDto(saved);
+        Course course = Course.builder()
+                .title(dto.getTitle())
+                .description(dto.getDescription())
+                .instructorName(dto.getInstructorName())
+                .level(CourseLevel.valueOf(dto.getLevel().toUpperCase()))
+                .createdAt(LocalDateTime.now())
+                .build();
+        courseRepository.save(course);
+        return toDto(course);
     }
 
     @Override
     public CourseResponseDTO update(Long id, CourseRequestDTO dto) {
         Course course = courseRepository.findById(id)
-                .orElseThrow(() -> new HttpBadRequest("Course not found with id = " + id));
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học với id = " + id));
 
-        course.setName(dto.getName());
         course.setTitle(dto.getTitle());
         course.setDescription(dto.getDescription());
-        course.setCategory(dto.getCategory());
+        course.setInstructorName(dto.getInstructorName());
+        course.setCreatedAt(LocalDateTime.now());
+        course.setLevel(CourseLevel.valueOf(dto.getLevel().toUpperCase()));
 
-        Course saved = courseRepository.save(course);
-        return toDto(saved);
+        courseRepository.save(course);
+        return toDto(course);
     }
 
     @Override
     public void delete(Long id) {
         Course course = courseRepository.findById(id)
-                .orElseThrow(() -> new HttpBadRequest("Course not found with id = " + id));
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học với id = " + id));
         courseRepository.delete(course);
     }
 
     @Override
     public CourseResponseDTO findById(Long id) {
         Course course = courseRepository.findById(id)
-                .orElseThrow(() -> new HttpBadRequest("Course not found with id = " + id));
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học với id = " + id));
         return toDto(course);
     }
 
@@ -75,24 +69,14 @@ public class CourseServiceImpl implements ICourseService {
                 .toList();
     }
 
-    // ✅ Hàm convert entity → DTO (bị thiếu trước đây)
     private CourseResponseDTO toDto(Course course) {
-        Long teacherId = null;
-        String teacherName = null;
-
-        if (course.getTeacher() != null) {
-            teacherId = course.getTeacher().getId();
-            teacherName = course.getTeacher().getFullName(); // hoặc getUsername() nếu không có fullName
-        }
-
         return CourseResponseDTO.builder()
                 .id(course.getId())
-                .name(course.getName())
                 .title(course.getTitle())
                 .description(course.getDescription())
-                .category(course.getCategory())
-                .teacherId(teacherId)
-                .teacherName(teacherName)
+                .instructorName(course.getInstructorName())
+                .level(course.getLevel().name())
+                .createdAt(course.getCreatedAt())
                 .build();
     }
 }
