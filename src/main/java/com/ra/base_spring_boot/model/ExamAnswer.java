@@ -23,6 +23,8 @@ public class ExamAnswer {
     private Question question;
 
     private String selectedAnswer;
+    @Builder.Default
     private Boolean isCorrect = false;
+    @Builder.Default
     private Integer scoreAwarded = 0;
 }

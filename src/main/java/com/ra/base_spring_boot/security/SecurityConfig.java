@@ -27,7 +27,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true) // ✅ Cho phép dùng @PreAuthorize
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -39,7 +39,6 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                // ✅ Cấu hình CORS
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
                     config.setAllowedOrigins(List.of("http://localhost:5173"));
@@ -50,50 +49,38 @@ public class SecurityConfig {
                     config.setExposedHeaders(List.of("Authorization"));
                     return config;
                 }))
-                // ❌ Tắt CSRF vì API dùng JWT
                 .csrf(AbstractHttpConfigurer::disable)
-
-                // 🛡️ Cấu hình quyền truy cập
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/v1/auth/**",
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/register",
+                                "/api/v1/auth/forgot-password",
+                                "/api/v1/auth/reset-password",
+                                "/api/v1/users/check",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
-                                "/docs/**",
-                                "/ws/**"
+                                "/docs/**"
                         ).permitAll()
-
-                        // ✅ Dùng authority thay vì role để nhất quán với token
-                        .requestMatchers("/api/v1/admin/**").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers("/api/v1/user/**").hasAuthority("ROLE_USER")
-                        .requestMatchers("/api/v1/courses/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_INSTRUCTOR")
-                        .requestMatchers("/api/v1/questions/**").hasAuthority("ROLE_ADMIN")
-
-                        // Các request khác yêu cầu đăng nhập
+                        .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.name())
+                        .requestMatchers("/api/v1/user/**").hasAuthority(RoleName.ROLE_USER.name())
                         .anyRequest().authenticated()
                 )
-
-                // ⚠️ Xử lý lỗi xác thực và từ chối truy cập
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(jwtEntryPoint)
                         .accessDeniedHandler(accessDenied)
                 )
-
-                // ✅ Cấu hình xác thực & JWT filter
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
-
                 .build();
     }
 
-    // ✅ Bean mã hóa mật khẩu
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // ✅ Provider xác thực dùng UserDetailsService
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -102,7 +89,6 @@ public class SecurityConfig {
         return provider;
     }
 
-    // ✅ AuthenticationManager để dùng trong AuthController
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration auth) throws Exception {
         return auth.getAuthenticationManager();

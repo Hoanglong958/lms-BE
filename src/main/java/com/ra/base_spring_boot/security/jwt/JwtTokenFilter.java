@@ -35,53 +35,65 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
+        // ✅ Bỏ qua các endpoint public (không yêu cầu JWT)
         if (isPublicEndpoint(path)) {
             filterChain.doFilter(request, response);
             return;
         }
 
+        log.info("🔍 [JwtTokenFilter] Checking JWT for request: {}", path);
+
         try {
             String token = getTokenFromRequest(request);
-
             if (token != null) {
                 String username = jwtProvider.extractUsername(token);
+                log.info("👤 Username extracted from token: {}", username);
 
-                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                boolean isValid = jwtProvider.validateToken(token, userDetails);
 
-                    if (jwtProvider.validateToken(token, userDetails)) {
-                        UsernamePasswordAuthenticationToken authentication =
-                                new UsernamePasswordAuthenticationToken(
-                                        userDetails,
-                                        null,
-                                        userDetails.getAuthorities()
-                                );
+                if (isValid) {
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-                        log.info("✅ Authenticated user: {} with roles {}", username, userDetails.getAuthorities());
-                    }
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    log.info("✅ Authentication set for user: {}", username);
+                } else {
+                    log.warn("🚫 Token validation failed for user: {}", username);
                 }
+            } else {
+                log.warn("⚠️ No JWT token found in request headers");
             }
-
         } catch (ExpiredJwtException e) {
-            log.error("⏰ Token expired: {}", e.getMessage());
+            log.error("⏰ JWT expired: {}", e.getMessage());
         } catch (MalformedJwtException | SignatureException e) {
-            log.error("❌ Invalid token format/signature: {}", e.getMessage());
+            log.error("❌ Invalid JWT: {}", e.getMessage());
         } catch (Exception e) {
-            log.error("💥 Error validating token: {}", e.getMessage());
+            log.error("💥 Cannot set user authentication: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);
     }
 
+    /**
+     * ✅ Các endpoint public được phép truy cập mà không cần token
+     */
     private boolean isPublicEndpoint(String path) {
-        return path.startsWith("/api/v1/auth/")
-                || path.startsWith("/v3/api-docs")
-                || path.startsWith("/swagger-ui")
-                || path.startsWith("/docs");
+        return path.equals("/api/v1/auth/login")
+                || path.equals("/api/v1/auth/register")
+                || path.equals("/api/v1/auth/forgot-password")
+                || path.equals("/api/v1/auth/reset-password");
     }
 
+    /**
+     * ✅ Lấy JWT token từ header Authorization
+     * Dạng hợp lệ: Bearer <jwt_token>
+     */
     private String getTokenFromRequest(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {

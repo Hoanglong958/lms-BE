@@ -23,5 +23,6 @@ public class ExamQuestion {
     private Question question;
 
     private Integer orderIndex;
+    @Builder.Default
     private Integer score = 1;
 }

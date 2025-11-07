@@ -6,10 +6,8 @@ import com.ra.base_spring_boot.model.Question;
 import com.ra.base_spring_boot.repository.IQuestionRepository;
 import com.ra.base_spring_boot.services.IQuestionService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,7 +21,6 @@ public class QuestionServiceImpl implements IQuestionService {
     private final IQuestionRepository questionRepository;
 
     @Override
-    @Transactional(readOnly = true)
     public List<QuestionResponseDTO> getAll() {
         return questionRepository.findAll()
                 .stream()
@@ -32,11 +29,9 @@ public class QuestionServiceImpl implements IQuestionService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public QuestionResponseDTO getById(Long id) {
         Question question = questionRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Question not found"));
+                .orElseThrow(() -> new RuntimeException("Question not found"));
         return toResponse(question);
     }
 
@@ -48,8 +43,8 @@ public class QuestionServiceImpl implements IQuestionService {
                 .options(request.getOptions())
                 .correctAnswer(request.getCorrectAnswer())
                 .explanation(request.getExplanation())
+                .createdAt(LocalDateTime.now())
                 .build();
-
         questionRepository.save(question);
         return toResponse(question);
     }
@@ -57,8 +52,7 @@ public class QuestionServiceImpl implements IQuestionService {
     @Override
     public QuestionResponseDTO update(Long id, QuestionRequestDTO request) {
         Question question = questionRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Question not found"));
+                .orElseThrow(() -> new RuntimeException("Question not found"));
 
         question.setCategory(request.getCategory());
         question.setQuestionText(request.getQuestionText());
@@ -73,10 +67,10 @@ public class QuestionServiceImpl implements IQuestionService {
 
     @Override
     public void delete(Long id) {
-        Question question = questionRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Question not found"));
-        questionRepository.delete(question);
+        if (!questionRepository.existsById(id)) {
+            throw new RuntimeException("Question not found");
+        }
+        questionRepository.deleteById(id);
     }
 
     private QuestionResponseDTO toResponse(Question question) {

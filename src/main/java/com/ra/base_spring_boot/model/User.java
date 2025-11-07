@@ -33,10 +33,6 @@ public class User {
 
     private LocalDateTime createdAt;
 
-    @Column(name = "avatar_url", length = 255)
-    private String avatarUrl;
-
-
     // ✅ Thêm các trường phục vụ reset mật khẩu
     private String resetToken;
     private LocalDateTime resetTokenExpiry;

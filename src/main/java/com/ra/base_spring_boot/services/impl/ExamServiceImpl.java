@@ -6,9 +6,7 @@ import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.model.constants.ExamStatus;
 import com.ra.base_spring_boot.repository.*;
 import com.ra.base_spring_boot.services.IExamService;
-import com.ra.base_spring_boot.config.controller.ExamSocketController; // ✅ đúng import
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -22,9 +20,7 @@ public class ExamServiceImpl implements IExamService {
     private final IExamRepository examRepository;
     private final ICourseRepository courseRepository;
     private final IQuestionRepository questionRepository;
-    private final IExamQuestionRepository examQuestionRepository;
-    private final ModelMapper modelMapper;
-    private final ExamSocketController examSocketController; // ✅ sửa lại đúng
+    // Loại bỏ IExamQuestionRepository, ModelMapper và Socket controller
 
     // ======= Tạo kỳ thi (ADMIN) =======
     @Override
@@ -48,11 +44,8 @@ public class ExamServiceImpl implements IExamService {
 
         examRepository.save(exam);
 
-        // ✅ Sau khi tạo xong kỳ thi -> gửi thông báo qua WebSocket
-        ExamResponseDTO response = mapToResponse(exam);
-        examSocketController.sendExamCreatedNotification(response);
-
-        return response;
+        // Trả về DTO mà không gửi socket
+        return mapToResponse(exam);
     }
 
     // ======= Cập nhật kỳ thi (ADMIN) =======
@@ -120,7 +113,8 @@ public class ExamServiceImpl implements IExamService {
                     .score(1)
                     .build();
 
-            examQuestionRepository.save(eq);
+            // Thêm vào collection để lưu thông qua examRepository (yêu cầu cascade trong mapping)
+            exam.getExamQuestions().add(eq);
         }
 
         exam.setTotalQuestions(exam.getExamQuestions().size());
@@ -129,8 +123,20 @@ public class ExamServiceImpl implements IExamService {
 
     // ======= Hàm chuyển Entity -> DTO =======
     private ExamResponseDTO mapToResponse(Exam exam) {
-        ExamResponseDTO dto = modelMapper.map(exam, ExamResponseDTO.class);
-        dto.setStatus(exam.getStatus().name());
-        return dto;
+        return ExamResponseDTO.builder()
+                .id(exam.getId())
+                .courseId(exam.getCourse() != null ? exam.getCourse().getId() : null)
+                .title(exam.getTitle())
+                .description(exam.getDescription())
+                .totalQuestions(exam.getTotalQuestions())
+                .maxScore(exam.getMaxScore())
+                .passingScore(exam.getPassingScore())
+                .durationMinutes(exam.getDurationMinutes())
+                .startTime(exam.getStartTime())
+                .endTime(exam.getEndTime())
+                .status(exam.getStatus() != null ? exam.getStatus().name() : null)
+                .createdAt(exam.getCreatedAt())
+                .updatedAt(exam.getUpdatedAt())
+                .build();
     }
 }

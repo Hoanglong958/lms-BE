@@ -30,7 +30,8 @@ public class MyUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return this.user.getEmail(); // Dùng email làm username
+        // ✅ Dùng email làm username để đăng nhập
+        return this.user.getEmail();
     }
 
     @Override
@@ -53,16 +54,11 @@ public class MyUserDetails implements UserDetails {
         return this.user.getIsActive() != null ? this.user.getIsActive() : true;
     }
 
-    /**
-     * ✅ Build MyUserDetails từ User entity — tự động thêm ROLE_ nếu thiếu
-     */
+    // ✅ Static builder method để dùng trong MyUserDetailsService
     public static MyUserDetails build(User user) {
-        String roleName = user.getRole().name();
-        if (!roleName.startsWith("ROLE_")) {
-            roleName = "ROLE_" + roleName;
-        }
-
-        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(roleName));
+        List<GrantedAuthority> authorities = List.of(
+                new SimpleGrantedAuthority(user.getRole().name())
+        );
 
         return MyUserDetails.builder()
                 .user(user)

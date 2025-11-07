@@ -27,12 +27,12 @@ public class Course {
     @Column(length = 100)
     private String instructorName;
 
-    private LocalDateTime create_At;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private CourseLevel level = CourseLevel.BEGINNER;
 
     @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 }
