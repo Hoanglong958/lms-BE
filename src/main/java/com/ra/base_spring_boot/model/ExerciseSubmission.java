@@ -18,7 +18,7 @@ public class ExerciseSubmission {
 
     @ManyToOne
     @JoinColumn(name = "exercise_id", nullable = false)
-    private SessionExercise exercise;
+    private LessonExercise exercise;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)

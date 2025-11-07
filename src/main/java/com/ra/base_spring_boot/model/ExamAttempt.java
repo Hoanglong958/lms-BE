@@ -24,13 +24,17 @@ public class ExamAttempt {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Builder.Default
     private LocalDateTime startTime = LocalDateTime.now();
     private LocalDateTime endTime;
+    @Builder.Default
     private Double score = 0.0;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private AttemptStatus status = AttemptStatus.IN_PROGRESS;
 
+    @Builder.Default
     private Integer attemptNumber = 1;
 
     @OneToMany(mappedBy = "attempt", cascade = CascadeType.ALL, orphanRemoval = true)
