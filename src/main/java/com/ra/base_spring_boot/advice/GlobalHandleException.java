@@ -40,8 +40,7 @@ public class GlobalHandleException
      * @apiNote handle exception max upload file (400)
      */
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<?> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex)
-    {
+    public ResponseEntity<?> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                 ResponseWrapper.builder()
                         .data(ex.getMessage())
