@@ -6,6 +6,8 @@ import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.model.constants.RoleName;
 import com.ra.base_spring_boot.repository.IUserRepository;
+import com.ra.base_spring_boot.repository.IPasswordResetTokenRepository;
+import com.ra.base_spring_boot.model.PasswordResetToken;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.IAuthService;
@@ -31,6 +33,7 @@ public class AuthServiceImpl implements IAuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
+    private final IPasswordResetTokenRepository passwordResetTokenRepository;
 
     // ======================= Đăng ký =========================
     @Override
@@ -125,16 +128,21 @@ public class AuthServiceImpl implements IAuthService {
     // ======================= Đặt lại mật khẩu =========================
     @Override
     public void resetPassword(ResetPasswordRequest request) {
-        User user = userRepository.findByResetToken(request.getToken())
+        PasswordResetToken token = passwordResetTokenRepository.findByToken(request.getToken())
                 .orElseThrow(() -> new HttpBadRequest("Token không hợp lệ hoặc đã sử dụng!"));
 
-        if (user.getResetTokenExpiry() == null || user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
+        if (Boolean.TRUE.equals(token.getIsUsed())) {
+            throw new HttpBadRequest("Token đã được sử dụng!");
+        }
+        if (token.getExpiresAt() == null || token.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new HttpBadRequest("Token đã hết hạn, vui lòng yêu cầu lại!");
         }
 
+        User user = token.getUser();
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        user.setResetToken(null);
-        user.setResetTokenExpiry(null);
         userRepository.save(user);
+
+        token.setIsUsed(true);
+        passwordResetTokenRepository.save(token);
     }
 }

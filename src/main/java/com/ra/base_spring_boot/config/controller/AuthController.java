@@ -3,6 +3,8 @@ package com.ra.base_spring_boot.config.controller;
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.*;
 import com.ra.base_spring_boot.services.IAuthService;
+import com.ra.base_spring_boot.services.IPasswordResetTokenService;
+import com.ra.base_spring_boot.dto.req.CreatePasswordResetTokenRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,6 +25,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 public class AuthController {
 
     private final IAuthService authService;
+    private final IPasswordResetTokenService passwordResetTokenService;
 
     /**
      * @param formLogin FormLogin
@@ -100,12 +103,14 @@ public class AuthController {
     @Operation(summary = "Quên mật khẩu", description = "Gửi liên kết đặt lại mật khẩu qua email")
     @ApiResponse(responseCode = "200", description = "Gửi email thành công (demo có thể log ra console)")
     public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        authService.forgotPassword(request);
+        CreatePasswordResetTokenRequest createReq = new CreatePasswordResetTokenRequest();
+        createReq.setEmail(request.getEmail());
+        passwordResetTokenService.create(createReq);
         return ResponseEntity.ok(
                 ResponseWrapper.builder()
                         .status(HttpStatus.OK)
                         .code(200)
-                        .data("Liên kết đặt lại mật khẩu đã được gửi đến email của bạn (xem console nếu demo).")
+                        .data("Đã tạo token đặt lại mật khẩu. Vui lòng kiểm tra email để tiếp tục.")
                         .build()
         );
     }

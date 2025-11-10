@@ -56,11 +56,21 @@ public class SecurityConfig {
                 // 🛡️ Cấu hình quyền truy cập
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/v1/auth/**",
+                                // Public auth endpoints
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/register",
+                                "/api/v1/auth/forgot-password",
+                                "/api/v1/auth/reset-password",
+                                // Public password reset token endpoints
+                                "/api/v1/password-reset-tokens/request",
+                                "/api/v1/password-reset-tokens/validate",
+                                "/api/v1/password-reset-tokens/mark-used",
+                                // Swagger and docs
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/docs/**",
+                                // WebSocket endpoints (if any)
                                 "/ws/**"
                         ).permitAll()
 
