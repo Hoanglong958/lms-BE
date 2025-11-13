@@ -24,6 +24,8 @@ public class ExamAttempt {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+
+
     @Builder.Default
     private LocalDateTime startTime = LocalDateTime.now();
     private LocalDateTime endTime;
@@ -43,4 +45,6 @@ public class ExamAttempt {
     public enum AttemptStatus {
         IN_PROGRESS, SUBMITTED, GRADED
     }
+
+
 }

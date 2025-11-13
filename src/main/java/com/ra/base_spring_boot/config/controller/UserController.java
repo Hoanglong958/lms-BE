@@ -1,4 +1,4 @@
-package com.ra.base_spring_boot.controller;
+package com.ra.base_spring_boot.config.controller;
 
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.UserCreateRequest;

@@ -60,9 +60,11 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
-                                "/docs/**"
+                                "/docs/**",
+                                "/ws/**"
                         ).permitAll()
                         .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.name())
+                        .requestMatchers("/api/v1/questions/**").hasAuthority(RoleName.ROLE_ADMIN.name())
                         .requestMatchers("/api/v1/user/**").hasAuthority(RoleName.ROLE_USER.name())
                         .anyRequest().authenticated()
                 )

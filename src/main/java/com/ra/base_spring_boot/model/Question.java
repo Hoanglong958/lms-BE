@@ -3,6 +3,9 @@ package com.ra.base_spring_boot.model;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @Entity
 @Table(name = "questions")
@@ -22,8 +25,10 @@ public class Question {
     @Column(name = "question_text", columnDefinition = "TEXT", nullable = false)
     private String questionText;
 
-    @Column(columnDefinition = "JSON")
-    private String options;
+    // Lưu List<String> sang TEXT với converter
+    @Convert(converter = ListToStringConverter.class)
+    @Column(columnDefinition = "TEXT")
+    private List<String> options;
 
     @Column(name = "correct_answer", length = 255, nullable = false)
     private String correctAnswer;
@@ -34,6 +39,10 @@ public class Question {
     @Column(name = "created_at")
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @OneToMany(mappedBy = "question")
+    private List<ExamQuestion> examQuestions = new ArrayList<>();
+
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;

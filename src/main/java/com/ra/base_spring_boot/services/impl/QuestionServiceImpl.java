@@ -20,6 +20,7 @@ public class QuestionServiceImpl implements IQuestionService {
 
     private final IQuestionRepository questionRepository;
 
+    // Lấy tất cả câu hỏi
     @Override
     public List<QuestionResponseDTO> getAll() {
         return questionRepository.findAll()
@@ -28,6 +29,7 @@ public class QuestionServiceImpl implements IQuestionService {
                 .collect(Collectors.toList());
     }
 
+    // Lấy câu hỏi theo ID
     @Override
     public QuestionResponseDTO getById(Long id) {
         Question question = questionRepository.findById(id)
@@ -35,36 +37,33 @@ public class QuestionServiceImpl implements IQuestionService {
         return toResponse(question);
     }
 
+    // Tạo câu hỏi mới
     @Override
     public QuestionResponseDTO create(QuestionRequestDTO request) {
-        Question question = Question.builder()
-                .category(request.getCategory())
-                .questionText(request.getQuestionText())
-                .options(request.getOptions())
-                .correctAnswer(request.getCorrectAnswer())
-                .explanation(request.getExplanation())
-                .createdAt(LocalDateTime.now())
-                .build();
+        Question question = mapRequestToEntity(request);
         questionRepository.save(question);
         return toResponse(question);
     }
 
+    // Cập nhật câu hỏi
     @Override
     public QuestionResponseDTO update(Long id, QuestionRequestDTO request) {
         Question question = questionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Question not found"));
 
-        question.setCategory(request.getCategory());
-        question.setQuestionText(request.getQuestionText());
-        question.setOptions(request.getOptions());
-        question.setCorrectAnswer(request.getCorrectAnswer());
-        question.setExplanation(request.getExplanation());
+        Question updated = mapRequestToEntity(request);
+        question.setCategory(updated.getCategory());
+        question.setQuestionText(updated.getQuestionText());
+        question.setOptions(updated.getOptions());
+        question.setCorrectAnswer(updated.getCorrectAnswer());
+        question.setExplanation(updated.getExplanation());
         question.setUpdatedAt(LocalDateTime.now());
 
         questionRepository.save(question);
         return toResponse(question);
     }
 
+    // Xóa câu hỏi
     @Override
     public void delete(Long id) {
         if (!questionRepository.existsById(id)) {
@@ -73,16 +72,36 @@ public class QuestionServiceImpl implements IQuestionService {
         questionRepository.deleteById(id);
     }
 
+    // ===================== Helper =====================
+
+    // Chuyển DTO request sang Entity
+    private Question mapRequestToEntity(QuestionRequestDTO request) {
+        List<String> optionList = request.getOptions() != null
+                ? request.getOptions()
+                : List.of();
+
+        return Question.builder()
+                .category(request.getCategory())
+                .questionText(request.getQuestionText())
+                .options(optionList)
+                .correctAnswer(request.getCorrectAnswer())
+                .explanation(request.getExplanation())
+                .createdAt(LocalDateTime.now())
+                .build();
+    }
+
+    // Chuyển Entity sang DTO response
     private QuestionResponseDTO toResponse(Question question) {
         return QuestionResponseDTO.builder()
                 .id(question.getId())
                 .category(question.getCategory())
                 .questionText(question.getQuestionText())
-                .options(question.getOptions())
+                .options(question.getOptions())  // List<String>
                 .correctAnswer(question.getCorrectAnswer())
                 .explanation(question.getExplanation())
                 .createdAt(question.getCreatedAt())
                 .updatedAt(question.getUpdatedAt())
+                .score(null) // điểm chưa gán
                 .build();
     }
 }

@@ -4,6 +4,7 @@ import com.ra.base_spring_boot.model.constants.ExamStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -17,7 +18,7 @@ public class Exam {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 
@@ -28,10 +29,13 @@ public class Exam {
 
     @Builder.Default
     private Integer totalQuestions = 0;
+
     @Builder.Default
     private Integer maxScore = 100;
+
     @Builder.Default
     private Integer passingScore = 70;
+
     private Integer durationMinutes;
 
     private LocalDateTime startTime;
@@ -40,13 +44,39 @@ public class Exam {
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private ExamStatus status = ExamStatus.UPCOMING;
+
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
+
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ExamQuestion> examQuestions;
+    // ======= Quan hệ với ExamQuestion =======
+    @Builder.Default
+    @OneToMany(
+            mappedBy = "exam",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private List<ExamQuestion> examQuestions = new ArrayList<>();
 
-    @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ExamAttempt> examAttempts;
+    // ======= Quan hệ với ExamAttempt =======
+    @Builder.Default
+    @OneToMany(
+            mappedBy = "exam",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private List<ExamAttempt> examAttempts = new ArrayList<>();
+
+    // ======= Helper method để xóa tất cả child (tùy chọn) =======
+    public void clearAllRelations() {
+        if (examQuestions != null) {
+            examQuestions.clear();
+        }
+        if (examAttempts != null) {
+            examAttempts.clear();
+        }
+    }
 }

@@ -1,8 +1,10 @@
 package com.ra.base_spring_boot.services;
 
 import com.ra.base_spring_boot.dto.ExamAttempt.ExamAttemptResponseDTO;
+import com.ra.base_spring_boot.model.ExamAttempt;
 
 import java.util.List;
+import java.util.Map;
 
 public interface IExamAttemptService {
     ExamAttemptResponseDTO startAttempt(Long examId, Long userId);
@@ -13,4 +15,8 @@ public interface IExamAttemptService {
     List<ExamAttemptResponseDTO> getAll();
     List<ExamAttemptResponseDTO> getByExam(Long examId);
     List<ExamAttemptResponseDTO> getByUser(Long userId);
+    ExamAttempt createAttempt(Long examId, Long userId, String examRoomId);
+    ExamAttempt submitExam(Long attemptId, Map<Long, String> answers);
+
+
 }

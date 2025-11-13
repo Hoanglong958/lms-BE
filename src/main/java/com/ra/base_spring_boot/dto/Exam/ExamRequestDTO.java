@@ -23,6 +23,8 @@ public class ExamRequestDTO {
     private Integer durationMinutes;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+    private boolean autoAddQuestions; // nếu true lấy tất cả
+    private List<Long> questionIds;
 
 
 }

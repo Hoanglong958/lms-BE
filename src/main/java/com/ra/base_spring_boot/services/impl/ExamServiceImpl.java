@@ -6,10 +6,13 @@ import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.model.constants.ExamStatus;
 import com.ra.base_spring_boot.repository.*;
 import com.ra.base_spring_boot.services.IExamService;
+import com.ra.base_spring_boot.dto.Question.QuestionResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,10 +23,10 @@ public class ExamServiceImpl implements IExamService {
     private final IExamRepository examRepository;
     private final ICourseRepository courseRepository;
     private final IQuestionRepository questionRepository;
-    // Loại bỏ IExamQuestionRepository, ModelMapper và Socket controller
 
     // ======= Tạo kỳ thi (ADMIN) =======
     @Override
+    @Transactional
     public ExamResponseDTO createExam(ExamRequestDTO dto) {
         Course course = courseRepository.findById(dto.getCourseId())
                 .orElseThrow(() -> new RuntimeException("Course not found"));
@@ -39,17 +42,45 @@ public class ExamServiceImpl implements IExamService {
                 .endTime(dto.getEndTime())
                 .status(ExamStatus.UPCOMING)
                 .createdAt(LocalDateTime.now())
+                .examQuestions(new ArrayList<>())
                 .totalQuestions(0)
                 .build();
 
+        // ======= Thêm câu hỏi theo yêu cầu =======
+        if (dto.isAutoAddQuestions()) {
+            List<Question> questions = questionRepository.findAll();
+            int orderIndex = 1;
+            for (Question q : questions) {
+                ExamQuestion eq = ExamQuestion.builder()
+                        .exam(exam)
+                        .question(q)
+                        .orderIndex(orderIndex++)
+                        .build();
+                exam.getExamQuestions().add(eq);
+            }
+        } else if (dto.getQuestionIds() != null && !dto.getQuestionIds().isEmpty()) {
+            int orderIndex = 1;
+            for (Long qId : dto.getQuestionIds()) {
+                Question q = questionRepository.findById(qId)
+                        .orElseThrow(() -> new RuntimeException("Question not found: " + qId));
+                ExamQuestion eq = ExamQuestion.builder()
+                        .exam(exam)
+                        .question(q)
+                        .orderIndex(orderIndex++)
+                        .build();
+                exam.getExamQuestions().add(eq);
+            }
+        }
+
+        exam.setTotalQuestions(exam.getExamQuestions().size());
         examRepository.save(exam);
 
-        // Trả về DTO mà không gửi socket
         return mapToResponse(exam);
     }
 
     // ======= Cập nhật kỳ thi (ADMIN) =======
     @Override
+    @Transactional
     public ExamResponseDTO updateExam(Long examId, ExamRequestDTO dto) {
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new RuntimeException("Exam not found"));
@@ -69,14 +100,30 @@ public class ExamServiceImpl implements IExamService {
 
     // ======= Xóa kỳ thi (ADMIN) =======
     @Override
+    @Transactional
     public void deleteExam(Long examId) {
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new RuntimeException("Exam not found"));
+
+        // Force load lazy collections trước khi xóa
+        exam.getExamQuestions().size();
+        if (exam.getExamAttempts() != null) {
+            exam.getExamAttempts().size();
+        }
+
+        // Xóa tất cả child
+        exam.getExamQuestions().clear();
+        if (exam.getExamAttempts() != null) {
+            exam.getExamAttempts().clear();
+        }
+
+        // Xóa parent
         examRepository.delete(exam);
     }
 
     // ======= Lấy kỳ thi theo ID =======
     @Override
+    @Transactional(readOnly = true)
     public ExamResponseDTO getExam(Long examId) {
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new RuntimeException("Exam not found"));
@@ -85,6 +132,7 @@ public class ExamServiceImpl implements IExamService {
 
     // ======= Lấy danh sách tất cả kỳ thi =======
     @Override
+    @Transactional(readOnly = true)
     public List<ExamResponseDTO> getAllExams() {
         return examRepository.findAll()
                 .stream()
@@ -92,8 +140,9 @@ public class ExamServiceImpl implements IExamService {
                 .collect(Collectors.toList());
     }
 
-    // ======= Thêm câu hỏi vào kỳ thi =======
+    // ======= Thêm câu hỏi hiện có vào kỳ thi =======
     @Override
+    @Transactional
     public void addQuestionsToExam(Long examId, List<Long> questionIds) {
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new RuntimeException("Exam not found"));
@@ -110,10 +159,8 @@ public class ExamServiceImpl implements IExamService {
                     .exam(exam)
                     .question(question)
                     .orderIndex(exam.getExamQuestions().size() + 1)
-                    .score(1)
                     .build();
 
-            // Thêm vào collection để lưu thông qua examRepository (yêu cầu cascade trong mapping)
             exam.getExamQuestions().add(eq);
         }
 
@@ -121,8 +168,23 @@ public class ExamServiceImpl implements IExamService {
         examRepository.save(exam);
     }
 
-    // ======= Hàm chuyển Entity -> DTO =======
+    // ======= Chuyển Entity -> DTO (bao gồm danh sách câu hỏi) =======
     private ExamResponseDTO mapToResponse(Exam exam) {
+        double pointPerQuestion = exam.getTotalQuestions() > 0
+                ? exam.getMaxScore() * 1.0 / exam.getTotalQuestions()
+                : 0;
+
+        List<QuestionResponseDTO> questions = exam.getExamQuestions().stream()
+                .map(eq -> QuestionResponseDTO.builder()
+                        .id(eq.getQuestion().getId())
+                        .questionText(eq.getQuestion().getQuestionText())
+                        .options(eq.getQuestion().getOptions())
+                        .correctAnswer(eq.getQuestion().getCorrectAnswer())
+                        .explanation(eq.getQuestion().getExplanation())
+                        .score(pointPerQuestion)
+                        .build())
+                .collect(Collectors.toList());
+
         return ExamResponseDTO.builder()
                 .id(exam.getId())
                 .courseId(exam.getCourse() != null ? exam.getCourse().getId() : null)
@@ -135,6 +197,7 @@ public class ExamServiceImpl implements IExamService {
                 .startTime(exam.getStartTime())
                 .endTime(exam.getEndTime())
                 .status(exam.getStatus() != null ? exam.getStatus().name() : null)
+                .questions(questions)
                 .createdAt(exam.getCreatedAt())
                 .updatedAt(exam.getUpdatedAt())
                 .build();

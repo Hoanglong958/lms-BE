@@ -1,11 +1,14 @@
 package com.ra.base_spring_boot.dto.Exam;
 
+import com.ra.base_spring_boot.dto.Question.QuestionResponseDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -25,6 +28,8 @@ public class ExamResponseDTO {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    private List<QuestionResponseDTO> questions;
 
 
 }

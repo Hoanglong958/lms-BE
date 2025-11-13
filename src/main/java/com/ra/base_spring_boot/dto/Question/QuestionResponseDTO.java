@@ -1,12 +1,13 @@
 package com.ra.base_spring_boot.dto.Question;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
@@ -15,11 +16,11 @@ import java.time.LocalDateTime;
 public class QuestionResponseDTO {
     private Long id;
     private String category;
-    @NotBlank(message = "Question text is required")
     private String questionText;
-    private String options;
+    private List<String> options; // Map để frontend dễ dùng
     private String correctAnswer;
     private String explanation;
+    private Double score;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
