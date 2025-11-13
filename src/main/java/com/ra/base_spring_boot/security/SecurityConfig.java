@@ -52,15 +52,22 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/forgot-password",
                                 "/api/v1/auth/reset-password",
                                 "/api/v1/users/check",
+                                // Public password reset token endpoints
+                                "/api/v1/password-reset-tokens/request",
+                                "/api/v1/password-reset-tokens/validate",
+                                "/api/v1/password-reset-tokens/mark-used",
+                                // Swagger and docs
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/docs/**",
+                                // WebSocket endpoints (if any)
                                 "/ws/**"
                         ).permitAll()
                         .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.name())
