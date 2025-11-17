@@ -21,7 +21,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-@Tag(name = "Xác thực", description = "Đăng nhập, đăng ký và quản lý mật khẩu")
+@Tag(name = "Auth", description = "Đăng nhập, đăng ký và quản lý mật khẩu")
 public class AuthController {
 
     private final IAuthService authService;

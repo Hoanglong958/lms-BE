@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.config.controller;
 
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.CreatePasswordResetTokenRequest;
+import com.ra.base_spring_boot.dto.req.ResetPasswordRequest;
 import com.ra.base_spring_boot.services.IPasswordResetTokenService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -58,6 +59,20 @@ public class PasswordResetTokenController {
                         .status(HttpStatus.OK)
                         .code(200)
                         .data("Đã đánh dấu token là đã dùng")
+                        .build()
+        );
+    }
+
+    @PostMapping("/reset")
+    @Operation(summary = "Đặt lại mật khẩu", description = "Đặt mật khẩu mới bằng token hợp lệ")
+    @ApiResponse(responseCode = "200", description = "Đặt lại mật khẩu thành công")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        service.resetPassword(request);
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data("Đặt lại mật khẩu thành công")
                         .build()
         );
     }

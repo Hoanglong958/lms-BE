@@ -94,7 +94,8 @@ public class UserServiceImpl implements IUserService {
         if (email == null || email.trim().isEmpty()) {
             throw new HttpBadRequest("Email không được để trống");
         }
-        return userRepository.existsByEmail(email);
+        String normalized = email.trim().toLowerCase();
+        return userRepository.existsByEmailIgnoreCase(normalized);
     }
 
     private UserResponse toResponse(User u) {

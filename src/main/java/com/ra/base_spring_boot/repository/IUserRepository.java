@@ -11,14 +11,17 @@ import org.springframework.data.domain.Pageable;
 import java.util.Optional;
 
 public interface IUserRepository extends JpaRepository<User, Long> {
-    // ✅ Dùng email để đăng nhập
+    // Dùng email để đăng nhập
     Optional<User> findByEmail(String email);
 
-    // ✅ Dùng cho quên mật khẩu
+    // Dùng cho quên mật khẩu
     Optional<User> findByResetToken(String token);
 
-    // ✅ Kiểm tra email tồn tại (đăng ký)
+    // Kiểm tra email tồn tại (đăng ký)
     boolean existsByEmail(String email);
+    
+    // Kiểm tra email tồn tại (không phân biệt hoa thường)
+    boolean existsByEmailIgnoreCase(String email);
 
     @Query("SELECT u FROM User u WHERE (:keyword IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND (:role IS NULL OR u.role = :role) AND (:active IS NULL OR u.isActive = :active)")
     Page<User> search(@Param("keyword") String keyword,

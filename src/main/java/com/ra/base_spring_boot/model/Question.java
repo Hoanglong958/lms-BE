@@ -41,6 +41,7 @@ public class Question {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @OneToMany(mappedBy = "question")
+    @Builder.Default
     private List<ExamQuestion> examQuestions = new ArrayList<>();
 
 

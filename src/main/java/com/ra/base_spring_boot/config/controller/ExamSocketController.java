@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.config.controller;
 
 import com.ra.base_spring_boot.dto.Exam.ExamResponseDTO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Controller;
 
 @Controller
 @RequiredArgsConstructor
+@Slf4j
 public class ExamSocketController {
 
     private final SimpMessagingTemplate messagingTemplate;
@@ -17,7 +19,7 @@ public class ExamSocketController {
     @MessageMapping("/exam/notify")
     @SendTo("/topic/exam-updates")
     public ExamResponseDTO broadcastExam(ExamResponseDTO message) {
-        System.out.println("Nhận message từ FE: " + message.getTitle());
+        log.info("Nhận message từ FE: {}", message.getTitle());
         return message; // broadcast lại cho toàn bộ FE
     }
 

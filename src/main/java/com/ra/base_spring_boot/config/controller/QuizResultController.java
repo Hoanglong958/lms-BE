@@ -1,12 +1,14 @@
 package com.ra.base_spring_boot.config.controller;
 
-import com.ra.base_spring_boot.model.QuizResult;
+import com.ra.base_spring_boot.dto.QuizResult.QuizResultResponseDTO;
+import com.ra.base_spring_boot.dto.QuizResult.QuizSubmissionRequestDTO;
 import com.ra.base_spring_boot.services.IQuizResultService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,8 +29,8 @@ public class QuizResultController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Lấy danh sách kết quả quiz", description = "Chỉ ADMIN được xem toàn bộ kết quả")
     @ApiResponse(responseCode = "200", description = "Thành công",
-            content = @Content(schema = @Schema(implementation = QuizResult.class)))
-    public ResponseEntity<List<QuizResult>> getAll() {
+            content = @Content(schema = @Schema(implementation = QuizResultResponseDTO.class)))
+    public ResponseEntity<List<QuizResultResponseDTO>> getAll() {
         return ResponseEntity.ok(quizResultService.findAll());
     }
 
@@ -36,9 +38,8 @@ public class QuizResultController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Lấy chi tiết kết quả quiz", description = "Trả về kết quả quiz theo ID")
-    public ResponseEntity<QuizResult> getById(@PathVariable Long id) {
-        QuizResult result = quizResultService.findById(id);
-        return result != null ? ResponseEntity.ok(result) : ResponseEntity.notFound().build();
+    public ResponseEntity<QuizResultResponseDTO> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(quizResultService.findById(id));
     }
 
     // ========== USER: Nộp bài quiz ==========
@@ -46,15 +47,11 @@ public class QuizResultController {
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
     @Operation(summary = "Nộp bài quiz", description = "Người dùng nộp bài quiz, hệ thống sẽ tự động tính điểm và lưu kết quả")
     @ApiResponse(responseCode = "200", description = "Nộp bài thành công",
-            content = @Content(schema = @Schema(implementation = QuizResult.class)))
-    public ResponseEntity<QuizResult> submitQuiz(
-            @RequestParam Long quizId,
-            @RequestParam Long userId,
-            @RequestParam int correctCount,
-            @RequestParam int totalCount
+            content = @Content(schema = @Schema(implementation = QuizResultResponseDTO.class)))
+    public ResponseEntity<QuizResultResponseDTO> submitQuiz(
+            @Valid @RequestBody QuizSubmissionRequestDTO request
     ) {
-        QuizResult result = quizResultService.submitQuiz(quizId, userId, correctCount, totalCount);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(quizResultService.submitQuiz(request));
     }
 
 

@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.Question.QuestionRequestDTO;
 import com.ra.base_spring_boot.dto.Question.QuestionResponseDTO;
+import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.model.Question;
 import com.ra.base_spring_boot.repository.IQuestionRepository;
 import com.ra.base_spring_boot.services.IQuestionService;
@@ -33,7 +34,7 @@ public class QuestionServiceImpl implements IQuestionService {
     @Override
     public QuestionResponseDTO getById(Long id) {
         Question question = questionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Question not found"));
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy câu hỏi với id = " + id));
         return toResponse(question);
     }
 
@@ -49,7 +50,7 @@ public class QuestionServiceImpl implements IQuestionService {
     @Override
     public QuestionResponseDTO update(Long id, QuestionRequestDTO request) {
         Question question = questionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Question not found"));
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy câu hỏi với id = " + id));
 
         Question updated = mapRequestToEntity(request);
         question.setCategory(updated.getCategory());
@@ -67,7 +68,7 @@ public class QuestionServiceImpl implements IQuestionService {
     @Override
     public void delete(Long id) {
         if (!questionRepository.existsById(id)) {
-            throw new RuntimeException("Question not found");
+            throw new HttpNotFound("Không tìm thấy câu hỏi với id = " + id);
         }
         questionRepository.deleteById(id);
     }

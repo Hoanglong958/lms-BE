@@ -9,6 +9,8 @@ import com.ra.base_spring_boot.repository.ICourseRepository;
 import com.ra.base_spring_boot.services.ICourseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,13 +23,15 @@ public class CourseServiceImpl implements ICourseService {
 
     @Override
     public CourseResponseDTO create(CourseRequestDTO dto) {
+        CourseLevel level = parseLevel(dto.getLevel());
         Course course = Course.builder()
                 .title(dto.getTitle())
                 .description(dto.getDescription())
                 .instructorName(dto.getInstructorName())
-                .level(CourseLevel.valueOf(dto.getLevel().toUpperCase()))
+                .level(level)
                 .createdAt(LocalDateTime.now())
                 .build();
+        course.setUpdatedAt(course.getCreatedAt());
         courseRepository.save(course);
         return toDto(course);
     }
@@ -40,8 +44,8 @@ public class CourseServiceImpl implements ICourseService {
         course.setTitle(dto.getTitle());
         course.setDescription(dto.getDescription());
         course.setInstructorName(dto.getInstructorName());
-        course.setCreatedAt(LocalDateTime.now());
-        course.setLevel(CourseLevel.valueOf(dto.getLevel().toUpperCase()));
+        course.setLevel(parseLevel(dto.getLevel()));
+        course.setUpdatedAt(LocalDateTime.now());
 
         courseRepository.save(course);
         return toDto(course);
@@ -69,6 +73,19 @@ public class CourseServiceImpl implements ICourseService {
                 .toList();
     }
 
+    @Override
+    public Page<CourseResponseDTO> findAll(Pageable pageable) {
+        return courseRepository.findAll(pageable).map(this::toDto);
+    }
+
+    @Override
+    public Page<CourseResponseDTO> search(String keyword, Pageable pageable) {
+        String kw = keyword == null ? "" : keyword.trim();
+        return courseRepository
+                .findByTitleContainingIgnoreCaseOrInstructorNameContainingIgnoreCase(kw, kw, pageable)
+                .map(this::toDto);
+    }
+
     private CourseResponseDTO toDto(Course course) {
         return CourseResponseDTO.builder()
                 .id(course.getId())
@@ -77,6 +94,18 @@ public class CourseServiceImpl implements ICourseService {
                 .instructorName(course.getInstructorName())
                 .level(course.getLevel().name())
                 .createdAt(course.getCreatedAt())
+                .updatedAt(course.getUpdatedAt())
                 .build();
+    }
+
+    private CourseLevel parseLevel(String rawLevel) {
+        if (rawLevel == null || rawLevel.trim().isEmpty()) {
+            throw new HttpBadRequest("Level khóa học không được để trống (BEGINNER/INTERMEDIATE/ADVANCED)");
+        }
+        try {
+            return CourseLevel.valueOf(rawLevel.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new HttpBadRequest("Level khóa học không hợp lệ. Giá trị hợp lệ: BEGINNER, INTERMEDIATE, ADVANCED");
+        }
     }
 }

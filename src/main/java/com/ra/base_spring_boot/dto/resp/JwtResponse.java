@@ -7,9 +7,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-import java.util.Set;
-
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
@@ -20,5 +17,5 @@ public class JwtResponse
     private final String type = "Bearer";
     @JsonIgnoreProperties({"roles","password"})
     private User user;
-    private Set<String> roles;
+    private String role; // Mỗi user chỉ có 1 role duy nhất
 }
