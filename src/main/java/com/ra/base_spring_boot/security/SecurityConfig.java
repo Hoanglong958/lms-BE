@@ -72,7 +72,8 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.name())
                         .requestMatchers("/api/v1/questions/**").hasAuthority(RoleName.ROLE_ADMIN.name())
-                        .requestMatchers("/api/v1/user/**").hasAuthority(RoleName.ROLE_USER.name())
+                        // Các endpoint quản lý user: chỉ ADMIN
+                        .requestMatchers("/api/v1/users/**").hasAuthority(RoleName.ROLE_ADMIN.name())
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
