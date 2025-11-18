@@ -1,54 +1,54 @@
 package com.ra.base_spring_boot.config.controller;
 
-import com.ra.base_spring_boot.dto.ChatMessageSocket.ChatMessageRequestDTO;
-import com.ra.base_spring_boot.dto.ChatMessageSocket.ChatMessageResponseDTO;
+import com.ra.base_spring_boot.config.dto.ChatMessageSocket.ChatMessageRequestDTO;
+import com.ra.base_spring_boot.config.dto.ChatMessageSocket.ChatMessageResponseDTO;
 import com.ra.base_spring_boot.services.IChatService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
 
 @Controller
 @RequiredArgsConstructor
+@RequestMapping("/api/chat")
 public class ChatController {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final IChatService chatService;
 
-    @MessageMapping("/chat") // FE send -> /app/chat
+    // STOMP endpoint
+    @MessageMapping("/chat")
     public void handleMessages(ChatMessageRequestDTO request) {
-        if (request == null || request.getType() == null) return;
+        processMessage(request);
+    }
+
+    // REST endpoint tạm để test
+    @PostMapping("/send")
+    public ResponseEntity<?> handleMessagesRest(@RequestBody ChatMessageRequestDTO request) {
+        ChatMessageResponseDTO dto = processMessage(request);
+        return ResponseEntity.ok(dto);
+    }
+
+    private ChatMessageResponseDTO processMessage(ChatMessageRequestDTO request) {
+        if (request == null || request.getType() == null) return null;
+
+        ChatMessageResponseDTO dto = null;
 
         switch (request.getType()) {
-
             case "JOIN" -> {
-                ChatMessageResponseDTO sysMsg =
-                        chatService.createSystemJoinMessage(request.getRoomId(), request.getSender());
-                messagingTemplate.convertAndSend("/topic/room/" + request.getRoomId(), sysMsg);
+                dto = chatService.createSystemJoinMessage(request.getRoomId(), request.getSender());
+                messagingTemplate.convertAndSend("/topic/room/" + request.getRoomId(), dto);
             }
-
             case "SEND" -> {
-                if (request.getContent() == null || request.getContent().trim().isEmpty()) return;
-
-                ChatMessageResponseDTO saved = chatService.saveMessage(request);
-                messagingTemplate.convertAndSend("/topic/room/" + request.getRoomId(), saved);
+                if (request.getContent() == null || request.getContent().trim().isEmpty()) return null;
+                dto = chatService.saveMessage(request);
+                messagingTemplate.convertAndSend("/topic/room/" + request.getRoomId(), dto);
             }
-
-            case "SUBMIT" -> {
-                ChatMessageResponseDTO sysMsg = new ChatMessageResponseDTO();
-                sysMsg.setRoomId(request.getRoomId());
-                sysMsg.setSender("system");
-                sysMsg.setContent(request.getSender() + " đã nộp bài");
-                sysMsg.setType("SYSTEM");
-                sysMsg.setTimestamp(System.currentTimeMillis());
-
-                messagingTemplate.convertAndSend("/topic/room/" + request.getRoomId(), sysMsg);
-            }
-
-
-            default -> {
-                // ignore or log invalid type
-            }
+            // ❌ Không xử lý SUBMIT ở đây nữa
+            default -> {}
         }
+        return dto;
     }
 }

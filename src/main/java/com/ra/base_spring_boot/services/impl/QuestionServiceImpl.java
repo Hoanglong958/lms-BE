@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.dto.Question.QuestionRequestDTO;
-import com.ra.base_spring_boot.dto.Question.QuestionResponseDTO;
+import com.ra.base_spring_boot.config.dto.Question.QuestionRequestDTO;
+import com.ra.base_spring_boot.config.dto.Question.QuestionResponseDTO;
 import com.ra.base_spring_boot.model.Question;
 import com.ra.base_spring_boot.repository.IQuestionRepository;
 import com.ra.base_spring_boot.services.IQuestionService;

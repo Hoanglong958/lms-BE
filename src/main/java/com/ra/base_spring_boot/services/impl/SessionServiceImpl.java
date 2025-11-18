@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.dto.Session.SessionRequestDTO;
-import com.ra.base_spring_boot.dto.Session.SessionResponseDTO;
+import com.ra.base_spring_boot.config.dto.Session.SessionRequestDTO;
+import com.ra.base_spring_boot.config.dto.Session.SessionResponseDTO;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.Course;
 import com.ra.base_spring_boot.model.Session;

@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.dto.req.*;
-import com.ra.base_spring_boot.dto.resp.JwtResponse;
+import com.ra.base_spring_boot.config.dto.req.*;
+import com.ra.base_spring_boot.config.dto.resp.JwtResponse;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.model.constants.RoleName;
@@ -16,14 +16,12 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,20 +36,48 @@ public class AuthServiceImpl implements IAuthService {
     // ======================= Đăng ký =========================
     @Override
     public void register(FormRegister formRegister) {
+        // ===== Validate Full Name =====
+        if (formRegister.getFullName() == null || formRegister.getFullName().isBlank()) {
+            throw new HttpBadRequest("Họ tên không được để trống!");
+        }
+
+        // ===== Validate Email =====
+        if (formRegister.getEmail() == null || formRegister.getEmail().isBlank()) {
+            throw new HttpBadRequest("Email không được để trống!");
+        }
+
+        // Regex: username >= 6 ký tự, kết thúc @gmail.com
+        if (!formRegister.getEmail().matches("^[A-Za-z0-9._%+-]{6,}@gmail\\.com$")) {
+            throw new HttpBadRequest("Email phải là gmail.com và phần username trước @ phải trên 5 ký tự!");
+        }
+
         if (userRepository.existsByEmail(formRegister.getEmail())) {
             throw new HttpBadRequest("Email đã tồn tại!");
         }
 
-        // Lấy role từ input hoặc mặc định USER
-        RoleName role = RoleName.ROLE_USER;
+        // ===== Validate Password =====
+        if (formRegister.getPassword() == null || formRegister.getPassword().isBlank()) {
+            throw new HttpBadRequest("Mật khẩu không được để trống!");
+        }
+
+        // Mật khẩu mạnh: ít nhất 8 ký tự, chữ hoa, chữ thường, số
+        if (!formRegister.getPassword().matches("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$")) {
+            throw new HttpBadRequest("Mật khẩu phải ít nhất 8 ký tự, có chữ hoa, chữ thường và số!");
+        }
+
+
+
+        // ===== Validate Role =====
+        RoleName role = RoleName.ROLE_USER; // mặc định USER
         if (formRegister.getRole() != null) {
-            String input = formRegister.getRole().toUpperCase();
-            if (input.equals("ADMIN") || input.equals("ROLE_ADMIN")) {
-                role = RoleName.ROLE_ADMIN;
+            try {
+                role = RoleName.valueOf("ROLE_" + formRegister.getRole().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new HttpBadRequest("Role không hợp lệ! Chỉ có USER hoặc ADMIN.");
             }
         }
 
-        // Tạo user
+        // ===== Tạo User =====
         User user = User.builder()
                 .fullName(formRegister.getFullName())
                 .email(formRegister.getEmail())

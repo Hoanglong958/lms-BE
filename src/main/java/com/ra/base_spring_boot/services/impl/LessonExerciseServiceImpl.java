@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.dto.LessonExercise.LessonExerciseRequestDTO;
-import com.ra.base_spring_boot.dto.LessonExercise.LessonExerciseResponseDTO;
+import com.ra.base_spring_boot.config.dto.LessonExercise.LessonExerciseRequestDTO;
+import com.ra.base_spring_boot.config.dto.LessonExercise.LessonExerciseResponseDTO;
 import com.ra.base_spring_boot.model.Lesson;
 import com.ra.base_spring_boot.model.LessonExercise;
 import com.ra.base_spring_boot.repository.ILessonExerciseRepository;

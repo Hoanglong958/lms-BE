@@ -2,99 +2,104 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>WebSocket STOMP Test</title>
+    <title>WebSocket STOMP Exam Test Client</title>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 </head>
 <body>
-<h2>WebSocket Test Client</h2>
+<h2>Exam WebSocket STOMP Test Client</h2>
 
-<input id="roomId" placeholder="Room ID" value="1"/>
-<input id="sender" placeholder="Sender" value="TestUser"/>
-<input id="message" placeholder="Message"/>
+<label>Room ID: </label><input id="roomId" placeholder="Room ID" value="1"/>
+<label>User ID: </label><input id="userId" placeholder="User ID" value="1001"/>
+<label>Exam ID: </label><input id="examId" placeholder="Exam ID" value="10"/>
 <br><br>
-<button onclick="joinRoom()">JOIN</button>
-<button onclick="sendMessage()">SEND</button>
-<button onclick="submitExam()">SUBMIT</button>
 
+<button onclick="joinExam()">JOIN EXAM</button>
+<button onclick="submitExam()">SUBMIT EXAM</button>
+
+<h3>Messages / Notifications:</h3>
 <ul id="messages"></ul>
 
 <script>
     let stompClient = null;
     const subscribedRooms = new Set();
 
+    // TODO: Thay bằng JWT token thực tế sau khi login
+    const JWT_TOKEN = "<JWT_TOKEN>";
+
     function connect(callback) {
         const socket = new SockJS('http://localhost:3999/ws');
         stompClient = Stomp.over(socket);
+        stompClient.debug = null; // tắt log debug
 
-        stompClient.connect({}, function(frame) {
-            console.log('Connected: ' + frame);
-            callback();
-        }, function(error) {
-            console.error('STOMP error', error);
-            alert('WebSocket kết nối thất bại, thử lại sau.');
-        });
+        stompClient.connect(
+            { "Authorization": "Bearer " + JWT_TOKEN },
+            function(frame) {
+                console.log('Connected: ' + frame);
+                callback();
+            },
+            function(error) {
+                console.error('STOMP error', error);
+                alert('WebSocket kết nối thất bại, thử lại sau.');
+            }
+        );
     }
 
-    function joinRoom() {
+    function joinExam() {
         if (!stompClient || !stompClient.connected) {
-            connect(() => sendJoin());
+            connect(sendJoinExam);
         } else {
-            sendJoin();
+            sendJoinExam();
         }
     }
 
-    function sendJoin() {
+    function sendJoinExam() {
         const roomId = document.getElementById("roomId").value;
-        const sender = document.getElementById("sender").value;
+        const userId = document.getElementById("userId").value;
+        const examId = document.getElementById("examId").value;
 
-        // Chỉ subscribe nếu chưa subscribe room này
+        // Subscribe room topic nếu chưa subscribe
         if (!subscribedRooms.has(roomId)) {
-            stompClient.subscribe('/topic/room/' + roomId, function(messageOutput) {
+            stompClient.subscribe('/topic/exam-room/' + roomId, function(messageOutput) {
                 const message = JSON.parse(messageOutput.body);
                 const li = document.createElement("li");
-                li.textContent = `[${message.type}] ${message.sender}: ${message.content || ''}`;
+                li.textContent = `[${message.type}] User ${message.userId || ''} Exam ${message.examId || ''}: ${message.content || ''}`;
                 document.getElementById("messages").appendChild(li);
             });
             subscribedRooms.add(roomId);
         }
 
-        // Gửi JOIN message
         const joinMessage = {
-            type: "JOIN",
-            roomId: roomId,
-            sender: sender
-        };
-        stompClient.send("/app/chat", {}, JSON.stringify(joinMessage));
-    }
-
-    function sendMessage() {
-        const roomId = document.getElementById("roomId").value;
-        const sender = document.getElementById("sender").value;
-        const content = document.getElementById("message").value;
-
-        const chatMessage = {
-            type: "SEND",
-            roomId: roomId,
-            sender: sender,
-            content: content
+            type: "JOIN_EXAM",
+            examRoomId: roomId,
+            userId: parseInt(userId),
+            examId: parseInt(examId)
         };
 
-        stompClient.send("/app/chat", {}, JSON.stringify(chatMessage));
-        document.getElementById("message").value = "";
+        stompClient.send("/app/exam/action", {}, JSON.stringify(joinMessage));
     }
 
     function submitExam() {
         const roomId = document.getElementById("roomId").value;
-        const sender = document.getElementById("sender").value;
+        const userId = document.getElementById("userId").value;
+        const examId = document.getElementById("examId").value;
 
-        const submitMessage = {
-            type: "SUBMIT",
-            roomId: roomId,
-            sender: sender
+        // Ví dụ answers: map questionId -> answer
+        const answers = {
+            1: "A",
+            2: "B",
+            3: "C"
         };
 
-        stompClient.send("/app/chat", {}, JSON.stringify(submitMessage));
+        const submitMessage = {
+            type: "SUBMIT_EXAM",
+            examRoomId: roomId,
+            userId: parseInt(userId),
+            examId: parseInt(examId),
+            answers: answers
+        };
+
+        stompClient.send("/app/exam/action", {}, JSON.stringify(submitMessage));
     }
 </script>
 </body>

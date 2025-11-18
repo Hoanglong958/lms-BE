@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.dto.LessonVideo.LessonVideoRequestDTO;
-import com.ra.base_spring_boot.dto.LessonVideo.LessonVideoResponseDTO;
+import com.ra.base_spring_boot.config.dto.LessonVideo.LessonVideoRequestDTO;
+import com.ra.base_spring_boot.config.dto.LessonVideo.LessonVideoResponseDTO;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.Lesson;
 import com.ra.base_spring_boot.model.LessonVideo;

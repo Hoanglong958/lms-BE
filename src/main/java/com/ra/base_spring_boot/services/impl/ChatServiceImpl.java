@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.dto.ChatMessageSocket.ChatMessageRequestDTO;
-import com.ra.base_spring_boot.dto.ChatMessageSocket.ChatMessageResponseDTO;
+import com.ra.base_spring_boot.config.dto.ChatMessageSocket.ChatMessageRequestDTO;
+import com.ra.base_spring_boot.config.dto.ChatMessageSocket.ChatMessageResponseDTO;
 import com.ra.base_spring_boot.model.ChatMessage;
 import com.ra.base_spring_boot.repository.IChatMessageRepository;
 import com.ra.base_spring_boot.services.IChatService;
@@ -14,6 +14,9 @@ public class ChatServiceImpl implements IChatService {
 
     private final IChatMessageRepository repository;
 
+    /**
+     * Save user message to chat_message
+     */
     @Override
     public ChatMessageResponseDTO saveMessage(ChatMessageRequestDTO req) {
         ChatMessage entity = mapToEntity(req);
@@ -21,22 +24,36 @@ public class ChatServiceImpl implements IChatService {
         return toDTO(saved);
     }
 
+    /**
+     * System JOIN message -> DO NOT save DB
+     */
     @Override
     public ChatMessageResponseDTO createSystemJoinMessage(String roomId, String user) {
-        ChatMessage entity = new ChatMessage();
-        entity.setRoomId(roomId);
-        entity.setSender("system");
-        entity.setContent(user + " joined the room");
-        entity.setType("SYSTEM");
-        entity.setTimestamp(System.currentTimeMillis());
+        ChatMessageResponseDTO dto = new ChatMessageResponseDTO();
+        dto.setRoomId(roomId);
+        dto.setSender("system");
+        dto.setContent(user + " joined the room");
+        dto.setType("SYSTEM_JOIN");
+        dto.setTimestamp(System.currentTimeMillis());
+        return dto;  // ❌ Không lưu DB
+    }
 
-        // Lưu hệ thống join message vào DB
-        ChatMessage saved = repository.save(entity);
-        return toDTO(saved);
+    /**
+     * System SUBMIT message -> DO NOT save DB
+     */
+    @Override
+    public ChatMessageResponseDTO createSystemSubmitMessage(String roomId, String user) {
+        ChatMessageResponseDTO dto = new ChatMessageResponseDTO();
+        dto.setRoomId(roomId);
+        dto.setSender("system");
+        dto.setContent(user + " submitted the exam");
+        dto.setType("SYSTEM_SUBMIT");
+        dto.setTimestamp(System.currentTimeMillis());
+        return dto;  // ❌ Không lưu DB vì submit thuộc exam_attempt
     }
 
     // ============================
-    // Private helper methods
+    // Helpers
     // ============================
 
     private ChatMessage mapToEntity(ChatMessageRequestDTO req) {
@@ -58,22 +75,5 @@ public class ChatServiceImpl implements IChatService {
         dto.setTimestamp(msg.getTimestamp());
         dto.setType(msg.getType());
         return dto;
-
     }
-    @Override
-    public ChatMessageResponseDTO createSystemSubmitMessage(String roomId, String user) {
-        ChatMessage entity = new ChatMessage();
-        entity.setRoomId(roomId);
-        entity.setSender("system");
-        entity.setContent(user + " submitted the exam");
-        entity.setType("SYSTEM");
-        entity.setTimestamp(System.currentTimeMillis());
-
-        ChatMessage saved = repository.save(entity);
-        return toDTO(saved);
-    }
-
-
-
-
 }

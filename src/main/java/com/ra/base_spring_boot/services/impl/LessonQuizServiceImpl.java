@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.dto.LessonQuizzes.LessonQuizRequestDTO;
-import com.ra.base_spring_boot.dto.LessonQuizzes.LessonQuizResponseDTO;
+import com.ra.base_spring_boot.config.dto.LessonQuizzes.LessonQuizRequestDTO;
+import com.ra.base_spring_boot.config.dto.LessonQuizzes.LessonQuizResponseDTO;
 import com.ra.base_spring_boot.model.Lesson;
 import com.ra.base_spring_boot.model.LessonQuiz;
 import com.ra.base_spring_boot.repository.ILessonQuizRepository;

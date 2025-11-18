@@ -1,9 +1,9 @@
 package com.ra.base_spring_boot.config.controller;
 
-import com.ra.base_spring_boot.dto.ResponseWrapper;
-import com.ra.base_spring_boot.dto.req.UserCreateRequest;
-import com.ra.base_spring_boot.dto.req.UserUpdateRequest;
-import com.ra.base_spring_boot.dto.resp.UserResponse;
+import com.ra.base_spring_boot.config.dto.ResponseWrapper;
+import com.ra.base_spring_boot.config.dto.req.UserCreateRequest;
+import com.ra.base_spring_boot.config.dto.req.UserUpdateRequest;
+import com.ra.base_spring_boot.config.dto.resp.UserResponse;
 import com.ra.base_spring_boot.model.constants.RoleName;
 import com.ra.base_spring_boot.services.IUserService;
 import io.swagger.v3.oas.annotations.Operation;

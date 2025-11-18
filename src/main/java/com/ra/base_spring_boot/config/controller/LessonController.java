@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.config.controller;
 
-import com.ra.base_spring_boot.dto.Lesson.LessonRequestDTO;
-import com.ra.base_spring_boot.dto.Lesson.LessonResponseDTO;
+import com.ra.base_spring_boot.config.dto.Lesson.LessonRequestDTO;
+import com.ra.base_spring_boot.config.dto.Lesson.LessonResponseDTO;
 import com.ra.base_spring_boot.services.ILessonService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @RestController

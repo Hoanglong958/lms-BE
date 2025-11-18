@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.services;
 
-import com.ra.base_spring_boot.dto.Question.QuestionRequestDTO;
-import com.ra.base_spring_boot.dto.Question.QuestionResponseDTO;
+import com.ra.base_spring_boot.config.dto.Question.QuestionRequestDTO;
+import com.ra.base_spring_boot.config.dto.Question.QuestionResponseDTO;
 import java.util.List;
 
 public interface IQuestionService {

@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.services;
 
-import com.ra.base_spring_boot.dto.Course.CourseRequestDTO;
-import com.ra.base_spring_boot.dto.Course.CourseResponseDTO;
+import com.ra.base_spring_boot.config.dto.Course.CourseRequestDTO;
+import com.ra.base_spring_boot.config.dto.Course.CourseResponseDTO;
 
 import java.util.List;
 

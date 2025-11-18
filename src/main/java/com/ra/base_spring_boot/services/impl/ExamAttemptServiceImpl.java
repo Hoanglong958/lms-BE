@@ -1,19 +1,19 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.dto.ExamAttempt.ExamAttemptResponseDTO;
-import com.ra.base_spring_boot.model.*;
+import com.ra.base_spring_boot.config.dto.ExamAttempt.ExamAttemptResponseDTO;
+import com.ra.base_spring_boot.model.Exam;
+import com.ra.base_spring_boot.model.ExamAttempt;
+import com.ra.base_spring_boot.model.ExamParticipant;
+import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.repository.*;
 import com.ra.base_spring_boot.services.IExamAttemptService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
-import com.ra.base_spring_boot.repository.IExamParticipant;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,10 +22,8 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
     private final IExamAttemptRepository attemptRepository;
     private final IExamRepository examRepository;
     private final IUserRepository userRepository;
-    private final com.ra.base_spring_boot.repository.IExamAnswerRepository examAnswerRepository;
+    private final IExamParticipantRepository participantRepository;
     private final ModelMapper modelMapper;
-    private final IQuestionRepository questionRepository;
-    private final IExamParticipant participantRepository;
 
     @Override
     public ExamAttemptResponseDTO startAttempt(Long examId, Long userId) {
@@ -53,102 +51,30 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
     }
 
     @Override
-    public ExamAttemptResponseDTO submitAttempt(Long attemptId) {
-        ExamAttempt attempt = attemptRepository.findById(attemptId)
-                .orElseThrow(() -> new RuntimeException("Attempt not found"));
-        attempt.setEndTime(LocalDateTime.now());
-
-        // Auto grade: score = (correct / total) * maxScore
-        long correct = examAnswerRepository.countByAttempt_IdAndIsCorrectTrue(attemptId);
-        // Prefer exam totalQuestions; if 0, fallback to number of answers recorded
-        long totalQuestions = attempt.getExam().getTotalQuestions() != null
-                ? attempt.getExam().getTotalQuestions()
-                : 0;
-        if (totalQuestions == 0) {
-            totalQuestions = examAnswerRepository.countByAttempt_Id(attemptId);
-        }
-
-        double maxScore = attempt.getExam().getMaxScore() != null ? attempt.getExam().getMaxScore() : 100.0;
-        double computedScore = 0.0;
-        if (totalQuestions > 0) {
-            computedScore = ((double) correct / (double) totalQuestions) * maxScore;
-        }
-
-        attempt.setScore(computedScore);
-        attempt.setStatus(ExamAttempt.AttemptStatus.GRADED);
-        attemptRepository.save(attempt);
-        return toDTO(attempt);
-    }
-
-    @Override
-    public ExamAttemptResponseDTO gradeAttempt(Long attemptId) {
-        ExamAttempt attempt = attemptRepository.findById(attemptId)
-                .orElseThrow(() -> new RuntimeException("Attempt not found"));
-
-        // Recompute score using the same auto-grading logic
-        long correct = examAnswerRepository.countByAttempt_IdAndIsCorrectTrue(attemptId);
-        long totalQuestions = attempt.getExam().getTotalQuestions() != null
-                ? attempt.getExam().getTotalQuestions()
-                : 0;
-        if (totalQuestions == 0) {
-            totalQuestions = examAnswerRepository.countByAttempt_Id(attemptId);
-        }
-
-        double maxScore = attempt.getExam().getMaxScore() != null ? attempt.getExam().getMaxScore() : 100.0;
-        double computedScore = 0.0;
-        if (totalQuestions > 0) {
-            computedScore = ((double) correct / (double) totalQuestions) * maxScore;
-        }
-
-        attempt.setScore(computedScore);
-        attempt.setStatus(ExamAttempt.AttemptStatus.GRADED);
-        attemptRepository.save(attempt);
-        return toDTO(attempt);
-    }
-
-    @Override
-    public ExamAttemptResponseDTO getById(Long id) {
-        ExamAttempt attempt = attemptRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Attempt not found"));
-        return toDTO(attempt);
-    }
-
-    @Override
-    public List<ExamAttemptResponseDTO> getAll() {
-        return attemptRepository.findAll().stream().map(this::toDTO).collect(Collectors.toList());
-    }
-
-    @Override
-    public List<ExamAttemptResponseDTO> getByExam(Long examId) {
-        return attemptRepository.findByExam_Id(examId).stream().map(this::toDTO).collect(Collectors.toList());
-    }
-
-    @Override
-    public List<ExamAttemptResponseDTO> getByUser(Long userId) {
-        return attemptRepository.findByUser_Id(userId).stream().map(this::toDTO).collect(Collectors.toList());
-    }
-
-    @Override
-    public ExamAttempt createAttempt(Long examId, Long userId, String examRoomId) {
-
-        // Lưu thông tin participant nếu chưa tồn tại
+    public ExamAttempt createAttempt(Long examId, Long userId, Long examRoomId) {
+        // Lưu participant nếu chưa có
         ExamParticipant participant = participantRepository
-                .findByExamIdAndUserId(examId, userId)
+                .findByUser_IdAndExamRoomId(userId, examRoomId)
                 .orElseGet(() -> participantRepository.save(
                         ExamParticipant.builder()
+                                .user(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")))
+                                .exam(examRepository.findById(examId).orElseThrow(() -> new RuntimeException("Exam not found")))
                                 .examRoomId(examRoomId)
-                                .exam(examRepository.findById(examId).orElseThrow())
-                                .user(userRepository.findById(userId).orElseThrow())
                                 .joinTime(LocalDateTime.now())
+                                .started(true)
+                                .submitted(false)
                                 .build()
                 ));
 
         participant.setStarted(true);
         participantRepository.save(participant);
 
+        // Tạo attempt mới
         ExamAttempt attempt = ExamAttempt.builder()
-                .exam(examRepository.findById(examId).orElseThrow())
-                .user(userRepository.findById(userId).orElseThrow())
+                .exam(participant.getExam())
+                .user(participant.getUser())
+                .startTime(LocalDateTime.now())
+                .status(ExamAttempt.AttemptStatus.IN_PROGRESS)
                 .build();
 
         return attemptRepository.save(attempt);
@@ -162,9 +88,11 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
         attempt.setEndTime(LocalDateTime.now());
         attempt.setStatus(ExamAttempt.AttemptStatus.SUBMITTED);
 
+        // Lấy participant theo userId + examRoomId
         ExamParticipant participant = participantRepository
-                .findByExamIdAndUserId(attempt.getExam().getId(), attempt.getUser().getId())
-                .orElseThrow();
+                .findByUser_IdAndExamRoomId(attempt.getUser().getId(), attempt.getExam().getId())
+                .orElseThrow(() -> new RuntimeException("ExamParticipant not found"));
+
 
         participant.setSubmitted(true);
         participantRepository.save(participant);
@@ -172,7 +100,34 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
         return attemptRepository.save(attempt);
     }
 
+    @Override
+    public ExamAttemptResponseDTO submitAttempt(Long attemptId) {
+        ExamAttempt attempt = attemptRepository.findById(attemptId)
+                .orElseThrow(() -> new RuntimeException("Attempt not found"));
 
+        attempt.setEndTime(LocalDateTime.now());
+        attempt.setStatus(ExamAttempt.AttemptStatus.GRADED);
+
+        attemptRepository.save(attempt);
+        return toDTO(attempt);
+    }
+
+    @Override
+    public ExamAttemptResponseDTO gradeAttempt(Long attemptId) {
+        ExamAttempt attempt = attemptRepository.findById(attemptId)
+                .orElseThrow(() -> new RuntimeException("Attempt not found"));
+
+        // Tính điểm nếu cần
+        attempt.setStatus(ExamAttempt.AttemptStatus.GRADED);
+        attemptRepository.save(attempt);
+
+        return toDTO(attempt);
+    }
+
+    @Override
+    public ExamAttemptResponseDTO getById(Long id) {
+        return toDTO(attemptRepository.findById(id).orElseThrow(() -> new RuntimeException("Attempt not found")));
+    }
 
     private ExamAttemptResponseDTO toDTO(ExamAttempt entity) {
         ExamAttemptResponseDTO dto = modelMapper.map(entity, ExamAttemptResponseDTO.class);
@@ -181,7 +136,28 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
         dto.setStatus(entity.getStatus().name());
         return dto;
     }
+    @Override
+    public List<ExamAttemptResponseDTO> getAll() {
+        return attemptRepository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .toList();
+    }
 
+    @Override
+    public List<ExamAttemptResponseDTO> getByExam(Long examId) {
+        return attemptRepository.findByExam_Id(examId)
+                .stream()
+                .map(this::toDTO)
+                .toList();
+    }
 
+    @Override
+    public List<ExamAttemptResponseDTO> getByUser(Long userId) {
+        return attemptRepository.findByUser_Id(userId)
+                .stream()
+                .map(this::toDTO)
+                .toList();
+    }
 
 }

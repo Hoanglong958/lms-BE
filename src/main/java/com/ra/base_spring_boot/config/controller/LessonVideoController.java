@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.config.controller;
 
-import com.ra.base_spring_boot.dto.LessonVideo.LessonVideoRequestDTO;
-import com.ra.base_spring_boot.dto.LessonVideo.LessonVideoResponseDTO;
+import com.ra.base_spring_boot.config.dto.LessonVideo.LessonVideoRequestDTO;
+import com.ra.base_spring_boot.config.dto.LessonVideo.LessonVideoResponseDTO;
 import com.ra.base_spring_boot.services.ILessonVideoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -45,7 +45,7 @@ public class LessonVideoController {
     @Operation(summary = "Tạo video", description = "Chỉ ADMIN được phép tạo video")
     @ApiResponse(responseCode = "200", description = "Tạo thành công")
     public ResponseEntity<LessonVideoResponseDTO> create(@RequestBody LessonVideoRequestDTO dto) {
-        return ResponseEntity.ok(lessonVideoService.create(dto));
+        return ResponseEntity.ok(lessonVideoService.create(dto));   
     }
 
     // 🔹 Cập nhật video (ADMIN)

@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.config.controller;
 
-import com.ra.base_spring_boot.dto.ResponseWrapper;
-import com.ra.base_spring_boot.dto.req.CreatePasswordResetTokenRequest;
+import com.ra.base_spring_boot.config.dto.ResponseWrapper;
+import com.ra.base_spring_boot.config.dto.req.CreatePasswordResetTokenRequest;
 import com.ra.base_spring_boot.services.IPasswordResetTokenService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

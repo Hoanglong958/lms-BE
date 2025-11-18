@@ -1,10 +1,9 @@
 package com.ra.base_spring_boot.config.controller;
 
-import com.ra.base_spring_boot.dto.ResponseWrapper;
-import com.ra.base_spring_boot.dto.req.*;
+import com.ra.base_spring_boot.config.dto.ResponseWrapper;
+import com.ra.base_spring_boot.config.dto.req.*;
 import com.ra.base_spring_boot.services.IAuthService;
 import com.ra.base_spring_boot.services.IPasswordResetTokenService;
-import com.ra.base_spring_boot.dto.req.CreatePasswordResetTokenRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,7 +15,6 @@ import java.net.URI;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.Parameter;
 
 @RestController
 @RequestMapping("/api/v1/auth")
