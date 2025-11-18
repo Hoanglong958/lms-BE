@@ -15,6 +15,8 @@ import java.util.List;
 @Builder
 public class MyUserDetails implements UserDetails {
 
+    private static final long serialVersionUID = 1L;
+
     private User user;
     private Collection<? extends GrantedAuthority> authorities;
 

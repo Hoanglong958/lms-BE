@@ -41,11 +41,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.flywaydb:flyway-core:9.22.3'
     implementation 'org.modelmapper:modelmapper:3.2.0'
+    implementation 'com.mysql:mysql-connector-j'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
-    runtimeOnly 'com.mysql:mysql-connector-j'
-    runtimeOnly 'com.h2database:h2'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
@@ -59,4 +59,13 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+// Hiển thị tối đa cảnh báo khi biên dịch
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += [
+            '-Xlint:all',
+            // Tắt một số cảnh báo nhiễu nếu có annotation processing (Lombok)
+            '-Xlint:-processing'
+    ]
 }

@@ -1,5 +1,8 @@
 package com.ra.base_spring_boot.services.impl;
 
+import com.ra.base_spring_boot.dto.req.CreatePasswordResetTokenRequest;
+import com.ra.base_spring_boot.dto.req.ResetPasswordRequest;
+import com.ra.base_spring_boot.dto.resp.PasswordResetTokenResponse;
 import com.ra.base_spring_boot.config.dto.req.CreatePasswordResetTokenRequest;
 import com.ra.base_spring_boot.config.dto.resp.PasswordResetTokenResponse;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
@@ -9,7 +12,9 @@ import com.ra.base_spring_boot.repository.IPasswordResetTokenRepository;
 import com.ra.base_spring_boot.repository.IUserRepository;
 import com.ra.base_spring_boot.services.IPasswordResetTokenService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -20,6 +25,7 @@ public class PasswordResetTokenServiceImpl implements IPasswordResetTokenService
 
     private final IPasswordResetTokenRepository tokenRepository;
     private final IUserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public PasswordResetTokenResponse create(CreatePasswordResetTokenRequest request) {
@@ -68,5 +74,25 @@ public class PasswordResetTokenServiceImpl implements IPasswordResetTokenService
         }
         t.setIsUsed(true);
         tokenRepository.save(t);
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        PasswordResetToken token = tokenRepository.findByToken(request.getToken())
+                .orElseThrow(() -> new HttpBadRequest("Token không hợp lệ!"));
+        if (Boolean.TRUE.equals(token.getIsUsed())) {
+            throw new HttpBadRequest("Token đã được sử dụng!");
+        }
+        if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new HttpBadRequest("Token đã hết hạn!");
+        }
+
+        User user = token.getUser();
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        token.setIsUsed(true);
+        tokenRepository.save(token);
     }
 }

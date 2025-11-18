@@ -16,12 +16,14 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -55,17 +57,30 @@ public class AuthServiceImpl implements IAuthService {
             throw new HttpBadRequest("Email đã tồn tại!");
         }
 
-        // ===== Validate Password =====
-        if (formRegister.getPassword() == null || formRegister.getPassword().isBlank()) {
-            throw new HttpBadRequest("Mật khẩu không được để trống!");
+      // ===== Validate Password =====
+      if (formRegister.getPassword() == null || formRegister.getPassword().isBlank()) {
+        throw new HttpBadRequest("Mật khẩu không được để trống!");
+    }
+
+    // Mật khẩu mạnh: ít nhất 8 ký tự, chữ hoa, chữ thường, số, ký tự đặc biệt
+    String passwordRegex = "^(?=.*[0-9])" +                            // có số
+                           "(?=.*[a-z])" +                            // có chữ thường
+                           "(?=.*[A-Z])" +                            // có chữ hoa
+                           "(?=.*[!@#$%^&*()_+\\-={}\\[\\]|:;\"'<>,.?/])" +  // có ký tự đặc biệt
+                           ".{8,}$";                                 // độ dài tối thiểu 8 ký tự
+
+    if (!formRegister.getPassword().matches(passwordRegex)) {
+        throw new HttpBadRequest("Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt!");
+    }
+        // ===== Validate Phone Number =====
+        if (formRegister.getPhone() == null || formRegister.getPhone().isBlank()) {
+            throw new HttpBadRequest("Số điện thoại không được để trống!");
         }
 
-        // Mật khẩu mạnh: ít nhất 8 ký tự, chữ hoa, chữ thường, số
-        if (!formRegister.getPassword().matches("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$")) {
-            throw new HttpBadRequest("Mật khẩu phải ít nhất 8 ký tự, có chữ hoa, chữ thường và số!");
+        // Chỉ cho phép số, từ 10 đến 15 số
+        if (!formRegister.getPhone().matches("^\\d{10,15}$")) {
+            throw new HttpBadRequest("Số điện thoại phải từ 10 đến 15 chữ số!");
         }
-
-
 
         // ===== Validate Role =====
         RoleName role = RoleName.ROLE_USER; // mặc định USER
@@ -82,6 +97,7 @@ public class AuthServiceImpl implements IAuthService {
                 .fullName(formRegister.getFullName())
                 .email(formRegister.getEmail())
                 .password(passwordEncoder.encode(formRegister.getPassword()))
+                .phone(formRegister.getPhone())      // <<< ĐÃ THÊM
                 .role(role)
                 .isActive(true)
                 .createdAt(LocalDateTime.now())
@@ -97,7 +113,7 @@ public class AuthServiceImpl implements IAuthService {
         try {
             authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            formLogin.getUsername(),
+                            formLogin.getGmail(),
                             formLogin.getPassword()
                     )
             );
@@ -114,7 +130,7 @@ public class AuthServiceImpl implements IAuthService {
         return JwtResponse.builder()
                 .accessToken(jwtProvider.generateToken(userDetails))
                 .user(userDetails.getUser())
-                .roles(Set.of(userDetails.getUser().getRole().name()))
+                .role(userDetails.getUser().getRole().name())
                 .build();
     }
 
