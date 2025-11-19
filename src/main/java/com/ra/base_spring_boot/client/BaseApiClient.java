@@ -29,7 +29,7 @@ public class BaseApiClient {
                 .retrieve()
                 .bodyToMono(responseType)
                 .doOnError(WebClientResponseException.class, ex ->
-                        log.error("GET {} failed: {} - {}", path, ex.getRawStatusCode(), ex.getResponseBodyAsString()))
+                        log.error("GET {} failed: {} - {}", path, ex.getStatusCode().value(), ex.getResponseBodyAsString()))
                 ;
     }
 
@@ -43,7 +43,7 @@ public class BaseApiClient {
                 .retrieve()
                 .bodyToMono(responseType)
                 .doOnError(WebClientResponseException.class, ex ->
-                        log.error("POST {} failed: {} - {}", path, ex.getRawStatusCode(), ex.getResponseBodyAsString()))
+                        log.error("POST {} failed: {} - {}", path, ex.getStatusCode().value(), ex.getResponseBodyAsString()))
                 ;
     }
 

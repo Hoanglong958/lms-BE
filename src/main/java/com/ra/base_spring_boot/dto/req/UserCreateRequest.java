@@ -16,11 +16,13 @@ public class UserCreateRequest {
     private String fullName;
 
     @NotBlank(message = "Không được để trống")
-    @Email(message = "Email không hợp lệ")
-    private String email;
+    @Email(message = "Gmail không hợp lệ")
+    private String gmail;
 
     @NotBlank(message = "Không được để trống")
     private String password;
+
+    private String phone;
 
     private String role;
 

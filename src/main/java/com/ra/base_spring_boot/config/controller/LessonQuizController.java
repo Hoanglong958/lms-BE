@@ -16,7 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/lesson-quizzes")
 @RequiredArgsConstructor
-@Tag(name = "LessonQuiz", description = "Quản lý quiz trong các bài học")
+@Tag(name = "07 - Lesson Quizzes", description = "Quản lý quiz trong các bài học")
 public class LessonQuizController {
 
     private final ILessonQuizService lessonQuizService;

@@ -39,20 +39,65 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public UserResponse create(UserCreateRequest req) {
-        if (userRepository.existsByEmail(req.getEmail())) {
-            throw new HttpBadRequest("Email đã tồn tại!");
+        // ===== Validate Full Name =====
+        if (req.getFullName() == null || req.getFullName().isBlank()) {
+            throw new HttpBadRequest("Họ tên không được để trống!");
         }
-        RoleName role = parseRoleOrDefault(req.getRole(), RoleName.ROLE_USER);
+
+        // ===== Validate Gmail =====
+        if (req.getGmail() == null || req.getGmail().isBlank()) {
+            throw new HttpBadRequest("Gmail không được để trống!");
+        }
+        if (!req.getGmail().matches("^[A-Za-z0-9._%+-]{6,}@gmail\\.com$")) {
+            throw new HttpBadRequest("Gmail phải là gmail.com và phần username trước @ phải trên 5 ký tự!");
+        }
+        if (userRepository.existsByGmail(req.getGmail())) {
+            throw new HttpBadRequest("Gmail đã tồn tại!");
+        }
+
+        // ===== Validate Password (strong) =====
+        if (req.getPassword() == null || req.getPassword().isBlank()) {
+            throw new HttpBadRequest("Mật khẩu không được để trống!");
+        }
+        String passwordRegex = "^(?=.*[0-9])" +
+                "(?=.*[a-z])" +
+                "(?=.*[A-Z])" +
+                "(?=.*[!@#$%^&*()_+\\-={}\\[\\]|:;\"'<>.,?//])" +
+                ".{8,}$";
+        if (!req.getPassword().matches(passwordRegex)) {
+            throw new HttpBadRequest("Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt!");
+        }
+
+        // ===== Validate Role =====
+        RoleName role = RoleName.ROLE_USER; // mặc định USER
+        if (req.getRole() != null) {
+            try {
+                String normalizedRole = req.getRole().trim().toUpperCase();
+                if (!normalizedRole.startsWith("ROLE_")) {
+                    normalizedRole = "ROLE_" + normalizedRole;
+                }
+                role = RoleName.valueOf(normalizedRole);
+            } catch (IllegalArgumentException e) {
+                throw new HttpBadRequest("Role không hợp lệ! Chỉ chấp nhận USER, TEACHER hoặc ADMIN.");
+            }
+        }
+
         Boolean active = req.getIsActive() != null ? req.getIsActive() : Boolean.TRUE;
+
         User user = User.builder()
                 .fullName(req.getFullName())
-                .email(req.getEmail())
+                .gmail(req.getGmail())
                 .password(passwordEncoder.encode(req.getPassword()))
+                .phone(req.getPhone())
                 .role(role)
                 .isActive(active)
                 .createdAt(LocalDateTime.now())
                 .build();
-        userRepository.save(user);
+        try {
+            userRepository.save(user);
+        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+            throw new HttpBadRequest("Dữ liệu không hợp lệ hoặc gmail đã tồn tại!");
+        }
         return toResponse(user);
     }
 
@@ -90,19 +135,19 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public boolean emailExists(String email) {
-        if (email == null || email.trim().isEmpty()) {
-            throw new HttpBadRequest("Email không được để trống");
+    public boolean gmailExists(String gmail) {
+        if (gmail == null || gmail.trim().isEmpty()) {
+            throw new HttpBadRequest("Gmail không được để trống");
         }
-        String normalized = email.trim().toLowerCase();
-        return userRepository.existsByEmailIgnoreCase(normalized);
+        String normalized = gmail.trim().toLowerCase();
+        return userRepository.existsByGmailIgnoreCase(normalized);
     }
 
     private UserResponse toResponse(User u) {
         return UserResponse.builder()
                 .id(u.getId())
                 .fullName(u.getFullName())
-                .email(u.getEmail())
+                .gmail(u.getGmail())
                 .role(u.getRole())
                 .isActive(u.getIsActive())
                 .createdAt(u.getCreatedAt())
@@ -114,6 +159,7 @@ public class UserServiceImpl implements IUserService {
         String s = input.trim().toUpperCase();
         if ("ADMIN".equals(s) || "ROLE_ADMIN".equals(s)) return RoleName.ROLE_ADMIN;
         if ("USER".equals(s) || "ROLE_USER".equals(s)) return RoleName.ROLE_USER;
+        if ("TEACHER".equals(s) || "ROLE_TEACHER".equals(s)) return RoleName.ROLE_TEACHER;
         return fallback;
     }
 

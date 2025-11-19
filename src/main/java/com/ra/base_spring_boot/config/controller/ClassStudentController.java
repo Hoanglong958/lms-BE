@@ -15,20 +15,20 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/classes")
 @RequiredArgsConstructor
-@Tag(name = "Class Students", description = "Quản lý học viên trong lớp")
+@Tag(name = "15 - Class Students", description = "Quản lý học viên trong lớp")
 public class ClassStudentController {
 
     private final IClassroomService classroomService;
 
     @PostMapping("/students")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER')")
     @Operation(summary = "Thêm học viên vào lớp")
     public ResponseEntity<ClassStudentResponseDTO> enrollStudent(@RequestBody ClassStudentRequestDTO dto) {
         return ResponseEntity.ok(classroomService.enrollStudent(dto));
     }
 
     @DeleteMapping("/{classId}/students/{studentId}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER')")
     @Operation(summary = "Xóa học viên khỏi lớp")
     public ResponseEntity<Void> removeStudent(@PathVariable Long classId, @PathVariable Long studentId) {
         classroomService.removeStudent(classId, studentId);
@@ -36,7 +36,7 @@ public class ClassStudentController {
     }
 
     @GetMapping("/{classId}/students")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER','ROLE_USER')")
     @Operation(summary = "Danh sách học viên trong lớp")
     public ResponseEntity<List<ClassStudentResponseDTO>> listStudents(@PathVariable Long classId) {
         return ResponseEntity.ok(classroomService.findStudents(classId));

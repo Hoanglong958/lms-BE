@@ -32,8 +32,8 @@ public class MyUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        // ✅ Dùng email làm username để đăng nhập
-        return this.user.getEmail();
+        // ✅ Dùng gmail làm username để đăng nhập
+        return this.user.getGmail();
     }
 
     @Override

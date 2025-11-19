@@ -15,20 +15,20 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/classes")
 @RequiredArgsConstructor
-@Tag(name = "Class Teachers", description = "Quản lý giảng viên, trợ giảng trong lớp")
+@Tag(name = "14 - Class Teachers", description = "Quản lý giảng viên, trợ giảng trong lớp")
 public class ClassTeacherController {
 
     private final IClassroomService classroomService;
 
     @PostMapping("/teachers")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER')")
     @Operation(summary = "Phân công giảng viên cho lớp")
     public ResponseEntity<ClassTeacherResponseDTO> assignTeacher(@RequestBody ClassTeacherRequestDTO dto) {
         return ResponseEntity.ok(classroomService.assignTeacher(dto));
     }
 
     @DeleteMapping("/{classId}/teachers/{teacherId}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER')")
     @Operation(summary = "Gỡ giảng viên khỏi lớp")
     public ResponseEntity<Void> removeTeacher(@PathVariable Long classId, @PathVariable Long teacherId) {
         classroomService.removeTeacher(classId, teacherId);
@@ -36,7 +36,7 @@ public class ClassTeacherController {
     }
 
     @GetMapping("/{classId}/teachers")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER','ROLE_USER')")
     @Operation(summary = "Danh sách giảng viên của lớp")
     public ResponseEntity<List<ClassTeacherResponseDTO>> listTeachers(@PathVariable Long classId) {
         return ResponseEntity.ok(classroomService.findTeachers(classId));

@@ -24,21 +24,21 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/classes")
 @RequiredArgsConstructor
-@Tag(name = "Classes", description = "Quản lý lớp học, học viên, giảng viên và khóa học")
+@Tag(name = "13 - Classes", description = "Quản lý lớp học, học viên, giảng viên và khóa học")
 public class ClassroomController {
 
     private final IClassroomService classroomService;
 
     // =========== CRUD lớp học ===========
     @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER')")
     @Operation(summary = "Tạo lớp học mới")
     public ResponseEntity<ClassroomResponseDTO> create(@RequestBody ClassroomRequestDTO dto) {
         return ResponseEntity.ok(classroomService.create(dto));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER')")
     @Operation(summary = "Cập nhật lớp học")
     public ResponseEntity<ClassroomResponseDTO> update(@PathVariable Long id,
                                                        @RequestBody ClassroomRequestDTO dto) {
@@ -46,7 +46,7 @@ public class ClassroomController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER')")
     @Operation(summary = "Xóa lớp học")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         classroomService.delete(id);
@@ -54,21 +54,21 @@ public class ClassroomController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER','ROLE_USER')")
     @Operation(summary = "Chi tiết lớp học")
     public ResponseEntity<ClassroomResponseDTO> findById(@PathVariable Long id) {
         return ResponseEntity.ok(classroomService.findById(id));
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER','ROLE_USER')")
     @Operation(summary = "Danh sách lớp học")
     public ResponseEntity<List<ClassroomResponseDTO>> findAll() {
         return ResponseEntity.ok(classroomService.findAll());
     }
 
     @GetMapping("/paging")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER','ROLE_USER')")
     @Operation(summary = "Danh sách lớp học (phân trang)")
     public ResponseEntity<Page<ClassroomResponseDTO>> paging(
             @RequestParam(value = "q", required = false) String keyword,
@@ -92,7 +92,7 @@ public class ClassroomController {
 
     // =========== Thống kê lớp học ===========
     @GetMapping("/{id}/stats")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER','ROLE_USER')")
     @Operation(summary = "Thống kê các chỉ số trong lớp học",
             description = "Trả về sĩ số, số HV active/completed/dropped, điểm trung bình và tỉ lệ điểm danh")
     @ApiResponses({

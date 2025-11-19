@@ -21,7 +21,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-@Tag(name = "Auth", description = "Đăng nhập, đăng ký và quản lý mật khẩu")
+@Tag(name = "01 - Auth", description = "Đăng nhập, đăng ký và quản lý mật khẩu")
 public class AuthController {
 
     private final IAuthService authService;
@@ -97,20 +97,30 @@ public class AuthController {
 
     /**
      * @param request ForgotPasswordRequest
-     * @apiNote Handle forgot password - send reset link via email
+     * @apiNote Handle forgot password - tạo token và gửi link reset qua email (delayed OTP reveal flow)
+     * Flow: User nhập email → Server tạo token và gửi link → User click link → Frontend validate token → Hiển thị form reset password
      */
     @PostMapping("/forgot-password")
-    @Operation(summary = "Quên mật khẩu", description = "Gửi liên kết đặt lại mật khẩu qua email")
-    @ApiResponse(responseCode = "200", description = "Gửi email thành công (demo có thể log ra console)")
+    @Operation(summary = "Quên mật khẩu", description = "Tạo token và gửi link đặt lại mật khẩu qua email. Token chỉ hiển thị khi user click vào link.")
+    @ApiResponse(responseCode = "200", description = "Gửi email thành công")
     public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         CreatePasswordResetTokenRequest createReq = new CreatePasswordResetTokenRequest();
-        createReq.setEmail(request.getEmail());
-        passwordResetTokenService.create(createReq);
+        createReq.setGmail(request.getGmail());
+        
+        // Tạo token (không trả token trong response - delayed reveal)
+        var tokenResponse = passwordResetTokenService.create(createReq);
+        
+        // Gửi email với link reset (demo: log ra console)
+        String resetLink = "http://localhost:5173/reset-password?token=" + tokenResponse.getToken();
+        System.out.println("🔗 Link đặt lại mật khẩu cho " + request.getGmail() + ":");
+        System.out.println(resetLink);
+        // TODO: Gửi email thực tế với link này
+        
         return ResponseEntity.ok(
                 ResponseWrapper.builder()
                         .status(HttpStatus.OK)
                         .code(200)
-                        .data("Đã tạo token đặt lại mật khẩu. Vui lòng kiểm tra email để tiếp tục.")
+                        .data("Đã gửi link đặt lại mật khẩu qua email. Vui lòng kiểm tra email và click vào link để tiếp tục.")
                         .build()
         );
     }

@@ -14,5 +14,5 @@ public interface IUserService {
     UserResponse update(Long id, UserUpdateRequest req);
     void softDelete(Long id);
     void toggleStatus(Long id, boolean active);
-    boolean emailExists(String email);
+    boolean gmailExists(String gmail);
 }

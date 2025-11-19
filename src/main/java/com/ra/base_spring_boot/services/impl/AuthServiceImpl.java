@@ -11,6 +11,7 @@ import com.ra.base_spring_boot.model.PasswordResetToken;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.IAuthService;
+import com.ra.base_spring_boot.services.IPasswordResetTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,9 +19,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +36,7 @@ public class AuthServiceImpl implements IAuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
     private final IPasswordResetTokenRepository passwordResetTokenRepository;
+    private final IPasswordResetTokenService passwordResetTokenService;
 
     // ======================= Đăng ký =========================
     @Override
@@ -40,18 +46,18 @@ public class AuthServiceImpl implements IAuthService {
             throw new HttpBadRequest("Họ tên không được để trống!");
         }
 
-        // ===== Validate Email =====
-        if (formRegister.getEmail() == null || formRegister.getEmail().isBlank()) {
-            throw new HttpBadRequest("Email không được để trống!");
+        // ===== Validate Gmail =====
+        if (formRegister.getGmail() == null || formRegister.getGmail().isBlank()) {
+            throw new HttpBadRequest("Gmail không được để trống!");
         }
 
         // Regex: username >= 6 ký tự, kết thúc @gmail.com
-        if (!formRegister.getEmail().matches("^[A-Za-z0-9._%+-]{6,}@gmail\\.com$")) {
-            throw new HttpBadRequest("Email phải là gmail.com và phần username trước @ phải trên 5 ký tự!");
+        if (!formRegister.getGmail().matches("^[A-Za-z0-9._%+-]{6,}@gmail\\.com$")) {
+            throw new HttpBadRequest("Gmail phải là gmail.com và phần username trước @ phải trên 5 ký tự!");
         }
 
-        if (userRepository.existsByEmail(formRegister.getEmail())) {
-            throw new HttpBadRequest("Email đã tồn tại!");
+        if (userRepository.existsByGmail(formRegister.getGmail())) {
+            throw new HttpBadRequest("Gmail đã tồn tại!");
         }
 
       // ===== Validate Password =====
@@ -69,30 +75,26 @@ public class AuthServiceImpl implements IAuthService {
     if (!formRegister.getPassword().matches(passwordRegex)) {
         throw new HttpBadRequest("Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt!");
     }
-        // ===== Validate Phone Number =====
-        if (formRegister.getPhone() == null || formRegister.getPhone().isBlank()) {
-            throw new HttpBadRequest("Số điện thoại không được để trống!");
-        }
-
-        // Chỉ cho phép số, từ 10 đến 15 số
-        if (!formRegister.getPhone().matches("^\\d{10,15}$")) {
-            throw new HttpBadRequest("Số điện thoại phải từ 10 đến 15 chữ số!");
-        }
+        // Phone is optional. If provided, you may validate format here (currently skipped).
 
         // ===== Validate Role =====
         RoleName role = RoleName.ROLE_USER; // mặc định USER
         if (formRegister.getRole() != null) {
             try {
-                role = RoleName.valueOf("ROLE_" + formRegister.getRole().toUpperCase());
+                String normalizedRole = formRegister.getRole().trim().toUpperCase();
+                if (!normalizedRole.startsWith("ROLE_")) {
+                    normalizedRole = "ROLE_" + normalizedRole;
+                }
+                role = RoleName.valueOf(normalizedRole);
             } catch (IllegalArgumentException e) {
-                throw new HttpBadRequest("Role không hợp lệ! Chỉ có USER hoặc ADMIN.");
+                throw new HttpBadRequest("Role không hợp lệ! Chỉ chấp nhận USER, TEACHER hoặc ADMIN.");
             }
         }
 
         // ===== Tạo User =====
         User user = User.builder()
                 .fullName(formRegister.getFullName())
-                .email(formRegister.getEmail())
+                .gmail(formRegister.getGmail())
                 .password(passwordEncoder.encode(formRegister.getPassword()))
                 .phone(formRegister.getPhone())      // <<< ĐÃ THÊM
                 .role(role)
@@ -100,7 +102,12 @@ public class AuthServiceImpl implements IAuthService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        userRepository.save(user);
+        try {
+            userRepository.save(user);
+        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+            // Trường hợp hiếm khi race condition hoặc ràng buộc DB khác gây lỗi 500
+            throw new HttpBadRequest("Dữ liệu không hợp lệ hoặc gmail đã tồn tại!");
+        }
     }
 
     // ======================= Đăng nhập =========================
@@ -134,7 +141,7 @@ public class AuthServiceImpl implements IAuthService {
     // ======================= Đổi mật khẩu =========================
     @Override
     public void changePassword(String username, ChangePasswordRequest request) {
-        User user = userRepository.findByEmail(username)
+        User user = userRepository.findByGmail(username)
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy người dùng!"));
 
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
@@ -152,21 +159,19 @@ public class AuthServiceImpl implements IAuthService {
     // ======================= Quên mật khẩu =========================
     @Override
     public void forgotPassword(ForgotPasswordRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new HttpBadRequest("Email không tồn tại trong hệ thống!"));
-
-        String token = UUID.randomUUID().toString();
-        user.setResetToken(token);
-        user.setResetTokenExpiry(LocalDateTime.now().plusMinutes(15));
-        userRepository.save(user);
-
+        // Chuyển sang luồng mới: tạo token qua PasswordResetTokenService
+        CreatePasswordResetTokenRequest createReq = new CreatePasswordResetTokenRequest();
+        createReq.setGmail(request.getGmail());
+        var resp = passwordResetTokenService.create(createReq);
         System.out.println("🔗 Link đặt lại mật khẩu:");
-        System.out.println("http://localhost:8081/api/v1/auth/reset-password?token=" + token);
+        System.out.println("http://localhost:8081/api/v1/auth/reset-password?token=" + resp.getToken());
     }
 
     // ======================= Đặt lại mật khẩu =========================
     @Override
+    @Transactional
     public void resetPassword(ResetPasswordRequest request) {
+        // ===== Validate Token =====
         PasswordResetToken token = passwordResetTokenRepository.findByToken(request.getToken())
                 .orElseThrow(() -> new HttpBadRequest("Token không hợp lệ hoặc đã sử dụng!"));
 
@@ -177,9 +182,32 @@ public class AuthServiceImpl implements IAuthService {
             throw new HttpBadRequest("Token đã hết hạn, vui lòng yêu cầu lại!");
         }
 
+        // ===== Validate Password (giống như đăng ký) =====
+        if (request.getNewPassword() == null || request.getNewPassword().isBlank()) {
+            throw new HttpBadRequest("Mật khẩu mới không được để trống!");
+        }
+
+        // Mật khẩu mạnh: ít nhất 8 ký tự, chữ hoa, chữ thường, số, ký tự đặc biệt
+        String passwordRegex = "^(?=.*[0-9])" +                            // có số
+                               "(?=.*[a-z])" +                            // có chữ thường
+                               "(?=.*[A-Z])" +                            // có chữ hoa
+                               "(?=.*[!@#$%^&*()_+\\-={}\\[\\]|:;\"'<>,.?/])" +  // có ký tự đặc biệt
+                               ".{8,}$";                                 // độ dài tối thiểu 8 ký tự
+
+        if (!request.getNewPassword().matches(passwordRegex)) {
+            throw new HttpBadRequest("Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt!");
+        }
+
+        // Reload User từ repository để tránh LazyInitializationException
         User user = token.getUser();
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        userRepository.save(user);
+        if (user == null || user.getId() == null) {
+            throw new HttpBadRequest("Token không hợp lệ!");
+        }
+        User userToUpdate = userRepository.findById(user.getId())
+                .orElseThrow(() -> new HttpBadRequest("Người dùng không tồn tại!"));
+        
+        userToUpdate.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(userToUpdate);
 
         token.setIsUsed(true);
         passwordResetTokenRepository.save(token);

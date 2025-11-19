@@ -19,7 +19,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 @RestController
 @RequestMapping("/api/v1/sessions")
 @RequiredArgsConstructor
-@Tag(name = "Session", description = "Quản lý Chương học (session)")
+@Tag(name = "05 - Sessions", description = "Quản lý Chương học (session)")
 public class SessionController {
 
     private final ISessionService sessionService;

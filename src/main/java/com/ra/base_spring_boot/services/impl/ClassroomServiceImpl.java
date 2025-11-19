@@ -151,8 +151,8 @@ public class ClassroomServiceImpl implements IClassroomService {
         Classroom classroom = getClassroom(dto.getClassId());
         User teacher = userRepository.findById(dto.getTeacherId())
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy giảng viên với id = " + dto.getTeacherId()));
-        if (teacher.getRole() != RoleName.ROLE_ADMIN) {
-            throw new HttpBadRequest("teacher_id chỉ chấp nhận tài khoản role INSTRUCTOR (ROLE_ADMIN)");
+        if (teacher.getRole() != RoleName.ROLE_TEACHER) {
+            throw new HttpBadRequest("teacher_id chỉ chấp nhận tài khoản role TEACHER");
         }
         if (classTeacherRepository.existsByClazzIdAndTeacherId(classroom.getId(), teacher.getId())) {
             throw new HttpBadRequest("Giảng viên đã được phân công cho lớp này");

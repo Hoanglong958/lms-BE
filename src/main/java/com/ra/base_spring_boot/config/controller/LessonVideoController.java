@@ -16,7 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/lesson-videos")
 @RequiredArgsConstructor
-@Tag(name = "LessonVideo", description = "Quản lí video")
+@Tag(name = "06 - Lesson Videos", description = "Quản lí video")
 public class LessonVideoController {
 
     private final ILessonVideoService lessonVideoService;

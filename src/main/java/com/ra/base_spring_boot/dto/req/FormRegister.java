@@ -18,9 +18,8 @@ public class FormRegister {
     private String password;
 
     @NotBlank(message = "Không được để trống")
-    private String email;
+    private String gmail;
 
-    @NotBlank(message = "Không được để trống")
     private String phone;
 
     private String role;

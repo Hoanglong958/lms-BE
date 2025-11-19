@@ -162,5 +162,32 @@ public class GlobalHandleException
         );
     }
 
+    /**
+     * @apiNote map lỗi vi phạm ràng buộc DB về 400 thay vì 500
+     */
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<?> handleDataIntegrityViolation(org.springframework.dao.DataIntegrityViolationException ex)
+    {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                ResponseWrapper.builder()
+                        .data("Dữ liệu không hợp lệ hoặc vi phạm ràng buộc!")
+                        .code(HttpStatus.BAD_REQUEST.value())
+                        .status(HttpStatus.BAD_REQUEST)
+                        .build()
+        );
+    }
+
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    public ResponseEntity<?> handleConstraintViolation(jakarta.validation.ConstraintViolationException ex)
+    {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                ResponseWrapper.builder()
+                        .data("Dữ liệu không hợp lệ!")
+                        .code(HttpStatus.BAD_REQUEST.value())
+                        .status(HttpStatus.BAD_REQUEST)
+                        .build()
+        );
+    }
+
 
 }

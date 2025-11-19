@@ -15,10 +15,10 @@ public class MyUserDetailsService implements UserDetailsService {
     private final IUserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
+    public UserDetails loadUserByUsername(String gmail) throws UsernameNotFoundException {
+        User user = userRepository.findByGmail(gmail)
                 .orElseThrow(() ->
-                        new UsernameNotFoundException("Không tìm thấy người dùng với email: " + email)
+                        new UsernameNotFoundException("Không tìm thấy người dùng với gmail: " + gmail)
                 );
 
         return MyUserDetails.build(user);
