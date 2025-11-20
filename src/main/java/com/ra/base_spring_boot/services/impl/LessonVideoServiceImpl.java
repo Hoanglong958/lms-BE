@@ -5,6 +5,7 @@ import com.ra.base_spring_boot.dto.LessonVideo.LessonVideoResponseDTO;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.Lesson;
 import com.ra.base_spring_boot.model.LessonVideo;
+import com.ra.base_spring_boot.model.constants.LessonType;
 import com.ra.base_spring_boot.repository.ILessonRepository;
 import com.ra.base_spring_boot.repository.ILessonVideoRepository;
 import com.ra.base_spring_boot.services.ILessonVideoService;
@@ -37,6 +38,11 @@ public class LessonVideoServiceImpl implements ILessonVideoService {
     public LessonVideoResponseDTO create(LessonVideoRequestDTO dto) {
         Lesson lesson = lessonRepository.findById(dto.getLessonId())
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy bài học với id = " + dto.getLessonId()));
+
+        // Validate lesson type must be VIDEO
+        if (lesson.getType() != LessonType.VIDEO) {
+            throw new HttpBadRequest("Lesson type must be VIDEO để tạo video cho bài học này");
+        }
 
         Integer nextOrderIndex = lessonVideoRepository.findMaxOrderIndexByLessonId(lesson.getId());
         nextOrderIndex = (nextOrderIndex == null ? 0 : nextOrderIndex) + 1;

@@ -35,10 +35,10 @@ public class ClassCourseController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{classId}/courses")
+    @GetMapping("/courses")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER','ROLE_USER')")
     @Operation(summary = "Danh sách khóa học của lớp")
-    public ResponseEntity<List<ClassCourseResponseDTO>> listCourses(@PathVariable Long classId) {
+    public ResponseEntity<List<ClassCourseResponseDTO>> listCourses(@RequestParam Long classId) {
         return ResponseEntity.ok(classroomService.findCourses(classId));
     }
 }

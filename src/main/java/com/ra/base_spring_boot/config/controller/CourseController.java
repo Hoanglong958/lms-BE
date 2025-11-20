@@ -86,7 +86,7 @@ public class CourseController {
     }
 
     // ======= Lấy khóa học theo ID (ADMIN + USER) =======
-    @GetMapping("/{id}")
+    @GetMapping("/detail")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(summary = "Lấy chi tiết khóa học", description = "Trả về thông tin khóa học theo ID")
     @ApiResponses(value = {
@@ -99,7 +99,7 @@ public class CourseController {
             @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
             @ApiResponse(responseCode = "500", description = "Lỗi hệ thống", content = @Content)
     })
-    public ResponseEntity<CourseResponseDTO> getCourse(@Parameter(description = "Mã khóa học") @PathVariable Long id) {
+    public ResponseEntity<CourseResponseDTO> getCourse(@Parameter(description = "Mã khóa học") @RequestParam Long id) {
         return ResponseEntity.ok(courseService.findById(id));
     }
 

@@ -2,8 +2,10 @@ package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.LessonQuizzes.LessonQuizRequestDTO;
 import com.ra.base_spring_boot.dto.LessonQuizzes.LessonQuizResponseDTO;
+import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.Lesson;
 import com.ra.base_spring_boot.model.LessonQuiz;
+import com.ra.base_spring_boot.model.constants.LessonType;
 import com.ra.base_spring_boot.repository.ILessonQuizRepository;
 import com.ra.base_spring_boot.repository.ILessonRepository;
 import com.ra.base_spring_boot.services.ILessonQuizService;
@@ -28,7 +30,12 @@ public class LessonQuizServiceImpl implements ILessonQuizService {
     @Override
     public LessonQuizResponseDTO create(LessonQuizRequestDTO request) {
         Lesson lesson = lessonRepository.findById(request.getLessonId())
-                .orElseThrow(() -> new RuntimeException("Lesson not found"));
+                .orElseThrow(() -> new HttpBadRequest("Lesson not found"));
+
+        // Validate lesson type must be QUIZ
+        if (lesson.getType() != LessonType.QUIZ) {
+            throw new HttpBadRequest("Lesson type must be QUIZ để tạo quiz cho bài học này");
+        }
 
         LessonQuiz quiz = LessonQuiz.builder()
                 .lesson(lesson)

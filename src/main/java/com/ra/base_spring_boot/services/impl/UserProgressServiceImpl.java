@@ -215,7 +215,7 @@ public class UserProgressServiceImpl implements IUserProgressService {
         try {
             return LessonType.valueOf(raw.trim().toUpperCase());
         } catch (Exception e) {
-            throw new HttpBadRequest("Loại bài học không hợp lệ (VIDEO/EXERCISE/QUIZ)");
+            throw new HttpBadRequest("Loại bài học không hợp lệ (VIDEO/QUIZ/DOCUMENT)");
         }
     }
 

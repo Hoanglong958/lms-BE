@@ -82,23 +82,23 @@ public class ExamAttemptController {
     }
 
     // ADMIN: Chi tiết theo id
-    @GetMapping("/{id}")
+    @GetMapping("/detail")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<ExamAttemptResponseDTO> getById(@PathVariable Long id) {
+    public ResponseEntity<ExamAttemptResponseDTO> getById(@RequestParam Long id) {
         return ResponseEntity.ok(attemptService.getById(id));
     }
 
     // ADMIN: Theo exam
-    @GetMapping("/by-exam/{examId}")
+    @GetMapping(params = "examId")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<List<ExamAttemptResponseDTO>> getByExam(@PathVariable Long examId) {
+    public ResponseEntity<List<ExamAttemptResponseDTO>> getByExam(@RequestParam Long examId) {
         return ResponseEntity.ok(attemptService.getByExam(examId));
     }
 
     // ADMIN: Theo user
-    @GetMapping("/by-user/{userId}")
+    @GetMapping(params = "userId")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<List<ExamAttemptResponseDTO>> getByUser(@PathVariable Long userId) {
+    public ResponseEntity<List<ExamAttemptResponseDTO>> getByUser(@RequestParam Long userId) {
         return ResponseEntity.ok(attemptService.getByUser(userId));
     }
 }

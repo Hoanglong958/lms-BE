@@ -22,20 +22,20 @@ public class LessonController {
     private final ILessonService lessonService;
 
     // ======= Lấy danh sách bài học theo session =======
-    @GetMapping("/session/{sessionId}")
+    @GetMapping(params = "sessionId")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(summary = "Danh sách bài học theo session", description = "Trả về danh sách bài học thuộc 1 session")
     @ApiResponse(responseCode = "200", description = "Thành công")
-    public ResponseEntity<List<LessonResponseDTO>> getBySession(@PathVariable Long sessionId) {
+    public ResponseEntity<List<LessonResponseDTO>> getBySession(@RequestParam Long sessionId) {
         return ResponseEntity.ok(lessonService.getBySession(sessionId));
     }
 
     // ======= Lấy chi tiết bài học =======
-    @GetMapping("/{id}")
+    @GetMapping("/detail")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(summary = "Lấy chi tiết bài học", description = "Trả về thông tin bài học theo ID")
     @ApiResponse(responseCode = "200", description = "Thành công")
-    public ResponseEntity<LessonResponseDTO> getById(@PathVariable Long id) {
+    public ResponseEntity<LessonResponseDTO> getById(@RequestParam Long id) {
         return ResponseEntity.ok(lessonService.getById(id));
     }
 

@@ -35,10 +35,10 @@ public class ClassStudentController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{classId}/students")
+    @GetMapping("/students")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER','ROLE_USER')")
     @Operation(summary = "Danh sách học viên trong lớp")
-    public ResponseEntity<List<ClassStudentResponseDTO>> listStudents(@PathVariable Long classId) {
+    public ResponseEntity<List<ClassStudentResponseDTO>> listStudents(@RequestParam Long classId) {
         return ResponseEntity.ok(classroomService.findStudents(classId));
     }
 }
