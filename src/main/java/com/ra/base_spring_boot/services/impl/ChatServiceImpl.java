@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.config.dto.ChatMessageSocket.ChatMessageRequestDTO;
-import com.ra.base_spring_boot.config.dto.ChatMessageSocket.ChatMessageResponseDTO;
+import com.ra.base_spring_boot.dto.ChatMessageSocket.ChatMessageRequestDTO;
+import com.ra.base_spring_boot.dto.ChatMessageSocket.ChatMessageResponseDTO;
 import com.ra.base_spring_boot.model.ChatMessage;
 import com.ra.base_spring_boot.repository.IChatMessageRepository;
 import com.ra.base_spring_boot.services.IChatService;

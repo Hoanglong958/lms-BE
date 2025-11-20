@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.config.controller;
 
-import com.ra.base_spring_boot.config.dto.Course.CourseResponseDTO;
-import com.ra.base_spring_boot.config.dto.Course.CourseRequestDTO;
+import com.ra.base_spring_boot.dto.Course.CourseResponseDTO;
+import com.ra.base_spring_boot.dto.Course.CourseRequestDTO;
 import com.ra.base_spring_boot.services.ICourseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

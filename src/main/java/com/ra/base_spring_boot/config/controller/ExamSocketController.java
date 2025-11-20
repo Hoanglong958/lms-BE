@@ -1,6 +1,6 @@
 package com.ra.base_spring_boot.config.controller;
 
-import com.ra.base_spring_boot.config.dto.Exam.ExamResponseDTO;
+import com.ra.base_spring_boot.dto.Exam.ExamResponseDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;

@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.services;
 
-import com.ra.base_spring_boot.config.dto.SessionExercise.SessionExerciseRequestDTO;
-import com.ra.base_spring_boot.config.dto.SessionExercise.SessionExerciseResponseDTO;
+import com.ra.base_spring_boot.dto.SessionExercise.SessionExerciseRequestDTO;
+import com.ra.base_spring_boot.dto.SessionExercise.SessionExerciseResponseDTO;
 
 import java.util.List;
 

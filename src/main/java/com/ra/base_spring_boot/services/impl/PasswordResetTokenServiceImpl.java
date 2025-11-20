@@ -3,8 +3,6 @@ package com.ra.base_spring_boot.services.impl;
 import com.ra.base_spring_boot.dto.req.CreatePasswordResetTokenRequest;
 import com.ra.base_spring_boot.dto.req.ResetPasswordRequest;
 import com.ra.base_spring_boot.dto.resp.PasswordResetTokenResponse;
-import com.ra.base_spring_boot.config.dto.req.CreatePasswordResetTokenRequest;
-import com.ra.base_spring_boot.config.dto.resp.PasswordResetTokenResponse;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.PasswordResetToken;
 import com.ra.base_spring_boot.model.User;
@@ -28,6 +26,7 @@ public class PasswordResetTokenServiceImpl implements IPasswordResetTokenService
     private final PasswordEncoder passwordEncoder;
 
     @Override
+    @Transactional
     public PasswordResetTokenResponse create(CreatePasswordResetTokenRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new HttpBadRequest("Email không tồn tại trong hệ thống!"));

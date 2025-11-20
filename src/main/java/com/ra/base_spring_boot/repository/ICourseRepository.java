@@ -7,11 +7,22 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
 public interface ICourseRepository extends JpaRepository<Course, Long> {
-    @Query("SELECT c FROM Course c WHERE c.createdAt >= CURRENT_DATE - 30")
-    List<Course> findNewCourses();
     Page<Course> findByTitleContainingIgnoreCaseOrInstructorNameContainingIgnoreCase(String title, String instructorName, Pageable pageable);
+
+    @Query("SELECT COUNT(c) FROM Course c")
+    long countAll();
+
+    @Query("SELECT COUNT(c) FROM Course c WHERE c.createdAt >= :since")
+    long countSince(LocalDateTime since);
+
+    @Query("SELECT COUNT(c) FROM Course c WHERE c.createdAt < :before")
+    long countBefore(LocalDateTime before);
+
+    @Query("SELECT c FROM Course c WHERE c.createdAt >= :since ORDER BY c.createdAt DESC")
+    List<Course> findNewCoursesSince(LocalDateTime since);
 }

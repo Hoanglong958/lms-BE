@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.config.controller;
 
-import com.ra.base_spring_boot.config.dto.ResponseWrapper;
-import com.ra.base_spring_boot.config.dto.req.*;
+import com.ra.base_spring_boot.dto.ResponseWrapper;
+import com.ra.base_spring_boot.dto.req.*;
 import com.ra.base_spring_boot.services.IAuthService;
 import com.ra.base_spring_boot.services.IPasswordResetTokenService;
 import jakarta.validation.Valid;

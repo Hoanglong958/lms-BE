@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.config.dto.Course.CourseRequestDTO;
-import com.ra.base_spring_boot.config.dto.Course.CourseResponseDTO;
+import com.ra.base_spring_boot.dto.Course.CourseRequestDTO;
+import com.ra.base_spring_boot.dto.Course.CourseResponseDTO;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.Course;
 import com.ra.base_spring_boot.model.constants.CourseLevel;

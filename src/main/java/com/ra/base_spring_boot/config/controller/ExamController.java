@@ -1,8 +1,8 @@
 package com.ra.base_spring_boot.config.controller;
 
-import com.ra.base_spring_boot.config.dto.Exam.AddQuestionsToExamDTO;
-import com.ra.base_spring_boot.config.dto.Exam.ExamResponseDTO;
-import com.ra.base_spring_boot.config.dto.Exam.ExamRequestDTO;
+import com.ra.base_spring_boot.dto.Exam.AddQuestionsToExamDTO;
+import com.ra.base_spring_boot.dto.Exam.ExamResponseDTO;
+import com.ra.base_spring_boot.dto.Exam.ExamRequestDTO;
 import com.ra.base_spring_boot.services.IExamService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

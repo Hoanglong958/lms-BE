@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.config.controller;
 
-import com.ra.base_spring_boot.config.dto.Lesson.LessonRequestDTO;
-import com.ra.base_spring_boot.config.dto.Lesson.LessonResponseDTO;
+import com.ra.base_spring_boot.dto.Lesson.LessonRequestDTO;
+import com.ra.base_spring_boot.dto.Lesson.LessonResponseDTO;
 import com.ra.base_spring_boot.services.ILessonService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

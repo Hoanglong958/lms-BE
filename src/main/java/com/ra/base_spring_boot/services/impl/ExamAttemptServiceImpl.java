@@ -1,6 +1,6 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.config.dto.ExamAttempt.ExamAttemptResponseDTO;
+import com.ra.base_spring_boot.dto.ExamAttempt.ExamAttemptResponseDTO;
 import com.ra.base_spring_boot.model.Exam;
 import com.ra.base_spring_boot.model.ExamAttempt;
 import com.ra.base_spring_boot.model.ExamParticipant;

@@ -3,5 +3,6 @@ package com.ra.base_spring_boot.model.constants;
 public enum LessonType {
     VIDEO,
     QUIZ,
-    EXERCISES
+    EXERCISES,
+    DOCUMENT
 }

@@ -1,12 +1,12 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.config.dto.Exam.ExamRequestDTO;
-import com.ra.base_spring_boot.config.dto.Exam.ExamResponseDTO;
+import com.ra.base_spring_boot.dto.Exam.ExamRequestDTO;
+import com.ra.base_spring_boot.dto.Exam.ExamResponseDTO;
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.model.constants.ExamStatus;
 import com.ra.base_spring_boot.repository.*;
 import com.ra.base_spring_boot.services.IExamService;
-import com.ra.base_spring_boot.config.dto.Question.QuestionResponseDTO;
+import com.ra.base_spring_boot.dto.Question.QuestionResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

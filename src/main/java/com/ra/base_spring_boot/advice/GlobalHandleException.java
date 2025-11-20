@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.advice;
 
 import com.ra.base_spring_boot.exception.*;
-import com.ra.base_spring_boot.config.dto.ResponseWrapper;
+import com.ra.base_spring_boot.dto.ResponseWrapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

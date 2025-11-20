@@ -1,8 +1,8 @@
 package com.ra.base_spring_boot.services;
 
-import com.ra.base_spring_boot.config.dto.req.UserCreateRequest;
-import com.ra.base_spring_boot.config.dto.req.UserUpdateRequest;
-import com.ra.base_spring_boot.config.dto.resp.UserResponse;
+import com.ra.base_spring_boot.dto.req.UserCreateRequest;
+import com.ra.base_spring_boot.dto.req.UserUpdateRequest;
+import com.ra.base_spring_boot.dto.resp.UserResponse;
 import com.ra.base_spring_boot.model.constants.RoleName;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

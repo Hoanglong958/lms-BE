@@ -1,7 +1,5 @@
 package com.ra.base_spring_boot.config.controller;
 
-import com.ra.base_spring_boot.config.dto.ExamAttempt.ExamAttemptResponseDTO;
-import com.ra.base_spring_boot.config.dto.ExamAttempt.StartAttemptRequestDTO;
 import com.ra.base_spring_boot.dto.ExamAttempt.ExamAttemptResponseDTO;
 import com.ra.base_spring_boot.dto.ExamAttempt.StartAttemptRequestDTO;
 import com.ra.base_spring_boot.dto.ExamAttempt.SubmitAttemptRequestDTO;

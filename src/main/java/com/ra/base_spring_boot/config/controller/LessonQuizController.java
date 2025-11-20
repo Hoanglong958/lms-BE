@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.config.controller;
 
-import com.ra.base_spring_boot.config.dto.LessonQuizzes.LessonQuizRequestDTO;
-import com.ra.base_spring_boot.config.dto.LessonQuizzes.LessonQuizResponseDTO;
+import com.ra.base_spring_boot.dto.LessonQuizzes.LessonQuizRequestDTO;
+import com.ra.base_spring_boot.dto.LessonQuizzes.LessonQuizResponseDTO;
 import com.ra.base_spring_boot.services.ILessonQuizService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

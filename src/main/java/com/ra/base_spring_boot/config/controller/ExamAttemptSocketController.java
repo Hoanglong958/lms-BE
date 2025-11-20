@@ -1,6 +1,6 @@
 package com.ra.base_spring_boot.config.controller;
 
-import com.ra.base_spring_boot.config.dto.ChatMessageSocket.ExamMessageDTO;
+import com.ra.base_spring_boot.dto.ChatMessageSocket.ExamMessageDTO;
 import com.ra.base_spring_boot.model.ExamAttempt;
 import com.ra.base_spring_boot.model.ExamParticipant;
 import com.ra.base_spring_boot.services.IExamAttemptService;

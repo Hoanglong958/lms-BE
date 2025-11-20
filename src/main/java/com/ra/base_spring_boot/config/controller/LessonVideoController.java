@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.config.controller;
 
-import com.ra.base_spring_boot.config.dto.LessonVideo.LessonVideoRequestDTO;
-import com.ra.base_spring_boot.config.dto.LessonVideo.LessonVideoResponseDTO;
+import com.ra.base_spring_boot.dto.LessonVideo.LessonVideoRequestDTO;
+import com.ra.base_spring_boot.dto.LessonVideo.LessonVideoResponseDTO;
 import com.ra.base_spring_boot.services.ILessonVideoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

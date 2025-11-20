@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.config.controller;
 
-import com.ra.base_spring_boot.config.dto.ChatMessageSocket.ChatMessageRequestDTO;
-import com.ra.base_spring_boot.config.dto.ChatMessageSocket.ChatMessageResponseDTO;
+import com.ra.base_spring_boot.dto.ChatMessageSocket.ChatMessageRequestDTO;
+import com.ra.base_spring_boot.dto.ChatMessageSocket.ChatMessageResponseDTO;
 import com.ra.base_spring_boot.services.IChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

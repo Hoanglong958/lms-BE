@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.services;
 
-import com.ra.base_spring_boot.config.dto.req.*;
-import com.ra.base_spring_boot.config.dto.resp.JwtResponse;
+import com.ra.base_spring_boot.dto.req.*;
+import com.ra.base_spring_boot.dto.resp.JwtResponse;
 
 public interface IAuthService
 {
