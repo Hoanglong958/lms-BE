@@ -25,7 +25,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @RestController
 @RequestMapping("/api/v1/dashboard")
 @RequiredArgsConstructor
-@Tag(name = "Dashboard", description = "Tổng quan và thống kê hệ thống LMS")
+@Tag(name = "21 - Dashboard", description = "Tổng quan và thống kê hệ thống LMS")
 public class DashboardController {
 
     private final IDashboardService dashboardService;
