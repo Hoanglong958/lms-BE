@@ -23,5 +23,6 @@ public class FormRegister {
     private String phone;
 
     private String role;
+
 }
 

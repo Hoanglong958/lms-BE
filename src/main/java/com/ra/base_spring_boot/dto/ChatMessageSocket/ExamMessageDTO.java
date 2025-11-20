@@ -2,7 +2,6 @@ package com.ra.base_spring_boot.dto.ChatMessageSocket;
 
 
 import com.ra.base_spring_boot.model.ExamAttempt;
-import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.Map;

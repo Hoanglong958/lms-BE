@@ -68,7 +68,7 @@ public class QuestionServiceImpl implements IQuestionService {
     @Override
     public void delete(Long id) {
         if (!questionRepository.existsById(id)) {
-            throw new HttpNotFound("Không tìm thấy câu hỏi với id = " + id);
+            throw new RuntimeException("Question not found");
         }
         questionRepository.deleteById(id);
     }

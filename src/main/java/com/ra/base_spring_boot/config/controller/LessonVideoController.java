@@ -45,7 +45,7 @@ public class LessonVideoController {
     @Operation(summary = "Tạo video", description = "Chỉ ADMIN được phép tạo video")
     @ApiResponse(responseCode = "200", description = "Tạo thành công")
     public ResponseEntity<LessonVideoResponseDTO> create(@RequestBody LessonVideoRequestDTO dto) {
-        return ResponseEntity.ok(lessonVideoService.create(dto));
+        return ResponseEntity.ok(lessonVideoService.create(dto));   
     }
 
     // 🔹 Cập nhật video (ADMIN)

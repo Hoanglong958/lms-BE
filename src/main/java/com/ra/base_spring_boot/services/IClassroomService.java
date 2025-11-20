@@ -42,4 +42,3 @@ public interface IClassroomService {
 
     ClassStatsResponseDTO getClassStats(Long classId);
 }
-

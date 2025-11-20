@@ -26,13 +26,11 @@ public class ExamParticipant {
     private User user;
 
     @Column(nullable = false)
-    private String examRoomId;
+    private Long examRoomId;
 
     private LocalDateTime joinTime;
 
-    @Builder.Default
     private Boolean started = false;
 
-    @Builder.Default
     private Boolean submitted = false;
 }

@@ -1,0 +1,282 @@
+package com.ra.base_spring_boot.services.impl;
+
+import com.ra.base_spring_boot.dto.DashBoardStats.DashboardStatsDTO;
+import com.ra.base_spring_boot.dto.DashBoardStats.CourseProgressDTO;
+import com.ra.base_spring_boot.dto.DashBoardStats.QuizReportDTO;
+import com.ra.base_spring_boot.dto.DashBoardStats.UserGrowthPointDTO;
+import com.ra.base_spring_boot.dto.resp.UserResponse;
+import com.ra.base_spring_boot.dto.Course.CourseResponseDTO;
+import com.ra.base_spring_boot.dto.LessonQuizzes.LessonQuizResponseDTO;
+import com.ra.base_spring_boot.model.*;
+import com.ra.base_spring_boot.model.constants.RoleName;
+import com.ra.base_spring_boot.repository.*;
+import com.ra.base_spring_boot.services.IDashboardService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class DashboardServiceImpl implements IDashboardService {
+
+    private final IUserRepository userRepo;
+    private final ICourseRepository courseRepo;
+    private final ILessonQuizRepository quizRepo;
+    private final IQuizResultRepository quizResultRepo;
+    private final IUserCourseRepository userCourseRepo;
+    private final IAssignmentRepository assignmentRepo; // optional (may be null if not injected)
+    private final IClassroomRepository classRepo; // optional (may be null if not injected)
+
+    private double calcGrowth(long current, long previous) {
+        if (previous == 0) return current > 0 ? 100.0 : 0.0;
+        return ((double) (current - previous) / previous) * 100.0;
+    }
+
+    private double calcGrowthDouble(Double current, Double previous) {
+        if (previous == null || previous == 0) return (current != null && current > 0) ? 100.0 : 0.0;
+        return ((current - previous) / previous) * 100.0;
+    }
+
+    public DashboardStatsDTO getDashboard() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime sinceMonth = now.minusMonths(1);
+        LocalDateTime since30 = now.minusDays(30);
+
+        // --- Users ---
+        long totalUsers = userRepo.countByRole(RoleName.ROLE_USER);
+        long prevMonthUsers = userRepo.countByRoleBefore(RoleName.ROLE_USER, sinceMonth);
+        double userGrowth = calcGrowth(totalUsers, prevMonthUsers);
+
+        // --- Courses ---
+        long totalCourses = courseRepo.count();
+        long prevMonthCourses = courseRepo.countBefore(sinceMonth);
+        double courseGrowth = calcGrowth(totalCourses, prevMonthCourses);
+
+        // --- Quizzes / Exams metadata ---
+        long totalQuizzes = quizRepo.count();
+        long prevMonthQuizzes = quizRepo.countByCreatedAtAfter(sinceMonth);
+        double quizGrowth = calcGrowth(totalQuizzes, prevMonthQuizzes);
+
+        // --- Assignments (optional) ---
+        long totalAssignments = assignmentRepo != null ? assignmentRepo.count() : 0;
+        long prevMonthAssignments = assignmentRepo != null ? assignmentRepo.countByCreatedAtAfter(sinceMonth) : 0;
+        double assignmentGrowth = calcGrowth(totalAssignments, prevMonthAssignments);
+
+        // --- Classes (optional) ---
+        long totalClasses = classRepo != null ? classRepo.count() : 0;
+        long prevMonthClasses = classRepo != null ? classRepo.countByCreatedAtAfter(sinceMonth) : 0;
+        double classGrowth = calcGrowth(totalClasses, prevMonthClasses);
+
+        // --- Exam attempts and avg score (QuizResult / ExamAttempt) ---
+        long totalExamAttempts = quizResultRepo.countAllAttempts();
+        long prevMonthExamAttempts = quizResultRepo.countAttemptsSince(sinceMonth);
+        double examAttemptGrowth = calcGrowth(totalExamAttempts, prevMonthExamAttempts);
+
+        Double avgScore = Optional.ofNullable(quizResultRepo.avgScoreAll()).orElse(0.0);
+        Double prevAvgScore = Optional.ofNullable(quizResultRepo.avgScoreSince(sinceMonth)).orElse(0.0);
+        double avgScoreGrowth = calcGrowthDouble(avgScore, prevAvgScore);
+
+        // --- Course completion (UserCourse / UserEnrollment) ---
+        long totalEnrollments = userCourseRepo.countTotal();
+        long totalCompleted = userCourseRepo.countCompleted();
+        double completionRate = totalEnrollments == 0 ? 0.0 : ((double) totalCompleted / totalEnrollments) * 100.0;
+
+        long prevTotalEnrollments = userCourseRepo.countTotalBefore(sinceMonth);
+        long prevCompleted = userCourseRepo.countCompletedBefore(sinceMonth);
+        double prevCompletionRate = prevTotalEnrollments == 0 ? 0.0 : ((double) prevCompleted / prevTotalEnrollments) * 100.0;
+        double completionGrowth = calcGrowthDouble(completionRate, prevCompletionRate);
+
+        // --- Top students (by avg score via repo) ---
+        List<User> topUsers;
+        try {
+            topUsers = userRepo.findTopStudents(PageRequest.of(0, 10));
+        } catch (Exception e) {
+            topUsers = userRepo.findAll(PageRequest.of(0, 10)).getContent();
+        }
+        List<UserResponse> topStudents = topUsers.stream().map(u ->
+                UserResponse.builder()
+                        .id(u.getId())
+                        .fullName(u.getFullName())
+                        .gmail(u.getGmail())
+                        .role(u.getRole())
+                        .isActive(u.getIsActive())
+                        .createdAt(u.getCreatedAt())
+                        .build()).collect(Collectors.toList());
+
+        // --- New users in last 30 days ---
+        List<UserResponse> newUsers = userRepo.findNewUsersSince(RoleName.ROLE_USER, since30)
+                .stream().map(u -> UserResponse.builder()
+                        .id(u.getId())
+                        .fullName(u.getFullName())
+                        .gmail(u.getGmail())
+                        .role(u.getRole())
+                        .isActive(u.getIsActive())
+                        .createdAt(u.getCreatedAt())
+                        .build()).collect(Collectors.toList());
+
+        // --- New courses in last 30 days ---
+        List<CourseResponseDTO> newCourses = courseRepo.findNewCoursesSince(since30)
+                .stream()
+                .map(c -> CourseResponseDTO.builder()
+                        .id(c.getId())
+                        .title(c.getTitle())
+                        .description(c.getDescription())
+                        .instructorName(c.getInstructorName())
+                        .level(c.getLevel().name()) // convert enum -> String
+                        .createdAt(c.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+
+
+
+        // --- Recent quizzes in last 30 days ---
+        List<LessonQuizResponseDTO> recentQuizzes = quizRepo.findRecentSince(since30).stream().map(q ->
+                LessonQuizResponseDTO.builder()
+                        .quizId(q.getId())
+                        .lessonId(q.getLesson().getId())
+                        .lessonTitle(q.getLesson().getTitle())
+                        .title(q.getTitle())
+                        .questionCount(q.getQuestionCount())
+                        .maxScore(q.getMaxScore())
+                        .passingScore(q.getPassingScore())
+                        .build()).collect(Collectors.toList());
+
+        // Build DTO (assumes DashboardStatsDTO exists in your dto package)
+        DashboardStatsDTO dto = DashboardStatsDTO.builder()
+                .totalUsers(new DashboardStatsDTO.GrowthItem(totalUsers, userGrowth))
+                .totalCourses(new DashboardStatsDTO.GrowthItem(totalCourses, courseGrowth))
+                .totalExams(new DashboardStatsDTO.GrowthItem(totalExamAttempts, examAttemptGrowth))
+                .averageExamScore(new DashboardStatsDTO.GrowthItem(avgScore.longValue(), avgScoreGrowth))
+                .courseCompletionRate(new DashboardStatsDTO.GrowthItem((long) Math.round(completionRate), completionGrowth))
+                .totalClasses(new DashboardStatsDTO.GrowthItem(totalClasses, classGrowth))
+                .totalQuizzes(new DashboardStatsDTO.GrowthItem(totalQuizzes, quizGrowth))
+                .totalAssignments(new DashboardStatsDTO.GrowthItem(totalAssignments, assignmentGrowth))
+                .topStudents(topStudents)
+                .newUsers(newUsers)
+                .newCourses(newCourses)
+                .recentQuizzes(recentQuizzes)
+                .build();
+
+        return dto;
+    }
+
+    @Override
+    public List<UserGrowthPointDTO> getUserGrowthByMonth(int months) {
+        LocalDate now = LocalDate.now();
+        List<UserGrowthPointDTO> points = new ArrayList<>();
+        for (int i = months - 1; i >= 0; i--) {
+            LocalDate start = now.minusMonths(i).withDayOfMonth(1);
+            LocalDateTime startDt = start.atStartOfDay();
+            long count = userRepo.countByRoleSince(RoleName.ROLE_USER, startDt);
+            points.add(UserGrowthPointDTO.builder()
+                    .period(start.toString().substring(0, 7))
+                    .count(count)
+                    .build());
+        }
+        return points;
+    }
+
+    @Override
+    public List<UserGrowthPointDTO> getUserGrowthByWeek(int weeks) {
+        LocalDate today = LocalDate.now();
+        List<UserGrowthPointDTO> points = new ArrayList<>();
+        for (int i = weeks - 1; i >= 0; i--) {
+            LocalDate start = today.minusWeeks(i);
+            LocalDateTime startDt = start.atStartOfDay();
+            long count = userRepo.countByRoleSince(RoleName.ROLE_USER, startDt);
+            points.add(UserGrowthPointDTO.builder()
+                    .period(start.toString())
+                    .count(count)
+                    .build());
+        }
+        return points;
+    }
+
+    @Override
+    public CourseProgressDTO getCourseProgress(Long courseId) {
+        long total = userCourseRepo.countByCourse_Id(courseId);
+        long completed = userCourseRepo.countByCourse_IdAndCompleted(courseId, true);
+        long inProgress = total - completed;
+        double rate = total == 0 ? 0.0 : ((double) completed / total) * 100.0;
+        return CourseProgressDTO.builder()
+                .courseId(courseId)
+                .completed(completed)
+                .inProgress(inProgress)
+                .completionRate(rate)
+                .build();
+    }
+
+    @Override
+    public List<UserResponse> getNewUsersLast30Days() {
+        return userRepo.findNewUsersSince(RoleName.ROLE_USER, LocalDateTime.now().minusDays(30)).stream().map(u ->
+                UserResponse.builder()
+                        .id(u.getId()).fullName(u.getFullName())
+                        .gmail(u.getGmail()).role(u.getRole())
+                        .isActive(u.getIsActive()).createdAt(u.getCreatedAt()).build()
+        ).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserResponse> getTopStudents(int topN) {
+        List<User> users = userRepo.findTopStudents(PageRequest.of(0, topN));
+        return users.stream().map(u -> UserResponse.builder()
+                .id(u.getId()).fullName(u.getFullName())
+                .gmail(u.getGmail()).role(u.getRole())
+                .isActive(u.getIsActive()).createdAt(u.getCreatedAt()).build()
+        ).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CourseResponseDTO> getNewCoursesLast30Days() {
+        return courseRepo.findNewCoursesSince(LocalDateTime.now().minusDays(30)).stream().map(c ->
+                CourseResponseDTO.builder()
+                        .id(c.getId())
+                        .title(c.getTitle())
+                        .description(c.getDescription())
+                        .instructorName(c.getInstructorName())
+                        .level(c.getLevel().name()) // chuyển enum sang String
+                        .createdAt(c.getCreatedAt())
+                        .build()
+        ).collect(Collectors.toList());
+    }
+
+
+    @Override
+    public List<LessonQuizResponseDTO> getRecentQuizzesLast30Days() {
+        return quizRepo.findRecentSince(LocalDateTime.now().minusDays(30)).stream().map(q ->
+                LessonQuizResponseDTO.builder()
+                        .quizId(q.getId())
+                        .lessonId(q.getLesson().getId())
+                        .lessonTitle(q.getLesson().getTitle())
+                        .title(q.getTitle())
+                        .questionCount(q.getQuestionCount())
+                        .maxScore(q.getMaxScore())
+                        .passingScore(q.getPassingScore())
+                        .build()).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<QuizReportDTO> getQuizReports() {
+        List<LessonQuiz> quizzes = quizRepo.findAll(); // LessonQuiz, không phải QuizQuestion
+        return quizzes.stream().map(q -> {
+            long attempts = Optional.ofNullable(quizResultRepo.countAttemptByQuiz(q.getId())).orElse(0L);
+            long pass = Optional.ofNullable(quizResultRepo.countPassByQuiz(q.getId())).orElse(0L);
+            Double avg = Optional.ofNullable(quizResultRepo.avgScoreByQuiz(q.getId())).orElse(0.0);
+
+            double passRate = attempts == 0 ? 0.0 : (double) pass / attempts * 100.0;
+            return QuizReportDTO.builder()
+                    .quizId(q.getId())
+                    .title(q.getTitle())
+                    .attempts(attempts)
+                    .avgScore(avg)
+                    .passRate(passRate)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+}

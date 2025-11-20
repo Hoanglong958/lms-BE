@@ -34,4 +34,9 @@ public class QuizResult {
 
     @Builder.Default
     private boolean deleted = false;
+    @Column(nullable = false)
+    private Integer passScore;
+
+
+
 }

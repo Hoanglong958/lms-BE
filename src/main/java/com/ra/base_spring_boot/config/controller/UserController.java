@@ -33,7 +33,7 @@ public class UserController {
     @GetMapping("/check")
     @Operation(summary = "Kiểm tra tồn tại gmail", description = "Trả về true nếu gmail đã tồn tại")
     @ApiResponse(responseCode = "200", description = "OK") // Mô tả response cho Swagger
-    public ResponseEntity<?> checkEmailExists(@RequestParam String gmail) {
+    public ResponseEntity<?> checkGmailExists(@RequestParam String gmail) {
         boolean exists = userService.gmailExists(gmail); // Gọi service kiểm tra gmail
         return ResponseEntity.ok(
                 ResponseWrapper.builder() // Dùng ResponseWrapper để chuẩn hóa response

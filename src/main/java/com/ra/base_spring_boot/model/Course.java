@@ -51,4 +51,6 @@ public class Course {
     public void preUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+
 }

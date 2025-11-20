@@ -66,7 +66,7 @@ class ForgotPasswordFlowIntegrationTest {
         // Setup test user
         testUser = User.builder()
                 .id(1L)
-                .email("testuser@gmail.com")
+                .gmail("testuser@gmail.com")
                 .fullName("Test User")
                 .password("$2a$10$encrypted")
                 .role(RoleName.ROLE_USER)
@@ -89,7 +89,7 @@ class ForgotPasswordFlowIntegrationTest {
     void testCompleteForgotPasswordFlow() throws Exception {
         // ========== BƯỚC 1: Gọi forgot-password ==========
         ForgotPasswordRequest forgotRequest = new ForgotPasswordRequest();
-        forgotRequest.setEmail("testuser@gmail.com");
+        forgotRequest.setGmail("testuser@gmail.com");
 
         PasswordResetTokenResponse tokenResponse = PasswordResetTokenResponse.builder()
                 .id(1L)
@@ -100,7 +100,7 @@ class ForgotPasswordFlowIntegrationTest {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        when(userRepository.findByEmail("testuser@gmail.com"))
+        when(userRepository.findByGmail("testuser@gmail.com"))
                 .thenReturn(Optional.of(testUser));
         when(passwordResetTokenService.create(any()))
                 .thenReturn(tokenResponse);
@@ -161,9 +161,9 @@ class ForgotPasswordFlowIntegrationTest {
     void testFlowWithInvalidToken() throws Exception {
         // Bước 1: Forgot password
         ForgotPasswordRequest forgotRequest = new ForgotPasswordRequest();
-        forgotRequest.setEmail("testuser@gmail.com");
+        forgotRequest.setGmail("testuser@gmail.com");
 
-        when(userRepository.findByEmail("testuser@gmail.com"))
+        when(userRepository.findByGmail("testuser@gmail.com"))
                 .thenReturn(Optional.of(testUser));
         when(passwordResetTokenService.create(any()))
                 .thenReturn(PasswordResetTokenResponse.builder()

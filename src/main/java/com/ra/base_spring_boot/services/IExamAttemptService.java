@@ -15,7 +15,7 @@ public interface IExamAttemptService {
     List<ExamAttemptResponseDTO> getAll();
     List<ExamAttemptResponseDTO> getByExam(Long examId);
     List<ExamAttemptResponseDTO> getByUser(Long userId);
-    ExamAttempt createAttempt(Long examId, Long userId, String examRoomId);
+    ExamAttempt createAttempt(Long examId, Long userId, Long examRoomId);
     ExamAttempt submitExam(Long attemptId, Map<Long, String> answers);
 
 

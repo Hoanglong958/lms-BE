@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Table(name = "classes")
 @Getter
 @Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -29,6 +30,9 @@ public class Classroom {
     @Column(name = "max_students")
     @Builder.Default
     private Integer maxStudents = 30;
+    @ManyToOne
+    @JoinColumn(name = "course_id")
+    private Course course;
 
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
