@@ -1,5 +1,8 @@
 package com.ra.base_spring_boot.config.controller;
 
+import com.ra.base_spring_boot.dto.Classroom.ClassStatsResponseDTO;
+import com.ra.base_spring_boot.dto.Classroom.ClassroomRequestDTO;
+import com.ra.base_spring_boot.dto.Classroom.ClassroomResponseDTO;
 import com.ra.base_spring_boot.services.IClassroomService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

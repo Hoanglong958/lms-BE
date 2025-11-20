@@ -102,7 +102,7 @@ public class DashboardServiceImpl implements IDashboardService {
                 UserResponse.builder()
                         .id(u.getId())
                         .fullName(u.getFullName())
-                        .email(u.getEmail())
+                        .gmail(u.getGmail())
                         .role(u.getRole())
                         .isActive(u.getIsActive())
                         .createdAt(u.getCreatedAt())
@@ -113,7 +113,7 @@ public class DashboardServiceImpl implements IDashboardService {
                 .stream().map(u -> UserResponse.builder()
                         .id(u.getId())
                         .fullName(u.getFullName())
-                        .email(u.getEmail())
+                        .gmail(u.getGmail())
                         .role(u.getRole())
                         .isActive(u.getIsActive())
                         .createdAt(u.getCreatedAt())
@@ -216,7 +216,7 @@ public class DashboardServiceImpl implements IDashboardService {
         return userRepo.findNewUsersSince(RoleName.ROLE_USER, LocalDateTime.now().minusDays(30)).stream().map(u ->
                 UserResponse.builder()
                         .id(u.getId()).fullName(u.getFullName())
-                        .email(u.getEmail()).role(u.getRole())
+                        .gmail(u.getGmail()).role(u.getRole())
                         .isActive(u.getIsActive()).createdAt(u.getCreatedAt()).build()
         ).collect(Collectors.toList());
     }
@@ -226,7 +226,7 @@ public class DashboardServiceImpl implements IDashboardService {
         List<User> users = userRepo.findTopStudents(PageRequest.of(0, topN));
         return users.stream().map(u -> UserResponse.builder()
                 .id(u.getId()).fullName(u.getFullName())
-                .email(u.getEmail()).role(u.getRole())
+                .gmail(u.getGmail()).role(u.getRole())
                 .isActive(u.getIsActive()).createdAt(u.getCreatedAt()).build()
         ).collect(Collectors.toList());
     }
