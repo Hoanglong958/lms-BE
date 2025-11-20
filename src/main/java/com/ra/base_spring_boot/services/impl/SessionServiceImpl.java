@@ -43,7 +43,6 @@ public class SessionServiceImpl implements ISessionService {
         Session session = Session.builder()
                 .title(dto.getTitle())
                 .orderIndex(dto.getOrderIndex())
-                .duration(dto.getDuration())
                 .course(course)
                 .build();
 
@@ -65,7 +64,6 @@ public class SessionServiceImpl implements ISessionService {
 
         if (dto.getTitle() != null) session.setTitle(dto.getTitle());
         if (dto.getOrderIndex() != null) session.setOrderIndex(dto.getOrderIndex());
-        if (dto.getDuration() != null) session.setDuration(dto.getDuration());
 
         Session saved = sessionRepository.save(session);
         return mapToResponse(saved);
@@ -76,9 +74,9 @@ public class SessionServiceImpl implements ISessionService {
                 .id(session.getId())
                 .title(session.getTitle())
                 .orderIndex(session.getOrderIndex())
-                .duration(session.getDuration())
                 .courseId(session.getCourse().getId())
                 .courseName(session.getCourse().getTitle())
+                .createdAt(session.getCreatedAt())
                 .build();
     }
 }

@@ -34,12 +34,12 @@ public class QuestionController {
     }
 
     // ======= Lấy chi tiết 1 câu hỏi theo ID =======
-    @GetMapping("/{id}")
+    @GetMapping("/detail")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(summary = "Lấy chi tiết câu hỏi",
             description = "Cho phép ADMIN và USER xem chi tiết một câu hỏi")
     @ApiResponse(responseCode = "200", description = "Lấy chi tiết thành công")
-    public ResponseEntity<QuestionResponseDTO> getQuestionById(@PathVariable Long id) {
+    public ResponseEntity<QuestionResponseDTO> getQuestionById(@RequestParam Long id) {
         return ResponseEntity.ok(questionService.getById(id));
     }
 

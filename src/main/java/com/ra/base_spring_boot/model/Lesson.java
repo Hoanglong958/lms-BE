@@ -30,8 +30,5 @@ public class Lesson {
     private Integer orderIndex;
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<LessonExercise> exercises;
-
-    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LessonQuiz> quizzes;
 }

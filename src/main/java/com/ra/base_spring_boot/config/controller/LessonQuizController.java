@@ -22,20 +22,20 @@ public class LessonQuizController {
     private final ILessonQuizService lessonQuizService;
 
     // ======= Danh sách quiz theo bài học =======
-    @GetMapping("/lesson/{lessonId}")
+    @GetMapping(params = "lessonId")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(summary = "Danh sách quiz theo bài học", description = "Trả về danh sách quiz thuộc một bài học cụ thể")
     @ApiResponse(responseCode = "200", description = "Lấy danh sách thành công")
-    public ResponseEntity<List<LessonQuizResponseDTO>> getByLesson(@PathVariable Long lessonId) {
+    public ResponseEntity<List<LessonQuizResponseDTO>> getByLesson(@RequestParam Long lessonId) {
         return ResponseEntity.ok(lessonQuizService.getByLesson(lessonId));
     }
 
     // ======= Chi tiết quiz =======
-    @GetMapping("/{id}")
+    @GetMapping("/detail")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(summary = "Chi tiết quiz", description = "Lấy thông tin chi tiết quiz theo ID")
     @ApiResponse(responseCode = "200", description = "Lấy thành công")
-    public ResponseEntity<LessonQuizResponseDTO> getById(@PathVariable Long id) {
+    public ResponseEntity<LessonQuizResponseDTO> getById(@RequestParam Long id) {
         return ResponseEntity.ok(lessonQuizService.getById(id));
     }
 

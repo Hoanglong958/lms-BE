@@ -53,11 +53,11 @@ public class    ExamController {
     }
 
     // ======= Lấy exam theo ID (ADMIN + USER) =======
-    @GetMapping("/{id}")
+    @GetMapping("/detail")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(summary = "Lấy chi tiết kỳ thi", description = "Trả về thông tin kỳ thi theo ID")
     @ApiResponse(responseCode = "200", description = "Thành công")
-    public ResponseEntity<ExamResponseDTO> getExam(@Parameter(description = "Mã kỳ thi") @PathVariable Long id) {
+    public ResponseEntity<ExamResponseDTO> getExam(@Parameter(description = "Mã kỳ thi") @RequestParam Long id) {
         return ResponseEntity.ok(examService.getExam(id));
     }
 

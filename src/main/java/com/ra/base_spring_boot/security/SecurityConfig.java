@@ -58,6 +58,8 @@ public class SecurityConfig {
                         .requestMatchers(
 
                                 "/api/v1/users/check",
+                                // Public static uploads (served by WebMvc)
+                                "/uploads/**",
                                 // Public password reset token endpoints (delayed OTP reveal flow)
                                 "/api/v1/password-reset-tokens/validate",
                                 "/api/v1/password-reset-tokens/latest", // DEV endpoint: Lấy token mới nhất để test

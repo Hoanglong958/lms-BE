@@ -1,6 +1,10 @@
 spring:
   application:
     name: base_spring_boot
+  servlet:
+    multipart:
+      max-file-size: 256MB
+      max-request-size: 256MB
   datasource:
     url: jdbc:mysql://localhost:3306/lms_rikkei?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
     username: root
@@ -35,6 +39,11 @@ jwt:
 
 server:
   port: 3900
+
+# Local upload root directory (used by LocalStorageService). Relative to project root if not absolute.
+app:
+  upload:
+    root: uploads
 
 external:
   api:

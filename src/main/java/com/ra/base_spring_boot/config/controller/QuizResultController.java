@@ -35,10 +35,10 @@ public class QuizResultController {
     }
 
     // ========== ADMIN: Xem chi tiết kết quả ==========
-    @GetMapping("/{id}")
+    @GetMapping("/detail")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Lấy chi tiết kết quả quiz", description = "Trả về kết quả quiz theo ID")
-    public ResponseEntity<QuizResultResponseDTO> getById(@PathVariable Long id) {
+    public ResponseEntity<QuizResultResponseDTO> getById(@RequestParam Long id) {
         return ResponseEntity.ok(quizResultService.findById(id));
     }
 

@@ -25,20 +25,20 @@ public class SessionController {
     private final ISessionService sessionService;
 
     // ======= 1️⃣ Lấy danh sách session theo course =======
-    @GetMapping("/course/{courseId}")
+    @GetMapping(params = "courseId")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(summary = "Danh sách Chương học theo khóa học", description = "Trả về danh sách session thuộc một khóa học")
     @ApiResponse(responseCode = "200", description = "Thành công")
-    public ResponseEntity<List<SessionResponseDTO>> getByCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<SessionResponseDTO>> getByCourse(@RequestParam Long courseId) {
         return ResponseEntity.ok(sessionService.getByCourse(courseId));
     }
 
     // ======= 2️⃣ Lấy chi tiết 1 session =======
-    @GetMapping("/{id}")
+    @GetMapping("/detail")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(summary = "Lấy chi tiết Chương học", description = "Trả về thông tin session theo ID")
     @ApiResponse(responseCode = "200", description = "Thành công")
-    public ResponseEntity<SessionResponseDTO> getById(@PathVariable Long id) {
+    public ResponseEntity<SessionResponseDTO> getById(@RequestParam Long id) {
         return ResponseEntity.ok(sessionService.getById(id));
     }
 

@@ -53,10 +53,10 @@ public class ClassroomController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/detail")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER','ROLE_USER')")
     @Operation(summary = "Chi tiết lớp học")
-    public ResponseEntity<ClassroomResponseDTO> findById(@PathVariable Long id) {
+    public ResponseEntity<ClassroomResponseDTO> findById(@RequestParam Long id) {
         return ResponseEntity.ok(classroomService.findById(id));
     }
 
@@ -91,7 +91,7 @@ public class ClassroomController {
     }
 
     // =========== Thống kê lớp học ===========
-    @GetMapping("/{id}/stats")
+    @GetMapping("/stats")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER','ROLE_USER')")
     @Operation(summary = "Thống kê các chỉ số trong lớp học",
             description = "Trả về sĩ số, số HV active/completed/dropped, điểm trung bình và tỉ lệ điểm danh")
@@ -105,7 +105,7 @@ public class ClassroomController {
             @ApiResponse(responseCode = "404", description = "Không tìm thấy lớp học", content = @Content),
             @ApiResponse(responseCode = "500", description = "Lỗi hệ thống", content = @Content)
     })
-    public ResponseEntity<ClassStatsResponseDTO> getClassStats(@PathVariable Long id) {
+    public ResponseEntity<ClassStatsResponseDTO> getClassStats(@RequestParam Long id) {
         return ResponseEntity.ok(classroomService.getClassStats(id));
     }
 }

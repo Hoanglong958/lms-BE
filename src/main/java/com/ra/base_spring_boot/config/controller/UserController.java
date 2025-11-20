@@ -68,11 +68,11 @@ public class UserController {
     }
 
     // ===================== Lấy chi tiết người dùng theo ID =====================
-    @GetMapping("/{id}")
+    @GetMapping("/detail")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')") // Chỉ ADMIN mới xem chi tiết
     @Operation(summary = "Chi tiết người dùng", description = "Lấy thông tin theo id")
     @ApiResponse(responseCode = "200", description = "OK")
-    public ResponseEntity<?> getById(@Parameter(description = "ID người dùng") @PathVariable Long id) {
+    public ResponseEntity<?> getById(@Parameter(description = "ID người dùng") @RequestParam Long id) {
         UserResponse resp = userService.getById(id); // Gọi service lấy user theo ID
         return ResponseEntity.ok(
                 ResponseWrapper.builder()

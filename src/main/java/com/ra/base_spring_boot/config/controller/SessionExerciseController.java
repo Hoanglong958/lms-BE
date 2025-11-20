@@ -21,19 +21,19 @@ public class SessionExerciseController {
 
     private final ISessionExerciseService sessionExerciseService;
 
-    @GetMapping("/session/{sessionId}")
+    @GetMapping(params = "sessionId")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(summary = "Danh sách bài tập theo session", description = "Lấy tất cả bài tập thuộc 1 session cụ thể")
     @ApiResponse(responseCode = "200", description = "Thành công")
-    public ResponseEntity<List<SessionExerciseResponseDTO>> getBySession(@PathVariable Long sessionId) {
+    public ResponseEntity<List<SessionExerciseResponseDTO>> getBySession(@RequestParam Long sessionId) {
         return ResponseEntity.ok(sessionExerciseService.getBySessionId(sessionId));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/detail")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(summary = "Chi tiết bài tập", description = "Lấy thông tin chi tiết của 1 bài tập theo ID")
     @ApiResponse(responseCode = "200", description = "Thành công")
-    public ResponseEntity<SessionExerciseResponseDTO> getById(@PathVariable Long id) {
+    public ResponseEntity<SessionExerciseResponseDTO> getById(@RequestParam Long id) {
         return ResponseEntity.ok(sessionExerciseService.getById(id));
     }
 
