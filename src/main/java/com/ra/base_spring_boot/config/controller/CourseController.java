@@ -26,7 +26,7 @@ import org.springframework.data.domain.Sort;
 @RestController
 @RequestMapping("/api/v1/courses")
 @RequiredArgsConstructor
-@Tag(name = "Course", description = "Quản lý khóa học")
+@Tag(name = "03 - Courses", description = "Quản lý khóa học")
 public class CourseController {
 
     private final ICourseService courseService;

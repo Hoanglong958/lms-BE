@@ -34,9 +34,18 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String path = request.getRequestURI();
+        
+        // ✅ Bỏ qua preflight CORS (OPTIONS) để tránh xử lý JWT không cần thiết
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            log.debug("[JwtTokenFilter] Skipping JWT for OPTIONS request: {}", path);
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-        // ✅ Bỏ qua các endpoint public (không yêu cầu JWT)
-        if (isPublicEndpoint(path)) {
+        // ✅ Bỏ qua TẤT CẢ endpoint public (không yêu cầu JWT)
+        // Bao gồm: /api/v1/auth/** (login, register, forgot-password, reset-password)
+        if (isPublicEndpoint(path) || path.startsWith("/api/v1/auth/")) {
+            log.info("[JwtTokenFilter] Skipping JWT validation for public endpoint: {}", path);
             filterChain.doFilter(request, response);
             return;
         }
@@ -87,7 +96,22 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         return path.equals("/api/v1/auth/login")
                 || path.equals("/api/v1/auth/register")
                 || path.equals("/api/v1/auth/forgot-password")
-                || path.equals("/api/v1/auth/reset-password");
+                || path.startsWith("/api/v1/auth/forgot-password/")
+                || path.equals("/api/v1/auth/reset-password")
+                || path.startsWith("/api/v1/auth/reset-password/")
+                // Public password reset token endpoints (delayed OTP reveal flow)
+                || path.equals("/api/v1/password-reset-tokens/validate")
+                || path.equals("/api/v1/password-reset-tokens/latest") // DEV endpoint: Lấy token mới nhất để test
+                // Public user endpoints
+                || path.equals("/api/v1/users/check")
+                || path.equals("/v3/api-docs")
+                || path.startsWith("/v3/api-docs/")
+                || path.startsWith("/swagger-ui")
+                || path.equals("/swagger-ui.html")
+                || path.startsWith("/docs/")
+                || path.startsWith("/ws/")
+                || path.equals("/error")
+                || path.startsWith("/error/");
     }
 
     /**

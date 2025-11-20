@@ -8,6 +8,7 @@ import com.ra.base_spring_boot.security.principle.MyUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -27,7 +28,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity(jsr250Enabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -51,34 +52,32 @@ public class SecurityConfig {
                 }))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints: login, register, forgot/reset password
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // Cho phép toàn bộ endpoint dưới /api/v1/auth/** public (login/register/forgot/reset)
+                        .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(
-                                "/api/v1/auth/login",
-                                "/api/v1/auth/register",
-                                "/api/v1/auth/forgot-password",
-                                "/api/v1/auth/reset-password",
+
                                 "/api/v1/users/check",
-                                "/api/v1/password-reset-tokens/**",
-                                "/api/v1/password-reset-tokens/request",
+                                // Public password reset token endpoints (delayed OTP reveal flow)
                                 "/api/v1/password-reset-tokens/validate",
-                                "/api/v1/password-reset-tokens/mark-used",
-                                // Swagger / docs
+                                "/api/v1/password-reset-tokens/latest", // DEV endpoint: Lấy token mới nhất để test
+                                // Swagger and docs
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/docs/**",
-                                // WebSocket endpoints
-                                "/ws/**"
+                                // WebSocket endpoints (if any)
+                                "/ws/**",
+                                // Error handling endpoint
+                                "/error",
+                                "/error/**"
                         ).permitAll()
-                        // Admin endpoints
                         .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.name())
                         .requestMatchers("/api/v1/questions/**").hasAuthority(RoleName.ROLE_ADMIN.name())
-                        // User endpoints
-                        .requestMatchers("/api/v1/user/**").hasAuthority(RoleName.ROLE_USER.name())
-                        // All other requests require authentication
+                        // Các endpoint quản lý user: chỉ ADMIN
+                        .requestMatchers("/api/v1/users/**").hasAuthority(RoleName.ROLE_ADMIN.name())
                         .anyRequest().authenticated()
                 )
-
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(jwtEntryPoint)
@@ -106,4 +105,5 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration auth) throws Exception {
         return auth.getAuthenticationManager();
     }
+
 }

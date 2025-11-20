@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 @RestController
 @RequestMapping("/api/v1/lessons")
 @RequiredArgsConstructor
-@Tag(name = "Lesson", description = "Quản lý bài học (lesson)")
+@Tag(name = "04 - Lessons", description = "Quản lý bài học (lesson)")
 public class LessonController {
 
     private final ILessonService lessonService;

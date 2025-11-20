@@ -38,12 +38,16 @@ public class LessonVideoServiceImpl implements ILessonVideoService {
         Lesson lesson = lessonRepository.findById(dto.getLessonId())
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy bài học với id = " + dto.getLessonId()));
 
+        Integer nextOrderIndex = lessonVideoRepository.findMaxOrderIndexByLessonId(lesson.getId());
+        nextOrderIndex = (nextOrderIndex == null ? 0 : nextOrderIndex) + 1;
+
         LessonVideo video = LessonVideo.builder()
                 .lesson(lesson)
                 .title(dto.getTitle())
                 .videoUrl(dto.getVideoUrl())
                 .description(dto.getDescription())
                 .durationSeconds(dto.getDurationSeconds())
+                .orderIndex(nextOrderIndex)
                 .build();
 
         LessonVideo saved = lessonVideoRepository.save(video);

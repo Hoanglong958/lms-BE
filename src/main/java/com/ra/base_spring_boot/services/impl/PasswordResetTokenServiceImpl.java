@@ -28,8 +28,8 @@ public class PasswordResetTokenServiceImpl implements IPasswordResetTokenService
     @Override
     @Transactional
     public PasswordResetTokenResponse create(CreatePasswordResetTokenRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new HttpBadRequest("Email không tồn tại trong hệ thống!"));
+        User user = userRepository.findByGmail(request.getGmail())
+                .orElseThrow(() -> new HttpBadRequest("Gmail không tồn tại trong hệ thống!"));
 
         tokenRepository.deleteByUser(user);
 
@@ -62,6 +62,7 @@ public class PasswordResetTokenServiceImpl implements IPasswordResetTokenService
     }
 
     @Override
+    @Transactional
     public void markUsed(String token) {
         PasswordResetToken t = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new HttpBadRequest("Token không hợp lệ!"));

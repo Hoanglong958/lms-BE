@@ -13,19 +13,19 @@ import java.util.List;
 import java.util.Optional;
 
 public interface IUserRepository extends JpaRepository<User, Long> {
-    // Dùng email để đăng nhập
-    Optional<User> findByEmail(String email);
+    // Dùng gmail để đăng nhập
+    Optional<User> findByGmail(String gmail);
 
     // Dùng cho quên mật khẩu
     Optional<User> findByResetToken(String token);
 
-    // Kiểm tra email tồn tại (đăng ký)
-    boolean existsByEmail(String email);
+    // Kiểm tra gmail tồn tại (đăng ký)
+    boolean existsByGmail(String gmail);
 
-    // Kiểm tra email tồn tại (không phân biệt hoa thường)
-    boolean existsByEmailIgnoreCase(String email);
+    // Kiểm tra gmail tồn tại (không phân biệt hoa thường)
+    boolean existsByGmailIgnoreCase(String gmail);
 
-    @Query("SELECT u FROM User u WHERE (:keyword IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND (:role IS NULL OR u.role = :role) AND (:active IS NULL OR u.isActive = :active)")
+    @Query("SELECT u FROM User u WHERE (:keyword IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.gmail) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND (:role IS NULL OR u.role = :role) AND (:active IS NULL OR u.isActive = :active) ORDER BY u.createdAt DESC")
     Page<User> search(@Param("keyword") String keyword,
                       @Param("role") RoleName role,
                       @Param("active") Boolean active,

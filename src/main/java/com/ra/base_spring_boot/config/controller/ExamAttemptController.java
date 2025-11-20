@@ -19,7 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/exam-attempts")
 @RequiredArgsConstructor
-@Tag(name = "ExamAttempt", description = "Quản lý lượt làm bài thi (exam attempts)")
+@Tag(name = "10 - Exam Attempts", description = "Quản lý lượt làm bài thi (exam attempts)")
 public class ExamAttemptController {
 
     private final IExamAttemptService attemptService;

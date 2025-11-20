@@ -8,7 +8,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ForgotPasswordRequest {
-    @NotBlank(message = "Email không được để trống")
-    @Email(message = "Email không hợp lệ")
-    private String email;
+    @NotBlank(message = "Gmail không được để trống")
+    @Email(message = "Gmail không hợp lệ")
+    private String gmail;
 }

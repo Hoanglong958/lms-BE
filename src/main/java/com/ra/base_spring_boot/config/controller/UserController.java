@@ -14,6 +14,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,17 +24,17 @@ import org.springframework.web.bind.annotation.*;
 @RestController // Đánh dấu đây là REST controller, trả về JSON
 @RequestMapping("/api/v1/users") // Base path cho tất cả endpoint liên quan đến User
 @RequiredArgsConstructor // Tự động sinh constructor cho các field final
-@Tag(name = "User", description = "Quản lý người dùng") // Dùng cho Swagger/OpenAPI
+@Tag(name = "02 - Users", description = "Quản lý người dùng") // Dùng cho Swagger/OpenAPI
 public class UserController {
 
     private final IUserService userService; // Service xử lý logic liên quan đến User
 
-    // ===================== Kiểm tra tồn tại email =====================
+    // ===================== Kiểm tra tồn tại gmail =====================
     @GetMapping("/check")
-    @Operation(summary = "Kiểm tra tồn tại email", description = "Trả về true nếu email đã tồn tại")
+    @Operation(summary = "Kiểm tra tồn tại gmail", description = "Trả về true nếu gmail đã tồn tại")
     @ApiResponse(responseCode = "200", description = "OK") // Mô tả response cho Swagger
-    public ResponseEntity<?> checkEmailExists(@RequestParam String email) {
-        boolean exists = userService.emailExists(email); // Gọi service kiểm tra email
+    public ResponseEntity<?> checkEmailExists(@RequestParam String gmail) {
+        boolean exists = userService.gmailExists(gmail); // Gọi service kiểm tra gmail
         return ResponseEntity.ok(
                 ResponseWrapper.builder() // Dùng ResponseWrapper để chuẩn hóa response
                         .status(HttpStatus.OK)
@@ -54,7 +56,8 @@ public class UserController {
             Pageable pageable // Hỗ trợ phân trang/sắp xếp
     ) {
         RoleName roleFilter = parseRole(role); // Chuyển role từ String sang enum
-        Page<UserResponse> page = userService.search(keyword, roleFilter, isActive, pageable); // Gọi service tìm kiếm
+        Pageable safePageable = sanitizePageable(pageable);
+        Page<UserResponse> page = userService.search(keyword, roleFilter, isActive, safePageable); // Gọi service tìm kiếm
         return ResponseEntity.ok(
                 ResponseWrapper.builder()
                         .status(HttpStatus.OK)
@@ -145,5 +148,26 @@ public class UserController {
         if ("ADMIN".equals(s) || "ROLE_ADMIN".equals(s)) return RoleName.ROLE_ADMIN;
         if ("USER".equals(s) || "ROLE_USER".equals(s)) return RoleName.ROLE_USER;
         return null; // Nếu không hợp lệ trả về null
+    }
+
+    // ===================== Làm sạch tham số phân trang/sắp xếp =====================
+    private Pageable sanitizePageable(Pageable pageable) {
+        java.util.Set<String> allowed = java.util.Set.of(
+                "id", "fullName", "gmail", "phone", "role", "isActive", "createdAt"
+        );
+
+        Sort incoming = pageable.getSort();
+        java.util.List<Sort.Order> safeOrders = new java.util.ArrayList<>();
+        for (Sort.Order o : incoming) {
+            if (allowed.contains(o.getProperty())) {
+                safeOrders.add(o);
+            }
+        }
+
+        Sort sort = safeOrders.isEmpty()
+                ? Sort.by(Sort.Direction.DESC, "createdAt")
+                : Sort.by(safeOrders);
+
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
     }
 }

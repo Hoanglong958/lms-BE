@@ -24,6 +24,8 @@ spring:
 springdoc:
   swagger-ui:
     path: /docs
+    tags-sorter: alpha       # Sắp xếp các tag theo tên (A-Z, 01-, 02-...)
+    operations-sorter: alpha # Sắp xếp các endpoint trong từng tag theo tên
 
 jwt:
   secret:

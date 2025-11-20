@@ -17,7 +17,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 @RestController
 @RequestMapping("/api/v1/exams")
 @RequiredArgsConstructor
-@Tag(name = "Exam", description = "Quản lý kỳ thi")
+@Tag(name = "09 - Exams", description = "Quản lý kỳ thi")
 public class    ExamController {
 
     private final IExamService examService;

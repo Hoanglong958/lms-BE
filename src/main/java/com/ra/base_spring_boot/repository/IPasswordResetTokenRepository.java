@@ -11,4 +11,7 @@ public interface IPasswordResetTokenRepository extends JpaRepository<PasswordRes
     Optional<PasswordResetToken> findByToken(String token);
     void deleteByUser(User user);
     long deleteByExpiresAtBefore(LocalDateTime cutoff);
+    
+    // Dev endpoint: Lấy token mới nhất để test (không cần frontend/email)
+    Optional<PasswordResetToken> findTopByOrderByCreatedAtDesc();
 }
