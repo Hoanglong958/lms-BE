@@ -1,11 +1,13 @@
 package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.Classroom.*;
+import com.ra.base_spring_boot.dto.Gmail.EmailDTO;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.*;
+import com.ra.base_spring_boot.model.Class;
 import com.ra.base_spring_boot.model.constants.*;
 import com.ra.base_spring_boot.repository.*;
-import com.ra.base_spring_boot.services.IClassroomService;
+import com.ra.base_spring_boot.services.IClassService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,21 +18,23 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class ClassroomServiceImpl implements IClassroomService {
+public class ClassServiceImpl implements IClassService {
 
-    private final IClassroomRepository classroomRepository;
+    private final IClassRepository classroomRepository;
     private final IClassStudentRepository classStudentRepository;
     private final IClassTeacherRepository classTeacherRepository;
     private final IClassCourseRepository classCourseRepository;
     private final IUserRepository userRepository;
     private final ICourseRepository courseRepository;
+    private final GmailService gmailService;
 
     @Override
     public ClassroomResponseDTO create(ClassroomRequestDTO dto) {
-        Classroom classroom = Classroom.builder()
+        Class aClass = Class.builder()
                 .className(requireText(dto.getClassName(), "Tên lớp học không được để trống"))
                 .description(dto.getDescription())
                 .maxStudents(dto.getMaxStudents() == null ? 30 : dto.getMaxStudents())
@@ -39,44 +43,30 @@ public class ClassroomServiceImpl implements IClassroomService {
                 .scheduleInfo(dto.getScheduleInfo())
                 .status(parseStatus(dto.getStatus()))
                 .build();
-        validateDateRange(classroom.getStartDate(), classroom.getEndDate());
-        classroomRepository.save(classroom);
-        return toClassroomDto(classroom);
+        validateDateRange(aClass.getStartDate(), aClass.getEndDate());
+        classroomRepository.save(aClass);
+        return toClassroomDto(aClass);
     }
 
     @Override
     public ClassroomResponseDTO update(Long id, ClassroomRequestDTO dto) {
-        Classroom classroom = getClassroom(id);
-        if (dto.getClassName() != null) {
-            classroom.setClassName(dto.getClassName());
-        }
-        if (dto.getDescription() != null) {
-            classroom.setDescription(dto.getDescription());
-        }
-        if (dto.getMaxStudents() != null && dto.getMaxStudents() > 0) {
-            classroom.setMaxStudents(dto.getMaxStudents());
-        }
-        if (dto.getStartDate() != null) {
-            classroom.setStartDate(parseDate(dto.getStartDate(), "Ngày bắt đầu lớp học không hợp lệ"));
-        }
-        if (dto.getEndDate() != null) {
-            classroom.setEndDate(parseOptionalDate(dto.getEndDate()));
-        }
-        if (dto.getScheduleInfo() != null) {
-            classroom.setScheduleInfo(dto.getScheduleInfo());
-        }
-        if (dto.getStatus() != null) {
-            classroom.setStatus(parseStatus(dto.getStatus()));
-        }
-        validateDateRange(classroom.getStartDate(), classroom.getEndDate());
-        classroomRepository.save(classroom);
-        return toClassroomDto(classroom);
+        Class aClass = getClassroom(id);
+        if (dto.getClassName() != null) aClass.setClassName(dto.getClassName());
+        if (dto.getDescription() != null) aClass.setDescription(dto.getDescription());
+        if (dto.getMaxStudents() != null && dto.getMaxStudents() > 0) aClass.setMaxStudents(dto.getMaxStudents());
+        if (dto.getStartDate() != null) aClass.setStartDate(parseDate(dto.getStartDate(), "Ngày bắt đầu lớp học không hợp lệ"));
+        if (dto.getEndDate() != null) aClass.setEndDate(parseOptionalDate(dto.getEndDate()));
+        if (dto.getScheduleInfo() != null) aClass.setScheduleInfo(dto.getScheduleInfo());
+        if (dto.getStatus() != null) aClass.setStatus(parseStatus(dto.getStatus()));
+        validateDateRange(aClass.getStartDate(), aClass.getEndDate());
+        classroomRepository.save(aClass);
+        return toClassroomDto(aClass);
     }
 
     @Override
     public void delete(Long id) {
-        Classroom classroom = getClassroom(id);
-        classroomRepository.delete(classroom);
+        Class aClass = getClassroom(id);
+        classroomRepository.delete(aClass);
     }
 
     @Override
@@ -106,20 +96,20 @@ public class ClassroomServiceImpl implements IClassroomService {
     @Override
     @Transactional
     public ClassStudentResponseDTO enrollStudent(ClassStudentRequestDTO dto) {
-        Classroom classroom = getClassroom(dto.getClassId());
+        Class aClass = getClassroom(dto.getClassId());
         User student = userRepository.findById(dto.getStudentId())
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy học viên với id = " + dto.getStudentId()));
         if (student.getRole() != RoleName.ROLE_USER) {
             throw new HttpBadRequest("student_id chỉ chấp nhận tài khoản role STUDENT (ROLE_USER)");
         }
-        if (classStudentRepository.existsByClazzIdAndStudentId(classroom.getId(), student.getId())) {
+        if (classStudentRepository.existsByClassroomIdAndStudentId(aClass.getId(), student.getId())) {
             throw new HttpBadRequest("Học viên đã tồn tại trong lớp");
         }
-        if (classStudentRepository.countByClazzId(classroom.getId()) >= classroom.getMaxStudents()) {
+        if (classStudentRepository.countByClassroomId(aClass.getId()) >= aClass.getMaxStudents()) {
             throw new HttpBadRequest("Lớp đã đủ sĩ số tối đa");
         }
         ClassStudent enrollment = ClassStudent.builder()
-                .clazz(classroom)
+                .classroom(aClass)
                 .student(student)
                 .status(parseEnrollmentStatus(dto.getStatus()))
                 .finalScore(normalizeScore(dto.getFinalScore()))
@@ -127,19 +117,32 @@ public class ClassroomServiceImpl implements IClassroomService {
                 .note(dto.getNote())
                 .build();
         classStudentRepository.save(enrollment);
+
+        // ======= Gửi email thông báo =======
+        gmailService.sendEmail(new EmailDTO(
+                student.getGmail(),
+                "Bạn đã được thêm vào lớp",
+                "added_to_class",
+                Map.of(
+                        "username", student.getFullName(),
+                        "className", aClass.getClassName()
+                )
+        ));
+
+
         return toStudentDto(enrollment);
     }
 
     @Override
-    public void removeStudent(Long classId, Long studentId) {
-        ClassStudent enrollment = classStudentRepository.findByClazzIdAndStudentId(classId, studentId)
+    public void removeStudent(Long classroomId, Long studentId) {
+        ClassStudent enrollment = classStudentRepository.findByClassroomIdAndStudentId(classroomId, studentId)
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy học viên trong lớp"));
         classStudentRepository.delete(enrollment);
     }
 
     @Override
-    public List<ClassStudentResponseDTO> findStudents(Long classId) {
-        return classStudentRepository.findByClazzId(classId)
+    public List<ClassStudentResponseDTO> findStudents(Long classroomId) {
+        return classStudentRepository.findByClassroomId(classroomId)
                 .stream()
                 .map(this::toStudentDto)
                 .toList();
@@ -148,17 +151,17 @@ public class ClassroomServiceImpl implements IClassroomService {
     @Override
     @Transactional
     public ClassTeacherResponseDTO assignTeacher(ClassTeacherRequestDTO dto) {
-        Classroom classroom = getClassroom(dto.getClassId());
+        Class aClass = getClassroom(dto.getClassId());
         User teacher = userRepository.findById(dto.getTeacherId())
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy giảng viên với id = " + dto.getTeacherId()));
         if (teacher.getRole() != RoleName.ROLE_TEACHER) {
             throw new HttpBadRequest("teacher_id chỉ chấp nhận tài khoản role TEACHER");
         }
-        if (classTeacherRepository.existsByClazzIdAndTeacherId(classroom.getId(), teacher.getId())) {
+        if (classTeacherRepository.existsByClazzIdAndTeacherId(aClass.getId(), teacher.getId())) {
             throw new HttpBadRequest("Giảng viên đã được phân công cho lớp này");
         }
         ClassTeacher assignment = ClassTeacher.builder()
-                .clazz(classroom)
+                .clazz(aClass)
                 .teacher(teacher)
                 .role(parseTeacherRole(dto.getRole()))
                 .note(dto.getNote())
@@ -185,18 +188,39 @@ public class ClassroomServiceImpl implements IClassroomService {
     @Override
     @Transactional
     public ClassCourseResponseDTO assignCourse(ClassCourseRequestDTO dto) {
-        Classroom classroom = getClassroom(dto.getClassId());
+        Class aClass = getClassroom(dto.getClassId());
         Course course = courseRepository.findById(dto.getCourseId())
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học với id = " + dto.getCourseId()));
-        if (classCourseRepository.existsByClazzIdAndCourseId(classroom.getId(), course.getId())) {
+        if (classCourseRepository.existsByClazzIdAndCourseId(aClass.getId(), course.getId())) {
             throw new HttpBadRequest("Khóa học đã được gán cho lớp");
         }
         ClassCourse classCourse = ClassCourse.builder()
-                .clazz(classroom)
+                .clazz(aClass)
                 .course(course)
                 .note(dto.getNote())
                 .build();
         classCourseRepository.save(classCourse);
+
+
+        List<ClassStudent> students = classStudentRepository.findByClassroomId(aClass.getId());
+
+        for (ClassStudent s : students) {
+            User student = s.getStudent();
+            gmailService.sendEmail(new EmailDTO(
+                    student.getGmail(),
+                    "Khóa học mới được thêm vào lớp",
+                    "new_course",
+                    Map.of(
+                            "username", student.getFullName(),
+                            "className", aClass.getClassName(),
+                            "courseName", course.getTitle()
+                    )
+            ));
+        }
+
+
+
+
         return toCourseDto(classCourse);
     }
 
@@ -217,12 +241,12 @@ public class ClassroomServiceImpl implements IClassroomService {
 
     @Override
     public ClassStatsResponseDTO getClassStats(Long classId) {
-        Classroom classroom = getClassroom(classId);
+        Class aClass = getClassroom(classId);
 
-        long totalStudents = classStudentRepository.countByClazzId(classId);
-        long activeStudents = classStudentRepository.countByClazzIdAndStatus(classId, ClassEnrollmentStatus.ACTIVE);
-        long completedStudents = classStudentRepository.countByClazzIdAndStatus(classId, ClassEnrollmentStatus.COMPLETED);
-        long droppedStudents = classStudentRepository.countByClazzIdAndStatus(classId, ClassEnrollmentStatus.DROPPED);
+        long totalStudents = classStudentRepository.countByClassroomId(classId);
+        long activeStudents = classStudentRepository.countByClassroomIdAndStatus(classId, ClassEnrollmentStatus.ACTIVE);
+        long completedStudents = classStudentRepository.countByClassroomIdAndStatus(classId, ClassEnrollmentStatus.COMPLETED);
+        long droppedStudents = classStudentRepository.countByClassroomIdAndStatus(classId, ClassEnrollmentStatus.DROPPED);
 
         long totalTeachers = classTeacherRepository.countByClazzId(classId);
         long instructors = classTeacherRepository.countByClazzIdAndRole(classId, ClassTeacherRole.INSTRUCTOR);
@@ -230,13 +254,13 @@ public class ClassroomServiceImpl implements IClassroomService {
 
         long totalCourses = classCourseRepository.countByClazzId(classId);
 
-        BigDecimal avgScore = classStudentRepository.averageFinalScoreByClassId(classId);
-        BigDecimal avgAttendance = classStudentRepository.averageAttendanceRateByClassId(classId);
+        BigDecimal avgScore = classStudentRepository.averageFinalScoreByClassroomId(classId);
+        BigDecimal avgAttendance = classStudentRepository.averageAttendanceRateByClassroomId(classId);
 
         return ClassStatsResponseDTO.builder()
-                .classId(classroom.getId())
-                .className(classroom.getClassName())
-                .maxStudents(classroom.getMaxStudents())
+                .classId(aClass.getId())
+                .className(aClass.getClassName())
+                .maxStudents(aClass.getMaxStudents())
                 .totalStudents(totalStudents)
                 .activeStudents(activeStudents)
                 .completedStudents(completedStudents)
@@ -250,27 +274,29 @@ public class ClassroomServiceImpl implements IClassroomService {
                 .build();
     }
 
-    private Classroom getClassroom(Long id) {
+    // ==================== PRIVATE HELPERS ====================
+
+    private Class getClassroom(Long id) {
         return classroomRepository.findById(id)
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy lớp học với id = " + id));
     }
 
-    private ClassroomResponseDTO toClassroomDto(Classroom classroom) {
-        long classId = classroom.getId();
-        long studentCount = classStudentRepository.countByClazzId(classId);
+    private ClassroomResponseDTO toClassroomDto(Class aClass) {
+        long classId = aClass.getId();
+        long studentCount = classStudentRepository.countByClassroomId(classId);
         long teacherCount = classTeacherRepository.countByClazzId(classId);
         long courseCount = classCourseRepository.countByClazzId(classId);
         return ClassroomResponseDTO.builder()
-                .id(classroom.getId())
-                .className(classroom.getClassName())
-                .description(classroom.getDescription())
-                .maxStudents(classroom.getMaxStudents())
-                .startDate(classroom.getStartDate())
-                .endDate(classroom.getEndDate())
-                .scheduleInfo(classroom.getScheduleInfo())
-                .status(classroom.getStatus().name())
-                .createdAt(classroom.getCreatedAt())
-                .updatedAt(classroom.getUpdatedAt())
+                .id(classId)
+                .className(aClass.getClassName())
+                .description(aClass.getDescription())
+                .maxStudents(aClass.getMaxStudents())
+                .startDate(aClass.getStartDate())
+                .endDate(aClass.getEndDate())
+                .scheduleInfo(aClass.getScheduleInfo())
+                .status(aClass.getStatus().name())
+                .createdAt(aClass.getCreatedAt())
+                .updatedAt(aClass.getUpdatedAt())
                 .totalStudents(studentCount)
                 .totalTeachers(teacherCount)
                 .totalCourses(courseCount)
@@ -280,8 +306,8 @@ public class ClassroomServiceImpl implements IClassroomService {
     private ClassStudentResponseDTO toStudentDto(ClassStudent classStudent) {
         return ClassStudentResponseDTO.builder()
                 .id(classStudent.getId())
-                .classId(classStudent.getClazz().getId())
-                .className(classStudent.getClazz().getClassName())
+                .classId(classStudent.getClassroom().getId())
+                .className(classStudent.getClassroom().getClassName())
                 .studentId(classStudent.getStudent().getId())
                 .studentName(classStudent.getStudent().getFullName())
                 .status(classStudent.getStatus().name())
@@ -325,9 +351,7 @@ public class ClassroomServiceImpl implements IClassroomService {
     }
 
     private LocalDate parseDate(String raw, String message) {
-        if (raw == null || raw.isBlank()) {
-            throw new HttpBadRequest(message);
-        }
+        if (raw == null || raw.isBlank()) throw new HttpBadRequest(message);
         try {
             return LocalDate.parse(raw);
         } catch (DateTimeParseException exception) {
@@ -336,9 +360,7 @@ public class ClassroomServiceImpl implements IClassroomService {
     }
 
     private LocalDate parseOptionalDate(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return null;
-        }
+        if (raw == null || raw.isBlank()) return null;
         try {
             return LocalDate.parse(raw);
         } catch (DateTimeParseException exception) {
@@ -348,15 +370,11 @@ public class ClassroomServiceImpl implements IClassroomService {
 
     private void validateDateRange(LocalDate start, LocalDate end) {
         if (start == null) return;
-        if (end != null && end.isBefore(start)) {
-            throw new HttpBadRequest("Ngày kết thúc không được trước ngày bắt đầu");
-        }
+        if (end != null && end.isBefore(start)) throw new HttpBadRequest("Ngày kết thúc không được trước ngày bắt đầu");
     }
 
     private ClassStatus parseStatus(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return ClassStatus.UPCOMING;
-        }
+        if (raw == null || raw.isBlank()) return ClassStatus.UPCOMING;
         try {
             return ClassStatus.valueOf(raw.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
@@ -365,9 +383,7 @@ public class ClassroomServiceImpl implements IClassroomService {
     }
 
     private ClassEnrollmentStatus parseEnrollmentStatus(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return ClassEnrollmentStatus.ACTIVE;
-        }
+        if (raw == null || raw.isBlank()) return ClassEnrollmentStatus.ACTIVE;
         try {
             return ClassEnrollmentStatus.valueOf(raw.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
@@ -376,9 +392,7 @@ public class ClassroomServiceImpl implements IClassroomService {
     }
 
     private ClassTeacherRole parseTeacherRole(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return ClassTeacherRole.INSTRUCTOR;
-        }
+        if (raw == null || raw.isBlank()) return ClassTeacherRole.INSTRUCTOR;
         try {
             return ClassTeacherRole.valueOf(raw.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
@@ -387,13 +401,7 @@ public class ClassroomServiceImpl implements IClassroomService {
     }
 
     private BigDecimal normalizeScore(BigDecimal value) {
-        if (value == null) {
-            return BigDecimal.ZERO;
-        }
-        if (value.compareTo(BigDecimal.ZERO) < 0) {
-            return BigDecimal.ZERO;
-        }
+        if (value == null || value.compareTo(BigDecimal.ZERO) < 0) return BigDecimal.ZERO;
         return value;
     }
 }
-

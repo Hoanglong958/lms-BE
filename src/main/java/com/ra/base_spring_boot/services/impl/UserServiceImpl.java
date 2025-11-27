@@ -93,11 +93,15 @@ public class UserServiceImpl implements IUserService {
                 .isActive(active)
                 .createdAt(LocalDateTime.now())
                 .build();
+
         try {
             userRepository.save(user);
+
+
         } catch (org.springframework.dao.DataIntegrityViolationException ex) {
             throw new HttpBadRequest("Dữ liệu không hợp lệ hoặc gmail đã tồn tại!");
         }
+
         return toResponse(user);
     }
 

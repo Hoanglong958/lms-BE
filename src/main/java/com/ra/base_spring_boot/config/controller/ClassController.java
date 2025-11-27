@@ -3,7 +3,7 @@ package com.ra.base_spring_boot.config.controller;
 import com.ra.base_spring_boot.dto.Classroom.ClassStatsResponseDTO;
 import com.ra.base_spring_boot.dto.Classroom.ClassroomRequestDTO;
 import com.ra.base_spring_boot.dto.Classroom.ClassroomResponseDTO;
-import com.ra.base_spring_boot.services.IClassroomService;
+import com.ra.base_spring_boot.services.IClassService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,9 +25,9 @@ import java.util.List;
 @RequestMapping("/api/v1/classes")
 @RequiredArgsConstructor
 @Tag(name = "13 - Classes", description = "Quản lý lớp học, học viên, giảng viên và khóa học")
-public class ClassroomController {
+public class ClassController {
 
-    private final IClassroomService classroomService;
+    private final IClassService classroomService;
 
     // =========== CRUD lớp học ===========
     @PostMapping

@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.services.impl;
 
+import com.ra.base_spring_boot.dto.Gmail.EmailDTO;
 import com.ra.base_spring_boot.dto.req.*;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
@@ -22,10 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +35,8 @@ public class AuthServiceImpl implements IAuthService {
     private final JwtProvider jwtProvider;
     private final IPasswordResetTokenRepository passwordResetTokenRepository;
     private final IPasswordResetTokenService passwordResetTokenService;
+    private final GmailService gmailService;
+
 
     // ======================= Đăng ký =========================
     @Override
@@ -75,7 +75,6 @@ public class AuthServiceImpl implements IAuthService {
     if (!formRegister.getPassword().matches(passwordRegex)) {
         throw new HttpBadRequest("Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt!");
     }
-        // Phone is optional. If provided, you may validate format here (currently skipped).
 
         // ===== Validate Role =====
         RoleName role = RoleName.ROLE_USER; // mặc định USER
@@ -95,19 +94,30 @@ public class AuthServiceImpl implements IAuthService {
         User user = User.builder()
                 .fullName(formRegister.getFullName())
                 .gmail(formRegister.getGmail())
-                .password(passwordEncoder.encode(formRegister.getPassword()))
-                .phone(formRegister.getPhone())      // <<< ĐÃ THÊM
-                .role(role)
+                .password(passwordEncoder.encode(formRegister.getPassword())) // encode 1 lần
+                .phone(formRegister.getPhone())
+                .role(RoleName.ROLE_USER)          // mặc định user mới
                 .isActive(true)
                 .createdAt(LocalDateTime.now())
                 .build();
 
         try {
+            // Lưu user vào DB
             userRepository.save(user);
+
+            // Gửi email thông báo khi tài khoản được tạo
+            gmailService.sendEmail(new EmailDTO(
+                    user.getGmail(),
+                    "Chào mừng tài khoản mới",
+                    "user_created",
+                    Map.of("username", user.getFullName())
+            ));
         } catch (org.springframework.dao.DataIntegrityViolationException ex) {
-            // Trường hợp hiếm khi race condition hoặc ràng buộc DB khác gây lỗi 500
+            // Gmail đã tồn tại hoặc ràng buộc DB khác
             throw new HttpBadRequest("Dữ liệu không hợp lệ hoặc gmail đã tồn tại!");
         }
+
+
     }
 
     // ======================= Đăng nhập =========================
@@ -156,16 +166,32 @@ public class AuthServiceImpl implements IAuthService {
         userRepository.save(user);
     }
 
-    // ======================= Quên mật khẩu =========================
     @Override
     public void forgotPassword(ForgotPasswordRequest request) {
-        // Chuyển sang luồng mới: tạo token qua PasswordResetTokenService
+        // 1️⃣ Tạo token reset
         CreatePasswordResetTokenRequest createReq = new CreatePasswordResetTokenRequest();
         createReq.setGmail(request.getGmail());
-        var resp = passwordResetTokenService.create(createReq);
-        System.out.println("🔗 Link đặt lại mật khẩu:");
-        System.out.println("http://localhost:8081/api/v1/auth/reset-password?token=" + resp.getToken());
+        var tokenResp = passwordResetTokenService.create(createReq);
+
+        // 2️⃣ Tạo link reset hoàn chỉnh
+        String resetLink = "http://localhost:5173/reset-password?token=" + tokenResp.getToken();
+
+        // 3️⃣ Gửi mail
+        gmailService.sendEmail(new EmailDTO(
+                request.getGmail(),                  // Người nhận
+                "Đặt lại mật khẩu",                  // Tiêu đề mail
+                "forgot_password",                   // Template Thymeleaf
+                Map.of(
+                        "username", request.getGmail(),
+                        "resetLink", resetLink
+                )
+        ));
+
+        // 4️⃣ Không cần in ra console nữa, backend đã gửi email
     }
+
+
+
 
     // ======================= Đặt lại mật khẩu =========================
     @Override

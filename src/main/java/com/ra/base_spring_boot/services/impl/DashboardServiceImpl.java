@@ -30,7 +30,7 @@ public class DashboardServiceImpl implements IDashboardService {
     private final IQuizResultRepository quizResultRepo;
     private final IUserCourseRepository userCourseRepo;
     private final IAssignmentRepository assignmentRepo; // optional (may be null if not injected)
-    private final IClassroomRepository classRepo; // optional (may be null if not injected)
+    private final IClassRepository classRepo; // optional (may be null if not injected)
 
     private double calcGrowth(long current, long previous) {
         if (previous == 0) return current > 0 ? 100.0 : 0.0;

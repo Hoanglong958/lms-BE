@@ -11,20 +11,21 @@ import java.util.Optional;
 
 public interface IClassStudentRepository extends JpaRepository<ClassStudent, Long> {
 
-    boolean existsByClazzIdAndStudentId(Long classId, Long studentId);
+    boolean existsByClassroomIdAndStudentId(Long classroomId, Long studentId);
 
-    Optional<ClassStudent> findByClazzIdAndStudentId(Long classId, Long studentId);
+    Optional<ClassStudent> findByClassroomIdAndStudentId(Long classroomId, Long studentId);
 
-    List<ClassStudent> findByClazzId(Long classId);
+    List<ClassStudent> findByClassroomId(Long classroomId);
 
-    long countByClazzId(Long classId);
+    long countByClassroomId(Long classroomId);
 
-    long countByClazzIdAndStatus(Long classId, ClassEnrollmentStatus status);
+    long countByClassroomIdAndStatus(Long classroomId, ClassEnrollmentStatus status);
 
-    @Query("SELECT COALESCE(AVG(cs.finalScore),0) FROM ClassStudent cs WHERE cs.clazz.id = :classId")
-    BigDecimal averageFinalScoreByClassId(Long classId);
+    @Query("SELECT COALESCE(AVG(cs.finalScore),0) FROM ClassStudent cs WHERE cs.classroom.id = :classroomId")
+    BigDecimal averageFinalScoreByClassroomId(Long classroomId);
 
-    @Query("SELECT COALESCE(AVG(cs.attendanceRate),0) FROM ClassStudent cs WHERE cs.clazz.id = :classId")
-    BigDecimal averageAttendanceRateByClassId(Long classId);
+    @Query("SELECT COALESCE(AVG(cs.attendanceRate),0) FROM ClassStudent cs WHERE cs.classroom.id = :classroomId")
+    BigDecimal averageAttendanceRateByClassroomId(Long classroomId);
 }
+
 

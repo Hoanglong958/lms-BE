@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.Exam.ExamRequestDTO;
 import com.ra.base_spring_boot.dto.Exam.ExamResponseDTO;
+import com.ra.base_spring_boot.dto.Gmail.EmailDTO;
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.model.constants.ExamStatus;
 import com.ra.base_spring_boot.repository.*;
@@ -13,7 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,6 +26,8 @@ public class ExamServiceImpl implements IExamService {
     private final IExamRepository examRepository;
     private final ICourseRepository courseRepository;
     private final IQuestionRepository questionRepository;
+    private final GmailService gmailService;
+    private final IClassStudentRepository classStudentRepository;
 
     // ======= Tạo kỳ thi (ADMIN) =======
     @Override
@@ -73,7 +78,28 @@ public class ExamServiceImpl implements IExamService {
         }
 
         exam.setTotalQuestions(exam.getExamQuestions().size());
+
+
         examRepository.save(exam);
+        // ====== Gửi email thông báo bài thi mới ======
+        List<ClassStudent> students = classStudentRepository.findByClassroomId(exam.getCourse().getId());
+// hoặc nếu có liên kết lớp-có khóa học thì lấy theo classId
+
+        for (ClassStudent s : students) {
+            User student = s.getStudent();
+            gmailService.sendEmail(new EmailDTO(
+                    student.getGmail(),
+                    "📢 Thông báo bài thi mới",
+                    "new_exam",
+                    Map.of(
+                            "username", student.getFullName(),
+                            "courseName", exam.getCourse().getTitle(),
+                            "examTitle", exam.getTitle(),
+                            "startTime", exam.getStartTime(),
+                            "endTime", exam.getEndTime()
+                    )
+            ));
+        }
 
         return mapToResponse(exam);
     }

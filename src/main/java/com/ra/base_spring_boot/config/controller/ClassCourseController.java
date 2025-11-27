@@ -2,7 +2,7 @@ package com.ra.base_spring_boot.config.controller;
 
 import com.ra.base_spring_boot.dto.Classroom.ClassCourseRequestDTO;
 import com.ra.base_spring_boot.dto.Classroom.ClassCourseResponseDTO;
-import com.ra.base_spring_boot.services.IClassroomService;
+import com.ra.base_spring_boot.services.IClassService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ import java.util.List;
 @Tag(name = "16 - Class Courses", description = "Quản lý khóa học gán vào lớp")
 public class ClassCourseController {
 
-    private final IClassroomService classroomService;
+    private final IClassService classroomService;
 
     @PostMapping("/courses")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER')")
