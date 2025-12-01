@@ -63,13 +63,7 @@ public class DashboardController {
         return ResponseEntity.ok(dashboardService.getUserGrowthByWeek(weeks));
     }
 
-    // ======= Top học viên =======
-    @GetMapping("/top-students")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
-    @Operation(summary = "Top học viên", description = "Danh sách 10 học viên có điểm trung bình cao nhất")
-    public ResponseEntity<List<UserResponse>> getTopStudents() {
-        return ResponseEntity.ok(dashboardService.getTopStudents(10));
-    }
+
 
     // ======= Người dùng mới 30 ngày =======
     @GetMapping("/new-users")

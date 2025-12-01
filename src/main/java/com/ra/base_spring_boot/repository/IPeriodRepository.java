@@ -1,0 +1,38 @@
+package com.ra.base_spring_boot.repository;
+
+import com.ra.base_spring_boot.model.Period;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalTime;
+
+@Repository
+public interface IPeriodRepository extends JpaRepository<Period, Long> {
+
+
+        boolean existsByName(String name);
+
+        boolean existsByNameAndIdNot(String name, Long id);
+
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END " +
+            "FROM Period p " +
+            "WHERE p.dayOfWeek = :dayOfWeek " +
+            "AND (p.startTime < :endTime AND p.endTime > :startTime)")
+    boolean existsOverlap(@Param("startTime") LocalTime startTime,
+                          @Param("endTime") LocalTime endTime,
+                          @Param("dayOfWeek") int dayOfWeek);
+
+
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END " +
+            "FROM Period p " +
+            "WHERE p.id <> :id AND p.dayOfWeek = :dayOfWeek " +
+            "AND (p.startTime < :endTime AND p.endTime > :startTime)")
+    boolean existsOverlapExceptId(@Param("startTime") LocalTime startTime,
+                                  @Param("endTime") LocalTime endTime,
+                                  @Param("dayOfWeek") int dayOfWeek,
+                                  @Param("id") Long id);
+
+}
+

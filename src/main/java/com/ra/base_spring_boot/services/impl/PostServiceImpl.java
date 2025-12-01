@@ -2,6 +2,7 @@
 
     import com.ra.base_spring_boot.dto.Post.PostRequestDTO;
     import com.ra.base_spring_boot.dto.Post.PostResponseDTO;
+    import com.ra.base_spring_boot.exception.HttpBadRequest;
     import com.ra.base_spring_boot.model.Post;
     import com.ra.base_spring_boot.model.Tag;
     import com.ra.base_spring_boot.model.User;
@@ -39,7 +40,7 @@
 
             // set author
             User author = userRepository.findById(request.getAuthorId())
-                    .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+                    .orElseThrow(() -> new HttpBadRequest("User không tồn tại"));
             post.setAuthor(author);
 
             // set status
@@ -62,7 +63,7 @@
         @Override
         public PostResponseDTO getPostById(Long id) {
             Post post = postRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Post không tồn tại"));
+                    .orElseThrow(() -> new HttpBadRequest("Post không tồn tại"));
             return toPostResponseDTO(post);
         }
 
@@ -70,7 +71,7 @@
         @Transactional
         public PostResponseDTO updatePost(Long id, PostRequestDTO request) {
             Post post = postRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Post không tồn tại"));
+                    .orElseThrow(() -> new HttpBadRequest("Post không tồn tại"));
 
             post.setTitle(request.getTitle());
             post.setSlug(request.getSlug());
@@ -89,7 +90,7 @@
         @Transactional
         public void deletePost(Long id) {
             if(!postRepository.existsById(id)) {
-                throw new RuntimeException("Post không tồn tại");
+                throw new HttpBadRequest("Post không tồn tại");
             }
             postRepository.deleteById(id);
         }

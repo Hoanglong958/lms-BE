@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface IUserRepository extends JpaRepository<User, Long> {
+
     // Dùng gmail để đăng nhập
     Optional<User> findByGmail(String gmail);
 
@@ -30,27 +31,40 @@ public interface IUserRepository extends JpaRepository<User, Long> {
                       @Param("role") RoleName role,
                       @Param("active") Boolean active,
                       Pageable pageable);
+
     @Query("SELECT COUNT(u) FROM User u WHERE u.role = :role")
     long countByRole(RoleName role);
 
-    // count users created since
+    // Count users created since
     @Query("SELECT COUNT(u) FROM User u WHERE u.role = :role AND u.createdAt >= :since")
     long countByRoleSince(RoleName role, LocalDateTime since);
 
-    // count users created before given date (useful for prev period)
+    // Count users created before given date (useful for previous period)
     @Query("SELECT COUNT(u) FROM User u WHERE u.role = :role AND u.createdAt < :before")
     long countByRoleBefore(RoleName role, LocalDateTime before);
 
-    // find new users since date
+    // Find new users since date
     @Query("SELECT u FROM User u WHERE u.role = :role AND u.createdAt >= :since ORDER BY u.createdAt DESC")
     List<User> findNewUsersSince(RoleName role, LocalDateTime since);
 
-    // top students (if averageScore stored in user or join with UserCourse/Exam)
+    // Top students (if averageScore stored in user or join with UserCourse/Exam)
     @Query("SELECT u FROM User u JOIN UserCourse uc ON uc.user = u GROUP BY u.id ORDER BY AVG(uc.averageScore) DESC")
     List<User> findTopStudents(Pageable pageable);
 
-    // fallback: if no averageScore, take by recent created
+    // Fallback: if no averageScore, take by recent created
     Page<User> findAll(Pageable pageable);
 
+    // ======= MỚI THÊM =======
 
+    // Count users by role between 2 thời điểm (dùng cho tăng trưởng theo tuần/tháng)
+    @Query("SELECT COUNT(u) FROM User u WHERE u.role = :role AND u.createdAt >= :start AND u.createdAt <= :end")
+    long countByRoleBetween(@Param("role") RoleName role,
+                            @Param("start") LocalDateTime start,
+                            @Param("end") LocalDateTime end);
+
+    // Lấy danh sách users theo role giữa 2 thời điểm (nếu cần)
+    @Query("SELECT u FROM User u WHERE u.role = :role AND u.createdAt >= :start AND u.createdAt <= :end ORDER BY u.createdAt DESC")
+    List<User> findByRoleBetween(@Param("role") RoleName role,
+                                 @Param("start") LocalDateTime start,
+                                 @Param("end") LocalDateTime end);
 }

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -29,4 +30,8 @@ public class CourseResponseDTO {
 
     @Schema(example = "2025-11-14T10:30:00")
     private LocalDateTime updatedAt;
+
+    private int totalSessions;
+    private int weeks;
+    private LocalDate startDate;
 }

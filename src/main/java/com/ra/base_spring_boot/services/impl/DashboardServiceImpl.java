@@ -91,22 +91,6 @@ public class DashboardServiceImpl implements IDashboardService {
         double prevCompletionRate = prevTotalEnrollments == 0 ? 0.0 : ((double) prevCompleted / prevTotalEnrollments) * 100.0;
         double completionGrowth = calcGrowthDouble(completionRate, prevCompletionRate);
 
-        // --- Top students (by avg score via repo) ---
-        List<User> topUsers;
-        try {
-            topUsers = userRepo.findTopStudents(PageRequest.of(0, 10));
-        } catch (Exception e) {
-            topUsers = userRepo.findAll(PageRequest.of(0, 10)).getContent();
-        }
-        List<UserResponse> topStudents = topUsers.stream().map(u ->
-                UserResponse.builder()
-                        .id(u.getId())
-                        .fullName(u.getFullName())
-                        .gmail(u.getGmail())
-                        .role(u.getRole())
-                        .isActive(u.getIsActive())
-                        .createdAt(u.getCreatedAt())
-                        .build()).collect(Collectors.toList());
 
         // --- New users in last 30 days ---
         List<UserResponse> newUsers = userRepo.findNewUsersSince(RoleName.ROLE_USER, since30)
@@ -156,7 +140,6 @@ public class DashboardServiceImpl implements IDashboardService {
                 .totalClasses(new DashboardStatsDTO.GrowthItem(totalClasses, classGrowth))
                 .totalQuizzes(new DashboardStatsDTO.GrowthItem(totalQuizzes, quizGrowth))
                 .totalAssignments(new DashboardStatsDTO.GrowthItem(totalAssignments, assignmentGrowth))
-                .topStudents(topStudents)
                 .newUsers(newUsers)
                 .newCourses(newCourses)
                 .recentQuizzes(recentQuizzes)
@@ -172,7 +155,8 @@ public class DashboardServiceImpl implements IDashboardService {
         for (int i = months - 1; i >= 0; i--) {
             LocalDate start = now.minusMonths(i).withDayOfMonth(1);
             LocalDateTime startDt = start.atStartOfDay();
-            long count = userRepo.countByRoleSince(RoleName.ROLE_USER, startDt);
+            LocalDateTime endDt = start.withDayOfMonth(start.lengthOfMonth()).atTime(23, 59, 59);
+            long count = userRepo.countByRoleBetween(RoleName.ROLE_USER, startDt, endDt);
             points.add(UserGrowthPointDTO.builder()
                     .period(start.toString().substring(0, 7))
                     .count(count)
@@ -181,21 +165,24 @@ public class DashboardServiceImpl implements IDashboardService {
         return points;
     }
 
+
     @Override
     public List<UserGrowthPointDTO> getUserGrowthByWeek(int weeks) {
         LocalDate today = LocalDate.now();
         List<UserGrowthPointDTO> points = new ArrayList<>();
         for (int i = weeks - 1; i >= 0; i--) {
-            LocalDate start = today.minusWeeks(i);
+            LocalDate start = today.minusWeeks(i).with(java.time.DayOfWeek.MONDAY);
             LocalDateTime startDt = start.atStartOfDay();
-            long count = userRepo.countByRoleSince(RoleName.ROLE_USER, startDt);
+            LocalDateTime endDt = start.plusDays(6).atTime(23, 59, 59); // Sunday
+            long count = userRepo.countByRoleBetween(RoleName.ROLE_USER, startDt, endDt);
             points.add(UserGrowthPointDTO.builder()
-                    .period(start.toString())
+                    .period(start.toString() + " ~ " + start.plusDays(6).toString())
                     .count(count)
                     .build());
         }
         return points;
     }
+
 
     @Override
     public CourseProgressDTO getCourseProgress(Long courseId) {
@@ -221,15 +208,6 @@ public class DashboardServiceImpl implements IDashboardService {
         ).collect(Collectors.toList());
     }
 
-    @Override
-    public List<UserResponse> getTopStudents(int topN) {
-        List<User> users = userRepo.findTopStudents(PageRequest.of(0, topN));
-        return users.stream().map(u -> UserResponse.builder()
-                .id(u.getId()).fullName(u.getFullName())
-                .gmail(u.getGmail()).role(u.getRole())
-                .isActive(u.getIsActive()).createdAt(u.getCreatedAt()).build()
-        ).collect(Collectors.toList());
-    }
 
     @Override
     public List<CourseResponseDTO> getNewCoursesLast30Days() {

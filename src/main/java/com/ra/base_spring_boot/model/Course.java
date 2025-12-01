@@ -4,6 +4,7 @@ import com.ra.base_spring_boot.model.constants.CourseLevel;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,6 +27,13 @@ public class Course {
 
     @Column(length = 100)
     private String instructorName;
+
+    @Column(nullable = false)
+    private int totalSessions; // tổng số buổi học của khóa
+
+    @Column(nullable = false)
+    private int weeks; // số tuần học
+    private LocalDate startDate; // ngày bắt đầu khóa học
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

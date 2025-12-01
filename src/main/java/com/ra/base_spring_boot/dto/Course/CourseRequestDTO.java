@@ -3,6 +3,8 @@ package com.ra.base_spring_boot.dto.Course;
 import lombok.Data;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.time.LocalDate;
+
 @Data
 public class CourseRequestDTO {
     @Schema(example = "Spring Boot Fundamentals")
@@ -16,4 +18,8 @@ public class CourseRequestDTO {
 
     @Schema(example = "BEGINNER") // BEGINNER, INTERMEDIATE, ADVANCED
     private String level; // BEGINNER, INTERMEDIATE, ADVANCED
+
+    private int totalSessions;  // tổng số buổi học
+    private int weeks;          // số tuần học
+    private LocalDate startDate; // ngày bắt đầu
 }

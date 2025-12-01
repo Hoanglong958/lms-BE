@@ -16,7 +16,6 @@ public interface IDashboardService {
     List<UserGrowthPointDTO> getUserGrowthByWeek(int weeks);
     CourseProgressDTO getCourseProgress(Long courseId);
     List<UserResponse> getNewUsersLast30Days();
-    List<UserResponse> getTopStudents(int topN);
     List<CourseResponseDTO> getNewCoursesLast30Days();
     List<LessonQuizResponseDTO> getRecentQuizzesLast30Days();
     List<QuizReportDTO> getQuizReports(); // general quiz reports
