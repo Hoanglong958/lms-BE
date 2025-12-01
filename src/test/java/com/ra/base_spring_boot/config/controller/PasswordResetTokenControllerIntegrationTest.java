@@ -100,7 +100,7 @@ class PasswordResetTokenControllerIntegrationTest {
         // Given: Có token mới nhất trong DB
         User mockUser = User.builder()
                 .id(100L)
-                .email("test@gmail.com")
+                .gmail("test@gmail.com")
                 .build();
 
         PasswordResetToken latestToken = PasswordResetToken.builder()
