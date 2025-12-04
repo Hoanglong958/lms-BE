@@ -23,8 +23,5 @@ public class PeriodRequestDTO {
 
     @NotNull(message = "Thời gian kết thúc không được để trống")
     private LocalTime endTime;
-    @NotNull(message = "Ngày trong tuần không được để trống")
-    private Integer dayOfWeek; // 1 = Monday, 7 = Sunday
-
 
 }

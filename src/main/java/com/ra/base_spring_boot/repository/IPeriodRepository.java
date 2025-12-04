@@ -11,28 +11,22 @@ import java.time.LocalTime;
 @Repository
 public interface IPeriodRepository extends JpaRepository<Period, Long> {
 
+    boolean existsByName(String name);
 
-        boolean existsByName(String name);
+    boolean existsByNameAndIdNot(String name, Long id);
 
-        boolean existsByNameAndIdNot(String name, Long id);
-
+    // Kiểm tra overlap thời gian, không cần dayOfWeek
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END " +
             "FROM Period p " +
-            "WHERE p.dayOfWeek = :dayOfWeek " +
-            "AND (p.startTime < :endTime AND p.endTime > :startTime)")
+            "WHERE p.startTime < :endTime AND p.endTime > :startTime")
     boolean existsOverlap(@Param("startTime") LocalTime startTime,
-                          @Param("endTime") LocalTime endTime,
-                          @Param("dayOfWeek") int dayOfWeek);
-
+                          @Param("endTime") LocalTime endTime);
 
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END " +
             "FROM Period p " +
-            "WHERE p.id <> :id AND p.dayOfWeek = :dayOfWeek " +
-            "AND (p.startTime < :endTime AND p.endTime > :startTime)")
+            "WHERE p.id <> :id AND p.startTime < :endTime AND p.endTime > :startTime")
     boolean existsOverlapExceptId(@Param("startTime") LocalTime startTime,
                                   @Param("endTime") LocalTime endTime,
-                                  @Param("dayOfWeek") int dayOfWeek,
                                   @Param("id") Long id);
 
 }
-

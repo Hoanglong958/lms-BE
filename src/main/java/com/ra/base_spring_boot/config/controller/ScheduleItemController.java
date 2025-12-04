@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.config.controller;
 
 import com.ra.base_spring_boot.dto.ScheduleItem.ScheduleItemResponseDTO;
 import com.ra.base_spring_boot.dto.ScheduleItem.GenerateScheduleRequestDTO;
+import com.ra.base_spring_boot.dto.ScheduleItem.UpdateScheduleItemRequestDTO;
 import com.ra.base_spring_boot.services.IScheduleItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -82,4 +83,20 @@ public class ScheduleItemController {
         scheduleItemService.clearScheduleForCourse(courseId);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/schedule-items/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Update buổi học", description = "Chỉ ADMIN được phép xoá toàn bộ lịch của khóa")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Xoá thành công", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Lỗi hệ thống", content = @Content)
+    })
+    public ScheduleItemResponseDTO updateScheduleItem(@PathVariable Long id,
+                                                      @RequestBody UpdateScheduleItemRequestDTO req) {
+        return scheduleItemService.updateScheduleItem(id, req);
+    }
+
 }

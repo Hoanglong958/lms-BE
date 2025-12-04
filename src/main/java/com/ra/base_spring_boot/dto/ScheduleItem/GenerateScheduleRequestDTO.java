@@ -12,6 +12,5 @@ import java.util.List;
 @Data
 public class GenerateScheduleRequestDTO {
     private Long courseId;
-    // Nếu muốn chỉ dùng 1 tập period (chuỗi id) để lập lịch; nếu null -> lấy tất cả period liên quan
-    private List<Long> periodIds;
+
 }

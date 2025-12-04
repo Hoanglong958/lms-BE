@@ -28,9 +28,6 @@ public class User {
     @Column(unique = true)
     private String phone;
 
-    private String author;
-
-
     @Enumerated(EnumType.STRING)
     private RoleName role;
 
