@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.services.impl;
 
+import com.ra.base_spring_boot.dto.ScheduleItem.CreateManualScheduleRequestDTO;
 import com.ra.base_spring_boot.dto.ScheduleItem.GenerateScheduleRequestDTO;
 import com.ra.base_spring_boot.dto.ScheduleItem.ScheduleItemResponseDTO;
 import com.ra.base_spring_boot.dto.ScheduleItem.UpdateScheduleItemRequestDTO;
@@ -180,4 +181,91 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                 .status(item.getStatus())
                 .build();
     }
+    @Override
+    @Transactional
+    public List<ScheduleItemResponseDTO> createManualSchedule(CreateManualScheduleRequestDTO req) {
+
+        Long courseId = req.getCourseId();
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học id = " + courseId));
+
+        if (course.getStartDate() == null)
+            throw new HttpBadRequest("startDate của khóa học chưa được thiết lập.");
+
+        int totalSessions = course.getTotalSessions();
+        LocalDate startDate = course.getStartDate();
+
+        // Validate
+        if (req.getDaysOfWeek() == null || req.getDaysOfWeek().isEmpty())
+            throw new HttpBadRequest("daysOfWeek không được bỏ trống!");
+
+        if (req.getPeriodIds() == null || req.getPeriodIds().isEmpty())
+            throw new HttpBadRequest("periodIds không được bỏ trống!");
+
+        if (req.getDaysOfWeek().size() != req.getPeriodIds().size())
+            throw new HttpBadRequest("daysOfWeek và periodIds phải có cùng số phần tử!");
+
+        // Load Periods
+        List<Period> periods = periodRepository.findAllById(req.getPeriodIds());
+        if (periods.size() != req.getPeriodIds().size())
+            throw new HttpBadRequest("Một hoặc nhiều periodIds không tồn tại.");
+
+        // Xóa lịch cũ
+        scheduleItemRepository.deleteByCourseId(courseId);
+
+        List<ScheduleItem> result = new ArrayList<>();
+        int sessionNumber = 1;
+
+        // Tạo danh sách (DayOfWeek, Period) theo thứ tự ngày tăng dần
+        List<Map.Entry<DayOfWeek, Period>> dayPeriodPairs =
+                new ArrayList<>();
+
+        for (int i = 0; i < req.getDaysOfWeek().size(); i++) {
+            DayOfWeek dow = DayOfWeek.of(req.getDaysOfWeek().get(i));
+            Period p = periods.get(i);
+            dayPeriodPairs.add(Map.entry(dow, p));
+        }
+
+        // Sort để đảm bảo sessionNumber theo đúng thứ trong tuần
+        dayPeriodPairs.sort(Comparator.comparingInt(e -> e.getKey().getValue()));
+
+        // Sinh lịch theo tuần
+        int weekOffset = 0;
+        while (sessionNumber <= totalSessions) {
+
+            LocalDate weekStart = startDate.plusWeeks(weekOffset)
+                    .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+
+            for (var entry : dayPeriodPairs) {
+
+                if (sessionNumber > totalSessions) break;
+
+                DayOfWeek dow = entry.getKey();
+                Period p = entry.getValue();
+
+                LocalDate date = weekStart.with(TemporalAdjusters.nextOrSame(dow));
+
+                ScheduleItem item = ScheduleItem.builder()
+                        .course(course)
+                        .period(p)
+                        .sessionNumber(sessionNumber++)
+                        .date(date)
+                        .startAt(LocalDateTime.of(date, p.getStartTime()))
+                        .endAt(LocalDateTime.of(date, p.getEndTime()))
+                        .status("SCHEDULED")
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .build();
+
+                result.add(item);
+            }
+
+            weekOffset++;
+        }
+
+        List<ScheduleItem> saved = scheduleItemRepository.saveAll(result);
+        saved.sort(Comparator.comparingInt(ScheduleItem::getSessionNumber));
+        return saved.stream().map(this::toDto).collect(Collectors.toList());
+    }
+
 }
