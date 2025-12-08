@@ -25,6 +25,7 @@ public class Assignment {
     @JoinColumn(name = "course_id")
     private Course course;
 
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
 }

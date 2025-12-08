@@ -30,7 +30,9 @@ public class ExamParticipant {
 
     private LocalDateTime joinTime;
 
+    @Builder.Default
     private Boolean started = false;
 
+    @Builder.Default
     private Boolean submitted = false;
 }

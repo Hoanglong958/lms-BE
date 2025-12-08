@@ -37,9 +37,11 @@ public class Post {
     private User author; // liên kết với bảng users
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private PostStatus status = PostStatus.DRAFT;
 
     @Column(name = "created_at", updatable = false)
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @ManyToMany
@@ -48,6 +50,7 @@ public class Post {
             joinColumns = @JoinColumn(name = "post_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
+    @Builder.Default
     private Set<Tag> tags = new HashSet<>();
 
     @PreUpdate

@@ -40,7 +40,6 @@ public class ClassServiceImpl implements IClassService {
                 .maxStudents(dto.getMaxStudents() == null ? 30 : dto.getMaxStudents())
                 .startDate(parseDate(dto.getStartDate(), "Ngày bắt đầu lớp học không hợp lệ"))
                 .endDate(parseOptionalDate(dto.getEndDate()))
-                .scheduleInfo(dto.getScheduleInfo())
                 .status(parseStatus(dto.getStatus()))
                 .build();
         validateDateRange(aClass.getStartDate(), aClass.getEndDate());
@@ -56,7 +55,6 @@ public class ClassServiceImpl implements IClassService {
         if (dto.getMaxStudents() != null && dto.getMaxStudents() > 0) aClass.setMaxStudents(dto.getMaxStudents());
         if (dto.getStartDate() != null) aClass.setStartDate(parseDate(dto.getStartDate(), "Ngày bắt đầu lớp học không hợp lệ"));
         if (dto.getEndDate() != null) aClass.setEndDate(parseOptionalDate(dto.getEndDate()));
-        if (dto.getScheduleInfo() != null) aClass.setScheduleInfo(dto.getScheduleInfo());
         if (dto.getStatus() != null) aClass.setStatus(parseStatus(dto.getStatus()));
         validateDateRange(aClass.getStartDate(), aClass.getEndDate());
         classroomRepository.save(aClass);

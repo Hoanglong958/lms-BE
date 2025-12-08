@@ -11,12 +11,16 @@ import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.repository.IPasswordResetTokenRepository;
 import com.ra.base_spring_boot.repository.IUserRepository;
 import com.ra.base_spring_boot.services.IPasswordResetTokenService;
+import com.ra.base_spring_boot.services.IAuthService;
+import com.ra.base_spring_boot.security.principle.MyUserDetailsService;
+import com.ra.base_spring_boot.security.jwt.JwtProvider;
+import com.ra.base_spring_boot.security.jwt.JwtTokenFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -40,7 +44,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 3. Validate token
  * 4. Reset password với token
  */
-@SpringBootTest
+@WebMvcTest(
+        controllers = {AuthController.class, PasswordResetTokenController.class},
+        excludeAutoConfiguration = {
+                org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
+                org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration.class
+        }
+)
 @AutoConfigureMockMvc(addFilters = false) // Tắt security filter cho test
 @DisplayName("Forgot Password Flow Integration Test")
 class ForgotPasswordFlowIntegrationTest {
@@ -56,6 +66,18 @@ class ForgotPasswordFlowIntegrationTest {
 
     @MockBean
     private IUserRepository userRepository;
+
+    @MockBean
+    private IAuthService authService;
+
+    @MockBean
+    private MyUserDetailsService myUserDetailsService;
+    @MockBean
+    private JwtProvider jwtProvider;
+    @MockBean
+    private JwtTokenFilter jwtTokenFilter;
+    @MockBean
+    private org.springframework.data.jpa.mapping.JpaMetamodelMappingContext jpaMetamodelMappingContext;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private User testUser;
@@ -144,7 +166,7 @@ class ForgotPasswordFlowIntegrationTest {
         resetRequest.setToken("test-token-12345");
         resetRequest.setNewPassword("NewPassword123!");
 
-        doNothing().when(passwordResetTokenService).resetPassword(any(ResetPasswordRequest.class));
+        doNothing().when(authService).resetPassword(any(ResetPasswordRequest.class));
 
         mockMvc.perform(post("/api/v1/auth/reset-password")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -153,7 +175,7 @@ class ForgotPasswordFlowIntegrationTest {
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data").value(org.hamcrest.Matchers.containsString("Đặt lại mật khẩu thành công")));
 
-        verify(passwordResetTokenService).resetPassword(any(ResetPasswordRequest.class));
+        verify(authService).resetPassword(any(ResetPasswordRequest.class));
     }
 
     @Test
@@ -190,7 +212,7 @@ class ForgotPasswordFlowIntegrationTest {
         resetRequest.setNewPassword("NewPassword123!");
 
         doThrow(new HttpBadRequest("Token không hợp lệ!"))
-                .when(passwordResetTokenService).resetPassword(any(ResetPasswordRequest.class));
+                .when(authService).resetPassword(any(ResetPasswordRequest.class));
 
         mockMvc.perform(post("/api/v1/auth/reset-password")
                         .contentType(MediaType.APPLICATION_JSON)

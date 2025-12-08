@@ -5,7 +5,6 @@ import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.ExamAnswer;
 import com.ra.base_spring_boot.model.ExamAttempt;
-import com.ra.base_spring_boot.repository.IExamAnswerRepository;
 import com.ra.base_spring_boot.repository.IExamAttemptRepository;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.IExamAnswerService;
@@ -22,7 +21,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ExamAnswerServiceImpl implements IExamAnswerService {
 
-    private final IExamAnswerRepository examAnswerRepository;
     private final IExamAttemptRepository examAttemptRepository;
 
     @Override

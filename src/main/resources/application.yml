@@ -11,45 +11,47 @@
       url: jdbc:mysql://localhost:3306/lms_rikkei?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
       username: root
       password: 123456
+
       driver-class-name: com.mysql.cj.jdbc.Driver
 
     jpa:
       hibernate:
         ddl-auto: update
         naming:
-          physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-          implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
-      properties:
-        hibernate:
-          dialect: org.hibernate.dialect.MySQLDialect
-          format_sql: true
-          show_sql: true
+          'physical-strategy': org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+          'implicit-strategy': org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+      database-platform: org.hibernate.dialect.MySQLDialect
+      show-sql: true
       open-in-view: false
 
     flyway:
       enabled: false
 
-    redis:
-      host: redis-15646.crce219.us-east-1-4.ec2.cloud.redislabs.com
-      port: 15646
-      password: mVv63ta1xjbb2wAafK5yo4P7vhE8sC6b
-      database: 0
+    data:
+      redis:
+        host: redis-15646.crce219.us-east-1-4.ec2.cloud.redislabs.com
+        port: 15646
+        password: mVv63ta1xjbb2wAafK5yo4P7vhE8sC6b
+        database: 0
 
     mail:
-        host: smtp.gmail.com
-        port: 587
-        username: namne2506@gmail.com
-        password: yqnt kgzc wwrs jxwy  # 16 ký tự App Password
-        protocol: smtp
-        properties:
-          mail.smtp.auth: true
-          mail.smtp.starttls.enable: true
+      host: smtp.gmail.com
+      port: 587
+      username: namne2506@gmail.com
+      password: "yqnt kgzc wwrs jxwy"  # 16 ký tự App Password
+      protocol: smtp
+      properties:
+        mail:
+          smtp:
+            auth: true
+            starttls:
+              enable: true
 
   springdoc:
     swagger-ui:
       path: /docs
-      tags-sorter: alpha
-      operations-sorter: alpha
+      'tags-sorter': alpha
+      'operations-sorter': alpha
 
   jwt:
     secret:
@@ -64,6 +66,11 @@
     upload:
       root: uploads
 
+  cloudinary:
+    cloud-name: dtbbrlnyc
+    api-key: 936751274181751
+    api-secret: ja4CTEXqeT9YD38oJHItIwiktW0
+
   external:
     api:
       base-url: https://example.com
@@ -72,4 +79,4 @@
 
   logging:
     level:
-      org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsManagerConfigurer: ERROR
+      "[org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsManagerConfigurer]": ERROR
