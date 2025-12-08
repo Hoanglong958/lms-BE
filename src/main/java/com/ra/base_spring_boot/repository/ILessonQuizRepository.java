@@ -1,7 +1,6 @@
 package com.ra.base_spring_boot.repository;
 
 import com.ra.base_spring_boot.model.LessonQuiz;
-import com.ra.base_spring_boot.model.QuizQuestion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

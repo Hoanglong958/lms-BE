@@ -65,6 +65,8 @@ public class SecurityConfig {
                                 "/api/v1/password-reset-tokens/latest", // DEV endpoint: Lấy token mới nhất để test
                                 // Swagger and docs
                                 "/v3/api-docs/**",
+                                "/docs",
+                                "/docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/docs/**",
@@ -98,8 +100,8 @@ public class SecurityConfig {
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setPasswordEncoder(passwordEncoder());
         provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
 

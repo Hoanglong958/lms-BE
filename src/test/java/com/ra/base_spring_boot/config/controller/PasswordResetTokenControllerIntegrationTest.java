@@ -1,6 +1,4 @@
 package com.ra.base_spring_boot.config.controller;
-
-import com.ra.base_spring_boot.dto.resp.PasswordResetTokenResponse;
 import com.ra.base_spring_boot.model.PasswordResetToken;
 import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.repository.IPasswordResetTokenRepository;
@@ -11,6 +9,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
+import com.ra.base_spring_boot.security.principle.MyUserDetailsService;
+import com.ra.base_spring_boot.security.jwt.JwtProvider;
+import com.ra.base_spring_boot.security.jwt.JwtTokenFilter;
 
 import java.time.LocalDateTime;
 
@@ -38,6 +40,15 @@ class PasswordResetTokenControllerIntegrationTest {
 
     @MockBean
     private IPasswordResetTokenRepository tokenRepository;
+
+    @MockBean
+    private MyUserDetailsService myUserDetailsService;
+    @MockBean
+    private JwtProvider jwtProvider;
+    @MockBean
+    private JwtTokenFilter jwtTokenFilter;
+    @MockBean
+    private JpaMetamodelMappingContext jpaMetamodelMappingContext;
 
     // ==================== TEST VALIDATE TOKEN (Delayed OTP Reveal Flow) ====================
 

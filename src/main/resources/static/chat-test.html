@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chat Realtime Test</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg:#0f172a; --panel:#111827; --muted:#6b7280; --primary:#22c55e; --danger:#ef4444; --card:#0b1220; }
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,#0b1220,#0f172a);color:#e5e7eb}
+    .container{max-width:1100px;margin:24px auto;padding:0 16px}
+    .grid{display:grid;grid-template-columns:320px 1fr;gap:16px}
+    .card{background:rgba(17,24,39,.75);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.06);border-radius:12px}
+    .section{padding:16px}
+    h1{font-size:20px;margin:0 0 12px}
+    label{display:block;font-size:12px;color:#9ca3af;margin:6px 0}
+    input,select,button,textarea{width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:#0b1220;color:#e5e7eb}
+    input:focus,select:focus,textarea:focus{outline:2px solid rgba(34,197,94,.35)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .stack{display:flex;gap:8px}
+    .btn{cursor:pointer;border:none}
+    .btn-primary{background:linear-gradient(90deg,#22c55e,#16a34a);color:white}
+    .btn-danger{background:linear-gradient(90deg,#ef4444,#dc2626);color:white}
+    .toolbar{display:flex;gap:8px}
+    .log{height:520px;overflow:auto;padding:12px;background:#0b1220;border-radius:8px;border:1px solid rgba(255,255,255,.06)}
+    .msg{padding:10px 12px;border-radius:8px;margin:8px 0;background:#111827;border:1px solid rgba(255,255,255,.06)}
+    .msg.sys{background:#0f172a;color:#9ca3af}
+    .msg.me{border-color:rgba(34,197,94,.35)}
+    .muted{color:#9ca3af;font-size:12px}
+    code{background:#0b1220;padding:2px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.06)}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <h1>Chat Realtime Test (STOMP)</h1>
+  <div class="grid">
+    <div class="card section">
+      <label>WS Endpoint</label>
+      <input id="endpoint" value="/ws" />
+      <div class="row">
+        <div>
+          <label>User ID</label>
+          <input id="userId" placeholder="Ví dụ: 1001" />
+        </div>
+        <div>
+          <label>User name</label>
+          <input id="userName" placeholder="Tên hiển thị" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Role (ROLE_USER / ROLE_TEACHER)</label>
+          <select id="role">
+            <option value="ROLE_USER">ROLE_USER</option>
+            <option value="ROLE_TEACHER">ROLE_TEACHER</option>
+          </select>
+        </div>
+        <div>
+          <label>Room ID (smallId_largeId)</label>
+          <input id="roomId" placeholder="1001_202" />
+        </div>
+      </div>
+      <div class="toolbar" style="margin-top:10px">
+        <button class="btn btn-primary" id="connectBtn">Kết nối & Subscribe</button>
+        <button class="btn btn-danger" id="disconnectBtn">Ngắt</button>
+      </div>
+      <hr style="border-color:rgba(255,255,255,.06)">
+      <label>Nội dung</label>
+      <textarea id="content" rows="3" placeholder="Nhập tin nhắn..."></textarea>
+      <div class="stack" style="margin-top:8px">
+        <button class="btn btn-primary" id="sendBtn">Gửi /app/chat/send</button>
+        <button class="btn" id="joinBtn">Join /app/chat/join</button>
+      </div>
+      <p class="muted">Subscribe: <code>/topic/room/{roomId}</code> | Send: <code>/app/chat/send</code> | Join: <code>/app/chat/join</code></p>
+    </div>
+    <div class="card section">
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+</div>
+<script>
+  let stompClient = null;
+  let currentSub = null;
+
+  function log(el, html) {
+    const div = document.createElement('div');
+    div.className = 'msg';
+    div.innerHTML = html;
+    el.appendChild(div);
+    el.scrollTop = el.scrollHeight;
+  }
+  function sys(el, text){
+    const div = document.createElement('div');
+    div.className = 'msg sys';
+    div.textContent = text;
+    el.appendChild(div);
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function connect() {
+    const endpoint = document.getElementById('endpoint').value || '/ws';
+    const roomId = document.getElementById('roomId').value.trim();
+    const logEl = document.getElementById('log');
+    if (!roomId) { alert('Nhập Room ID (vd: 1001_202)'); return; }
+
+    const sock = new SockJS(endpoint);
+    stompClient = Stomp.over(sock);
+    stompClient.debug = null; // tắt log console
+
+    stompClient.connect({}, () => {
+      sys(logEl, 'Đã kết nối');
+      // subscribe
+      if (currentSub) { currentSub.unsubscribe(); }
+      currentSub = stompClient.subscribe(`/topic/room/${roomId}`, (msg) => {
+        try {
+          const data = JSON.parse(msg.body);
+          const isMe = String(data.senderId||'') === document.getElementById('userId').value;
+          const html = `<div class="muted">#${data.id||''} • ${data.senderName||'system'} • ${data.createdAt||''}</div>`+
+                       `<div style="margin-top:6px">${(data.content||JSON.stringify(data))}</div>`;
+          const div = document.createElement('div');
+          div.className = 'msg'+(isMe?' me':'');
+          div.innerHTML = html;
+          logEl.appendChild(div);
+          logEl.scrollTop = logEl.scrollHeight;
+        } catch(e) {
+          log(logEl, 'RAW: '+msg.body);
+        }
+      });
+      sys(logEl, `Đã subscribe /topic/room/${roomId}`);
+    }, (err) => {
+      sys(logEl, 'Lỗi kết nối: '+err);
+    });
+  }
+
+  function disconnect(){
+    const logEl = document.getElementById('log');
+    if (currentSub) { currentSub.unsubscribe(); currentSub=null; }
+    if (stompClient) { stompClient.disconnect(()=>sys(logEl,'Đã ngắt kết nối')); stompClient=null; }
+  }
+
+  function sendMessage(){
+    if (!stompClient) { alert('Chưa kết nối'); return; }
+    const roomId = document.getElementById('roomId').value.trim();
+    const content = document.getElementById('content').value.trim();
+    const userId = document.getElementById('userId').value.trim();
+    const userName = document.getElementById('userName').value.trim() || 'anonymous';
+    const role = document.getElementById('role').value;
+    if (!content) return;
+    stompClient.send('/app/chat/send', {
+      userId: userId,
+      userName: userName,
+      role: role
+    }, JSON.stringify({ roomId, content, type: 'TEXT', fileUrl: null }));
+  }
+
+  function joinRoom(){
+    if (!stompClient) { alert('Chưa kết nối'); return; }
+    const roomId = document.getElementById('roomId').value.trim();
+    const userId = document.getElementById('userId').value.trim();
+    stompClient.send('/app/chat/join', { userId: userId }, JSON.stringify({ roomId }));
+  }
+
+  document.getElementById('connectBtn').addEventListener('click', connect);
+  document.getElementById('disconnectBtn').addEventListener('click', disconnect);
+  document.getElementById('sendBtn').addEventListener('click', sendMessage);
+  document.getElementById('joinBtn').addEventListener('click', joinRoom);
+</script>
+</body>
+</html>

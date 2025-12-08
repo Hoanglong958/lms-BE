@@ -112,7 +112,7 @@ public class AuthController {
         String resetLink = "http://localhost:5173/reset-password?token=" + tokenResponse.getToken();
         System.out.println("🔗 Link đặt lại mật khẩu cho " + request.getGmail() + ":");
         System.out.println(resetLink);
-        // TODO: Gửi email thực tế với link này
+        
         
         return ResponseEntity.ok(
                 ResponseWrapper.builder()

@@ -1,79 +1,122 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.dto.ChatMessageSocket.ChatMessageRequestDTO;
-import com.ra.base_spring_boot.dto.ChatMessageSocket.ChatMessageResponseDTO;
-import com.ra.base_spring_boot.model.ChatMessage;
-import com.ra.base_spring_boot.repository.IChatMessageRepository;
+import com.ra.base_spring_boot.dto.chatv2.AddMembersRequest;
+import com.ra.base_spring_boot.dto.chatv2.GroupCreateRequest;
+import com.ra.base_spring_boot.dto.chatv2.RenameRequest;
+import com.ra.base_spring_boot.model.chatv2.*;
+import com.ra.base_spring_boot.repository.chatv2.ChatRoomMemberRepository;
+import com.ra.base_spring_boot.repository.chatv2.ChatRoomRepository;
 import com.ra.base_spring_boot.services.IChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ChatServiceImpl implements IChatService {
 
-    private final IChatMessageRepository repository;
+    private final ChatRoomRepository roomRepo;
+    private final ChatRoomMemberRepository memberRepo;
 
-    /**
-     * Save user message to chat_message
-     */
     @Override
-    public ChatMessageResponseDTO saveMessage(ChatMessageRequestDTO req) {
-        ChatMessage entity = mapToEntity(req);
-        ChatMessage saved = repository.save(entity);
-        return toDTO(saved);
+    public ChatRoom getOrCreateOneToOne(Long userId1, Long userId2) {
+        if (Objects.equals(userId1, userId2)) {
+            throw new IllegalArgumentException("userId1 must be different from userId2");
+        }
+        return roomRepo.findOneToOneRoom(userId1, userId2).orElseGet(() -> {
+            ChatRoom room = ChatRoom.builder()
+                    .type(ChatRoomType.ONE_TO_ONE)
+                    .build();
+            room = roomRepo.save(room);
+            ChatRoom finalRoom = room;
+            memberRepo.save(ChatRoomMember.builder().room(finalRoom).userId(userId1).role(ChatMemberRole.USER).build());
+            memberRepo.save(ChatRoomMember.builder().room(finalRoom).userId(userId2).role(ChatMemberRole.TEACHER).build());
+            return finalRoom;
+        });
     }
 
-    /**
-     * System JOIN message -> DO NOT save DB
-     */
     @Override
-    public ChatMessageResponseDTO createSystemJoinMessage(String roomId, String user) {
-        ChatMessageResponseDTO dto = new ChatMessageResponseDTO();
-        dto.setRoomId(roomId);
-        dto.setSender("system");
-        dto.setContent(user + " joined the room");
-        dto.setType("SYSTEM_JOIN");
-        dto.setTimestamp(System.currentTimeMillis());
-        return dto;  // ❌ Không lưu DB
+    public ChatRoom createGroup(GroupCreateRequest req) {
+        if (req.getCreatedBy() == null) throw new IllegalArgumentException("createdBy is required");
+        ChatRoom room = ChatRoom.builder()
+                .type(ChatRoomType.GROUP)
+                .name(req.getName())
+                .avatar(req.getAvatar())
+                .createdBy(req.getCreatedBy())
+                .build();
+        room = roomRepo.save(room);
+        Set<Long> ids = new LinkedHashSet<>();
+        if (req.getMemberIds()!=null) ids.addAll(req.getMemberIds());
+        ids.add(req.getCreatedBy());
+        for (Long uid : ids) {
+            ChatMemberRole role = Objects.equals(uid, req.getCreatedBy()) ? ChatMemberRole.TEACHER : ChatMemberRole.USER;
+            memberRepo.save(ChatRoomMember.builder().room(room).userId(uid).role(role).build());
+        }
+        return room;
     }
 
-    /**
-     * System SUBMIT message -> DO NOT save DB
-     */
+    private void requireTeacher(UUID roomId, Long operatorUserId) {
+        List<ChatRoomMember> members = memberRepo.findByRoom_Id(roomId);
+        boolean ok = members.stream().anyMatch(m -> Objects.equals(m.getUserId(), operatorUserId) && m.getRole() == ChatMemberRole.TEACHER);
+        if (!ok) throw new SecurityException("Only TEACHER can perform this action");
+    }
+
     @Override
-    public ChatMessageResponseDTO createSystemSubmitMessage(String roomId, String user) {
-        ChatMessageResponseDTO dto = new ChatMessageResponseDTO();
-        dto.setRoomId(roomId);
-        dto.setSender("system");
-        dto.setContent(user + " submitted the exam");
-        dto.setType("SYSTEM_SUBMIT");
-        dto.setTimestamp(System.currentTimeMillis());
-        return dto;  // ❌ Không lưu DB vì submit thuộc exam_attempt
+    public void addMembers(AddMembersRequest req, Long operatorUserId) {
+        requireTeacher(req.getRoomId(), operatorUserId);
+        ChatRoom room = roomRepo.findById(req.getRoomId()).orElseThrow();
+        for (Long uid : req.getMemberIds()) {
+            if (!memberRepo.existsByRoom_IdAndUserId(room.getId(), uid)) {
+                memberRepo.save(ChatRoomMember.builder().room(room).userId(uid).role(ChatMemberRole.USER).build());
+            }
+        }
     }
 
-    // ============================
-    // Helpers
-    // ============================
-
-    private ChatMessage mapToEntity(ChatMessageRequestDTO req) {
-        ChatMessage entity = new ChatMessage();
-        entity.setRoomId(req.getRoomId());
-        entity.setSender(req.getSender());
-        entity.setContent(req.getContent());
-        entity.setType("USER");
-        entity.setTimestamp(System.currentTimeMillis());
-        return entity;
+    @Override
+    public void removeMember(UUID roomId, Long memberId, Long operatorUserId) {
+        requireTeacher(roomId, operatorUserId);
+        memberRepo.deleteByRoom_IdAndUserId(roomId, memberId);
     }
 
-    private ChatMessageResponseDTO toDTO(ChatMessage msg) {
-        ChatMessageResponseDTO dto = new ChatMessageResponseDTO();
-        dto.setId(msg.getId());
-        dto.setRoomId(msg.getRoomId());
-        dto.setSender(msg.getSender());
-        dto.setContent(msg.getContent());
-        dto.setTimestamp(msg.getTimestamp());
-        dto.setType(msg.getType());
-        return dto;
+    @Override
+    public void leaveRoom(UUID roomId, Long memberId) {
+        memberRepo.deleteByRoom_IdAndUserId(roomId, memberId);
+    }
+
+    @Override
+    public void renameRoom(UUID roomId, RenameRequest req, Long operatorUserId) {
+        requireTeacher(roomId, operatorUserId);
+        ChatRoom room = roomRepo.findById(roomId).orElseThrow();
+        room.setName(req.getName());
+        roomRepo.save(room);
+    }
+
+    @Override
+    public void updateAvatar(UUID roomId, String avatarUrl, Long operatorUserId) {
+        requireTeacher(roomId, operatorUserId);
+        ChatRoom room = roomRepo.findById(roomId).orElseThrow();
+        room.setAvatar(avatarUrl);
+        roomRepo.save(room);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ChatRoom> myRooms(Long userId) {
+        return roomRepo.findByMember(userId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ChatRoomMember> roomMembers(UUID roomId) {
+        return memberRepo.findByRoom_Id(roomId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ChatRoom getRoom(UUID roomId) {
+        return roomRepo.findById(roomId).orElseThrow();
     }
 }

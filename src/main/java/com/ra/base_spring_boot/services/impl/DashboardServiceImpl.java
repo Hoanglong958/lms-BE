@@ -12,7 +12,6 @@ import com.ra.base_spring_boot.model.constants.RoleName;
 import com.ra.base_spring_boot.repository.*;
 import com.ra.base_spring_boot.services.IDashboardService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -136,7 +135,7 @@ public class DashboardServiceImpl implements IDashboardService {
                 .totalCourses(new DashboardStatsDTO.GrowthItem(totalCourses, courseGrowth))
                 .totalExams(new DashboardStatsDTO.GrowthItem(totalExamAttempts, examAttemptGrowth))
                 .averageExamScore(new DashboardStatsDTO.GrowthItem(avgScore.longValue(), avgScoreGrowth))
-                .courseCompletionRate(new DashboardStatsDTO.GrowthItem((long) Math.round(completionRate), completionGrowth))
+                .courseCompletionRate(new DashboardStatsDTO.GrowthItem(Math.round(completionRate), completionGrowth))
                 .totalClasses(new DashboardStatsDTO.GrowthItem(totalClasses, classGrowth))
                 .totalQuizzes(new DashboardStatsDTO.GrowthItem(totalQuizzes, quizGrowth))
                 .totalAssignments(new DashboardStatsDTO.GrowthItem(totalAssignments, assignmentGrowth))
