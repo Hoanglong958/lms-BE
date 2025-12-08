@@ -35,6 +35,11 @@ public class ScheduleItem {
 
     @Column
     private LocalDateTime startAt; // có thể lấy từ period + date
+    // Mỗi buổi học thuộc về 1 class
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "class_id", nullable = false)
+    private Class clazz;
+
 
     @Column
     private LocalDateTime endAt;

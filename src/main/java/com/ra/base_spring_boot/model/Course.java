@@ -31,8 +31,6 @@ public class Course {
     @Column(nullable = false)
     private int totalSessions; // tổng số buổi học của khóa
 
-    @Column(nullable = false)
-    private int weeks; // số tuần học
     private LocalDate startDate; // ngày bắt đầu khóa học
 
     @Enumerated(EnumType.STRING)

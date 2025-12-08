@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "classes")
@@ -51,6 +52,9 @@ public class Class {
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
+    // ======= Thêm danh sách ScheduleItem =======
+    @OneToMany(mappedBy = "clazz", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ScheduleItem> scheduleItems;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;

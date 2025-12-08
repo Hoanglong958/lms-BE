@@ -9,4 +9,5 @@ public class UpdateScheduleItemRequestDTO {
     private LocalDate date;          // Ngày mới
     private Long periodId;           // Ca học mới
     private String status;           // "SCHEDULED", "CANCELLED", ...
+    private Long classId;
 }

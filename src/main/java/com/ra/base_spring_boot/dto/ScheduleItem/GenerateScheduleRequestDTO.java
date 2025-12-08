@@ -12,5 +12,7 @@ import java.util.List;
 @Data
 public class GenerateScheduleRequestDTO {
     private Long courseId;
+    private int sessionsPerWeek;
+    private Long classId;
 
 }

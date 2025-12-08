@@ -32,6 +32,5 @@ public class CourseResponseDTO {
     private LocalDateTime updatedAt;
 
     private int totalSessions;
-    private int weeks;
     private LocalDate startDate;
 }

@@ -15,4 +15,5 @@ public class CreateManualScheduleRequestDTO {
     private Long courseId;
     private List<Integer> daysOfWeek;   // Ví dụ [2,4]
     private List<Long> periodIds;       // Ví dụ [1,2]
+    private Long classId;
 }

@@ -31,7 +31,6 @@ public class CourseServiceImpl implements ICourseService {
                 .instructorName(dto.getInstructorName())
                 .level(level)
                 .totalSessions(dto.getTotalSessions())
-                .weeks(dto.getWeeks())
                 .startDate(dto.getStartDate())
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -52,7 +51,6 @@ public class CourseServiceImpl implements ICourseService {
         course.setInstructorName(dto.getInstructorName());
         course.setLevel(parseLevel(dto.getLevel()));
         course.setTotalSessions(dto.getTotalSessions());
-        course.setWeeks(dto.getWeeks());
         course.setStartDate(dto.getStartDate());
         course.setUpdatedAt(LocalDateTime.now());
 
@@ -104,7 +102,6 @@ public class CourseServiceImpl implements ICourseService {
                 .instructorName(course.getInstructorName())
                 .level(course.getLevel().name())
                 .totalSessions(course.getTotalSessions())
-                .weeks(course.getWeeks())
                 .startDate(course.getStartDate())
                 .createdAt(course.getCreatedAt())
                 .updatedAt(course.getUpdatedAt())
