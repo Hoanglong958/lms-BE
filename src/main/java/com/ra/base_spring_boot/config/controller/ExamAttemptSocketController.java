@@ -1,11 +1,12 @@
 package com.ra.base_spring_boot.config.controller;
 
 import com.ra.base_spring_boot.dto.ChatMessageSocket.ExamMessageDTO;
-import com.ra.base_spring_boot.model.ExamAttempt;
+import com.ra.base_spring_boot.dto.ExamAttempt.ExamAttemptResponseDTO;
 import com.ra.base_spring_boot.model.ExamParticipant;
 import com.ra.base_spring_boot.services.IExamAttemptService;
 import com.ra.base_spring_boot.services.IExamParticipantService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 
 @Controller
 @RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/api/exam-action")
 public class ExamAttemptSocketController {
 
@@ -23,80 +25,98 @@ public class ExamAttemptSocketController {
     private final IExamAttemptService examAttemptService;
     private final IExamParticipantService examParticipantService;
 
-    // ==================== SOCKET ENDPOINT ====================
+    // =================== WEBSOCKET ===================
     @MessageMapping("/exam/action")
     public void examAction(ExamMessageDTO message) {
-        process(message);
+        ExamMessageDTO dto = process(message);
+        // Broadcast đã thực hiện trong process()
     }
 
-    // ==================== REST ENDPOINT (for testing) ====================
+    // =================== REST FOR TESTING ===================
     @PostMapping("/action")
     public ResponseEntity<?> actionRest(@RequestBody ExamMessageDTO message) {
-        return ResponseEntity.ok(process(message));
+        ExamMessageDTO dto = process(message);
+        if(dto == null) return ResponseEntity.badRequest().body("Invalid message or type");
+        return ResponseEntity.ok(dto);
     }
 
-    // ==================== XỬ LÝ JOIN / SUBMIT ====================
+    // ==================== MAIN LOGIC ====================
     private ExamMessageDTO process(ExamMessageDTO message) {
+        if(message == null || message.getType() == null) {
+            log.warn("Received null message or type");
+            return null;
+        }
+
         ExamMessageDTO dto = new ExamMessageDTO();
 
         switch (message.getType()) {
 
             case "JOIN_EXAM" -> {
-                // 1️⃣ Tạo participant thực tế nếu chưa có
                 ExamParticipant participant = examParticipantService.joinExam(
                         message.getUserId(),
-                        Long.valueOf(message.getExamRoomId()),
+                        message.getExamId(),
                         LocalDateTime.now()
                 );
 
-                // 2️⃣ Tạo DTO gửi FE
+                if(participant == null) {
+                    dto.setType("JOIN_EXAM_FAILED");
+                    return dto;
+                }
+
                 dto.setType("JOIN_EXAM_SUCCESS");
                 dto.setUserId(participant.getUser().getId());
-                dto.setExamRoomId(participant.getExamRoomId().toString());
                 dto.setExamId(participant.getExam().getId());
 
-                // 3️⃣ Broadcast realtime cho tất cả user trong phòng
                 messagingTemplate.convertAndSend(
-                        "/topic/exam-room/" + participant.getExamRoomId(), dto
+                        "/topic/exam/" + participant.getExam().getId(),
+                        dto
                 );
             }
 
             case "SUBMIT_EXAM" -> {
-                // 1️⃣ Lấy participant đã join
-                ExamParticipant participant = examParticipantService.getParticipant(
-                        message.getUserId(),
-                        Long.valueOf(message.getExamRoomId())
-                );
+                ExamParticipant participant =
+                        examParticipantService.getParticipant(message.getUserId(), message.getExamId());
 
-                // 2️⃣ Tạo attempt mới
-                ExamAttempt attempt = examAttemptService.createAttempt(
+                if(participant == null) {
+                    dto.setType("SUBMIT_EXAM_FAILED");
+                    return dto;
+                }
+
+                // Tạo attempt → dùng startAttempt() thay cho createAttempt()
+                ExamAttemptResponseDTO attemptDto = examAttemptService.startAttempt(
                         participant.getExam().getId(),
-                        participant.getUser().getId(),
-                        participant.getExamRoomId()
+                        participant.getUser().getId()
                 );
 
-                // 3️⃣ Submit attempt với câu trả lời từ FE
-                attempt = examAttemptService.submitExam(
-                        attempt.getId(),
-                        message.getAnswers() // Map<Long, String>
-                );
+                if(attemptDto == null) {
+                    dto.setType("SUBMIT_EXAM_FAILED");
+                    return dto;
+                }
 
-                // 4️⃣ Tạo DTO gửi FE
+                // Submit answer
+                examAttemptService.submitExam(attemptDto.getId(), message.getAnswers());
+
+                // Chốt attempt
+                ExamAttemptResponseDTO finalAttempt = examAttemptService.submitAttempt(attemptDto.getId());
+
                 dto.setType("SUBMIT_EXAM_SUCCESS");
-                dto.setAttemptId(attempt.getId());
-                dto.setUserId(attempt.getUser().getId());
-                dto.setExamId(attempt.getExam().getId());
-                dto.setExamRoomId(participant.getExamRoomId().toString());
-                dto.setStartTime(attempt.getStartTime());
-                dto.setEndTime(attempt.getEndTime());
+                dto.setAttemptId(finalAttempt.getId());
+                dto.setUserId(finalAttempt.getUserId());
+                dto.setExamId(finalAttempt.getExamId());
+                dto.setStartTime(finalAttempt.getStartTime());
+                dto.setEndTime(finalAttempt.getEndTime());
+                dto.setScore(finalAttempt.getScore());
 
-                // 5️⃣ Broadcast realtime cho tất cả user trong phòng
                 messagingTemplate.convertAndSend(
-                        "/topic/exam-room/" + participant.getExamRoomId(), dto
+                        "/topic/exam/" + finalAttempt.getExamId(),
+                        dto
                 );
             }
 
-            default -> dto.setType("UNKNOWN_TYPE");
+            default -> {
+                dto.setType("UNKNOWN_TYPE");
+                log.warn("Received unknown message type: {}", message.getType());
+            }
         }
 
         return dto;

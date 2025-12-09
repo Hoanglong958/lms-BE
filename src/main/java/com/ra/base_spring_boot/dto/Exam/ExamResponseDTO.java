@@ -16,7 +16,6 @@ import java.util.List;
 public class ExamResponseDTO {
 
     private Long id;
-    private Long courseId;
     private String title;
     private String description;
     private Integer totalQuestions;

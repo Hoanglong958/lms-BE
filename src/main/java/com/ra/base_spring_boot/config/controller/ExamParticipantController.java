@@ -24,18 +24,18 @@ public class ExamParticipantController {
     private final IExamParticipantService examParticipantService;
 
     // ==========================================
-    // 1️⃣ User JOIN phòng thi
+    // 1️⃣ User JOIN bài thi
     // ==========================================
     @PostMapping("/join")
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @Operation(summary = "User tham gia kỳ thi")
     @ApiResponse(responseCode = "200", description = "Join thành công")
     public ResponseEntity<ExamParticipant> joinExam(
-            @Parameter(description = "ID người dùng") @RequestParam Long userId,
-            @Parameter(description = "ID phòng thi") @RequestParam Long examRoomId
+            @Parameter(description = "ID bài thi") @RequestParam Long examId,
+            @Parameter(description = "ID người dùng") @RequestParam Long userId
     ) {
         ExamParticipant participant =
-                examParticipantService.joinExam(userId, examRoomId, LocalDateTime.now());
+                examParticipantService.joinExam(examId, userId, LocalDateTime.now());
 
         return ResponseEntity.ok(participant);
     }
@@ -48,25 +48,25 @@ public class ExamParticipantController {
     @Operation(summary = "User nộp bài thi")
     @ApiResponse(responseCode = "200", description = "Submit thành công")
     public ResponseEntity<ExamParticipant> submitExam(
-            @Parameter(description = "ID người dùng") @RequestParam Long userId,
-            @Parameter(description = "ID phòng thi") @RequestParam Long examRoomId
+            @Parameter(description = "ID bài thi") @RequestParam Long examId,
+            @Parameter(description = "ID người dùng") @RequestParam Long userId
     ) {
         ExamParticipant participant =
-                examParticipantService.submitExam(userId, examRoomId, LocalDateTime.now());
+                examParticipantService.submitExam(examId, userId, LocalDateTime.now());
 
         return ResponseEntity.ok(participant);
     }
 
     // ==========================================
-    // 3️⃣ Lấy danh sách trạng thái người tham gia phòng thi (ADMIN)
+    // 3️⃣ Lấy danh sách người tham gia bài thi (ADMIN)
     // ==========================================
-    @GetMapping("/room-status")
+    @GetMapping("/exam-status")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Operation(summary = "Lấy danh sách người trong phòng thi")
+    @Operation(summary = "Lấy danh sách người tham gia kỳ thi")
     @ApiResponse(responseCode = "200", description = "Thành công")
-    public ResponseEntity<List<ExamParticipant>> getRoomStatus(
-            @Parameter(description = "ID phòng thi") @RequestParam Long examRoomId
+    public ResponseEntity<List<ExamParticipant>> getExamStatus(
+            @Parameter(description = "ID bài thi") @RequestParam Long examId
     ) {
-        return ResponseEntity.ok(examParticipantService.getParticipantsByRoom(examRoomId));
+        return ResponseEntity.ok(examParticipantService.getParticipantsByExam(examId));
     }
 }

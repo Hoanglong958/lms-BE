@@ -9,9 +9,15 @@ import java.util.Optional;
 
 public interface IExamParticipantService {
 
-    ExamParticipant joinExam(Long examRoomId, Long userId, LocalDateTime joinTime);
-    ExamParticipant submitExam(Long examRoomId, Long userId, LocalDateTime submitTime);
-    List<ExamParticipant> getParticipantsByRoom(Long examRoomId);
-    ExamParticipant getParticipant(Long userId, Long examRoomId);
-    Optional<ExamParticipant> findByUserIdAndExamRoomId(Long userId, Long examRoomId);
+    ExamParticipant joinExam(Long examId, Long userId, LocalDateTime joinTime);
+
+    ExamParticipant submitExam(Long examId, Long userId, LocalDateTime submitTime);
+
+    List<ExamParticipant> getParticipantsByExam(Long examId);
+
+    ExamParticipant getParticipant(Long userId, Long examId);
+
+    Optional<ExamParticipant> findByUserIdAndExamId(Long userId, Long examId);
+
 }
+

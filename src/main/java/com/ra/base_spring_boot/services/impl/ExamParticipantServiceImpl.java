@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.services.impl;
 
+import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.Exam;
 import com.ra.base_spring_boot.model.ExamParticipant;
 import com.ra.base_spring_boot.model.User;
@@ -22,36 +23,36 @@ public class ExamParticipantServiceImpl implements IExamParticipantService {
     private final IUserRepository userRepository;
     private final IExamRepository examRepository;
 
+    // ============================================
+    // 1️⃣ USER JOIN BÀI THI
+    // ============================================
     @Override
-    public ExamParticipant joinExam(Long userId, Long examRoomId, LocalDateTime joinTime) {
+    public ExamParticipant joinExam(Long examId, Long userId, LocalDateTime joinTime) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+                .orElseThrow(() -> new HttpBadRequest("User không tồn tại"));
 
-        Exam exam = examRepository.findById(examRoomId)
-                .orElseThrow(() -> new RuntimeException("Exam không tồn tại"));
+        Exam exam = examRepository.findById(examId)
+                .orElseThrow(() -> new HttpBadRequest("Exam không tồn tại"));
 
-        // ====== CHECK 1 — đã join rồi thì trả lại participant cũ ======
-        Optional<ExamParticipant> existed = participantRepository
-                .findByUser_IdAndExamRoomId(userId, examRoomId);
+        // Tìm xem user đã tham gia bài thi này chưa
+        Optional<ExamParticipant> existed =
+                participantRepository.findByUser_IdAndExam_Id(userId, examId);
 
         if (existed.isPresent()) {
             ExamParticipant p = existed.get();
 
-            // ====== CHECK 2 — nếu đã submit thì không cho thi lại ======
-            if (p.getSubmitted() != null && p.getSubmitted()) {
-                throw new RuntimeException("Bạn đã hoàn thành bài thi. Không thể tham gia lại.");
+            if (Boolean.TRUE.equals(p.getSubmitted())) {
+                throw new HttpBadRequest("Bạn đã hoàn thành bài thi — không thể tham gia lại.");
             }
 
-            // ====== CHECK 3 — nếu đang thi dở thì trả lại trạng thái cũ (fix lỗi refresh) ======
             return p;
         }
 
-        // ====== CHƯA TỪNG JOIN → tạo participant mới ======
+        // Chưa join → tạo mới
         ExamParticipant participant = ExamParticipant.builder()
-                .user(user)
                 .exam(exam)
-                .examRoomId(examRoomId)
+                .user(user)
                 .joinTime(joinTime)
                 .started(true)
                 .submitted(false)
@@ -60,15 +61,18 @@ public class ExamParticipantServiceImpl implements IExamParticipantService {
         return participantRepository.save(participant);
     }
 
+    // ============================================
+    // 2️⃣ USER SUBMIT BÀI THI
+    // ============================================
     @Override
-    public ExamParticipant submitExam(Long userId, Long examId, LocalDateTime submitTime) {
+    public ExamParticipant submitExam(Long examId, Long userId, LocalDateTime submitTime) {
 
         ExamParticipant participant = participantRepository
-                .findByUser_IdAndExamRoomId(userId, examId)
-                .orElseThrow(() -> new RuntimeException("User chưa join phòng thi"));
+                .findByUser_IdAndExam_Id(userId, examId)
+                .orElseThrow(() -> new HttpBadRequest("Bạn chưa tham gia bài thi này"));
 
-        if (participant.getSubmitted() != null && participant.getSubmitted()) {
-            throw new RuntimeException("Bạn đã nộp bài rồi. Không thể nộp lại.");
+        if (Boolean.TRUE.equals(participant.getSubmitted())) {
+            throw new HttpBadRequest("Bạn đã nộp bài rồi — không thể nộp lại.");
         }
 
         participant.setSubmitted(true);
@@ -77,19 +81,29 @@ public class ExamParticipantServiceImpl implements IExamParticipantService {
         return participantRepository.save(participant);
     }
 
+    // ============================================
+    // 3️⃣ LẤY DANH SÁCH NGƯỜI THAM GIA BÀI THI
+    // ============================================
     @Override
-    public List<ExamParticipant> getParticipantsByRoom(Long examId) {
-        return participantRepository.findAllByExamRoomId(examId);
+    public List<ExamParticipant> getParticipantsByExam(Long examId) {
+        return participantRepository.findAllByExam_Id(examId);
     }
 
+    // ============================================
+    // 4️⃣ LẤY TRẠNG THÁI CỦA USER
+    // ============================================
     @Override
-    public ExamParticipant getParticipant(Long userId, Long examRoomId) {
-        return participantRepository.findByUser_IdAndExamRoomId(userId, examRoomId)
-                .orElseThrow(() -> new RuntimeException("User chưa join phòng thi"));
+    public ExamParticipant getParticipant(Long userId, Long examId) {
+        return participantRepository
+                .findByUser_IdAndExam_Id(userId, examId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy user tham gia bài thi"));
     }
 
+    // ============================================
+    // 5️⃣ OPTIONAL SERVICE (DÙNG NỘI BỘ)
+    // ============================================
     @Override
-    public Optional<ExamParticipant> findByUserIdAndExamRoomId(Long userId, Long examRoomId) {
-        return participantRepository.findByUser_IdAndExamRoomId(userId, examRoomId);
+    public Optional<ExamParticipant> findByUserIdAndExamId(Long userId, Long examId) {
+        return participantRepository.findByUser_IdAndExam_Id(userId, examId);
     }
 }
