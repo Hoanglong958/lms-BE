@@ -4,42 +4,69 @@ import com.ra.base_spring_boot.model.ExamParticipant;
 import com.ra.base_spring_boot.services.IExamParticipantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @RestController
+@RequestMapping("/api/v1/exam-participants")
 @RequiredArgsConstructor
-@RequestMapping("/api/exam-participant")
+@Tag(name = "25 - Exam Participants", description = "Quản lý trạng thái người tham gia kỳ thi")
 public class ExamParticipantController {
 
     private final IExamParticipantService examParticipantService;
 
-    // User join phòng thi (REST test)
+    // ==========================================
+    // 1️⃣ User JOIN phòng thi
+    // ==========================================
     @PostMapping("/join")
-    public ResponseEntity<?> joinExam(@RequestParam Long userId,
-                                      @RequestParam Long examRoomId) {
-        ExamParticipant participant = examParticipantService.joinExam(userId, examRoomId, LocalDateTime.now());
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @Operation(summary = "User tham gia kỳ thi")
+    @ApiResponse(responseCode = "200", description = "Join thành công")
+    public ResponseEntity<ExamParticipant> joinExam(
+            @Parameter(description = "ID người dùng") @RequestParam Long userId,
+            @Parameter(description = "ID phòng thi") @RequestParam Long examRoomId
+    ) {
+        ExamParticipant participant =
+                examParticipantService.joinExam(userId, examRoomId, LocalDateTime.now());
+
         return ResponseEntity.ok(participant);
     }
 
-    // User submit bài (REST test)
+    // ==========================================
+    // 2️⃣ User SUBMIT bài thi
+    // ==========================================
     @PostMapping("/submit")
-    public ResponseEntity<?> submitExam(@RequestParam Long userId,
-                                        @RequestParam Long examRoomId) {
-        // ✅ Gọi submitExam đúng 3 tham số
-        ExamParticipant participant = examParticipantService.submitExam(
-                userId,
-                examRoomId,
-                LocalDateTime.now()
-        );
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    @Operation(summary = "User nộp bài thi")
+    @ApiResponse(responseCode = "200", description = "Submit thành công")
+    public ResponseEntity<ExamParticipant> submitExam(
+            @Parameter(description = "ID người dùng") @RequestParam Long userId,
+            @Parameter(description = "ID phòng thi") @RequestParam Long examRoomId
+    ) {
+        ExamParticipant participant =
+                examParticipantService.submitExam(userId, examRoomId, LocalDateTime.now());
 
         return ResponseEntity.ok(participant);
     }
 
-    // Lấy trạng thái user trong phòng thi
-    @GetMapping("/status")
-    public ResponseEntity<?> getStatus(@RequestParam Long examRoomId) {
+    // ==========================================
+    // 3️⃣ Lấy danh sách trạng thái người tham gia phòng thi (ADMIN)
+    // ==========================================
+    @GetMapping("/room-status")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Lấy danh sách người trong phòng thi")
+    @ApiResponse(responseCode = "200", description = "Thành công")
+    public ResponseEntity<List<ExamParticipant>> getRoomStatus(
+            @Parameter(description = "ID phòng thi") @RequestParam Long examRoomId
+    ) {
         return ResponseEntity.ok(examParticipantService.getParticipantsByRoom(examRoomId));
     }
 }
