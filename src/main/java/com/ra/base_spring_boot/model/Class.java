@@ -12,7 +12,6 @@ import java.util.List;
 @Table(name = "classes")
 @Getter
 @Setter
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -31,6 +30,7 @@ public class Class {
     @Column(name = "max_students")
     @Builder.Default
     private Integer maxStudents = 30;
+
     @ManyToOne
     @JoinColumn(name = "course_id")
     private Course course;
@@ -44,21 +44,18 @@ public class Class {
     @Column(name = "schedule_info", length = 255)
     private String scheduleInfo;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    @Builder.Default
-    private ClassStatus status = ClassStatus.UPCOMING;
-
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
-    // ======= Thêm danh sách ScheduleItem =======
-    @OneToMany(mappedBy = "clazz", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ScheduleItem> scheduleItems;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // ======= Danh sách ScheduleItem =======
+    @OneToMany(mappedBy = "clazz", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ScheduleItem> scheduleItems;
+
+    // ================= Lifecycle callbacks =================
     @PrePersist
     public void onCreate() {
         LocalDateTime now = LocalDateTime.now();
@@ -71,14 +68,23 @@ public class Class {
         if (maxStudents == null) {
             maxStudents = 30;
         }
-        if (status == null) {
-            status = ClassStatus.UPCOMING;
-        }
     }
 
     @PreUpdate
     public void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-}
 
+    // ================= Tính status động =================
+    public ClassStatus getCalculatedStatus() {
+        LocalDate today = LocalDate.now();
+
+        if (today.isBefore(startDate)) {
+            return ClassStatus.UPCOMING;
+        } else if (endDate == null || !today.isAfter(endDate)) {
+            return ClassStatus.ONGOING;
+        } else {
+            return ClassStatus.COMPLETED;
+        }
+    }
+}

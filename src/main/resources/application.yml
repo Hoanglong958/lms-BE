@@ -60,7 +60,7 @@
       access: 3600000
 
   server:
-    port: 3900
+    port: 3999
 
   app:
     upload:

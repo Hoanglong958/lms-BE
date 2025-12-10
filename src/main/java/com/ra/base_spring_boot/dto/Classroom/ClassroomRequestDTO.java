@@ -21,7 +21,6 @@ public class ClassroomRequestDTO {
     @Schema(example = "2025-04-05")
     private String endDate;
 
-    @Schema(example = "UPCOMING")
-    private String status;
+
 }
 

@@ -11,7 +11,8 @@ public interface IExamAttemptService {
     ExamAttemptResponseDTO startAttempt(Long examId, Long userId);
 
     // Lưu câu trả lời
-    ExamAttempt submitExam(Long attemptId, Map<Long, String> answers);
+    ExamAttemptResponseDTO submitExam(Long attemptId, Map<Long, String> answers);
+
 
     // Kết thúc bài (chốt endTime)
     ExamAttemptResponseDTO submitAttempt(Long attemptId);

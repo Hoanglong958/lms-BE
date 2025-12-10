@@ -5,7 +5,6 @@ import com.ra.base_spring_boot.dto.Course.CourseResponseDTO;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.Course;
 import com.ra.base_spring_boot.model.constants.CourseLevel;
-import com.ra.base_spring_boot.model.constants.CourseStatus;
 import com.ra.base_spring_boot.repository.ICourseRepository;
 import com.ra.base_spring_boot.services.ICourseService;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -25,6 +23,7 @@ public class CourseServiceImpl implements ICourseService {
 
     @Override
     public CourseResponseDTO create(CourseRequestDTO dto) {
+
         CourseLevel level = parseLevel(dto.getLevel());
 
         Course course = Course.builder()
@@ -32,14 +31,10 @@ public class CourseServiceImpl implements ICourseService {
                 .description(dto.getDescription())
                 .level(level)
                 .totalSessions(dto.getTotalSessions())
-                .startDate(dto.getStartDate())
                 .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
 
-        // Tính endDate & status
-        updateDateAndStatus(course);
-
-        course.setUpdatedAt(course.getCreatedAt());
         courseRepository.save(course);
 
         return toDto(course);
@@ -54,10 +49,7 @@ public class CourseServiceImpl implements ICourseService {
         course.setDescription(dto.getDescription());
         course.setLevel(parseLevel(dto.getLevel()));
         course.setTotalSessions(dto.getTotalSessions());
-        course.setStartDate(dto.getStartDate());
         course.setUpdatedAt(LocalDateTime.now());
-
-        updateDateAndStatus(course);
 
         courseRepository.save(course);
 
@@ -76,8 +68,6 @@ public class CourseServiceImpl implements ICourseService {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học với id = " + id));
 
-        updateDateAndStatus(course); // cập nhật status realtime
-
         return toDto(course);
     }
 
@@ -85,20 +75,14 @@ public class CourseServiceImpl implements ICourseService {
     public List<CourseResponseDTO> findAll() {
         return courseRepository.findAll()
                 .stream()
-                .map(course -> {
-                    updateDateAndStatus(course);
-                    return toDto(course);
-                })
+                .map(this::toDto)
                 .toList();
     }
 
     @Override
     public Page<CourseResponseDTO> findAll(Pageable pageable) {
         return courseRepository.findAll(pageable)
-                .map(course -> {
-                    updateDateAndStatus(course);
-                    return toDto(course);
-                });
+                .map(this::toDto);
     }
 
     @Override
@@ -106,36 +90,11 @@ public class CourseServiceImpl implements ICourseService {
         String kw = keyword == null ? "" : keyword.trim();
 
         return courseRepository
-                .findByTitleContainingIgnoreCase(kw, pageable) // ĐÃ BỎ instructorName
-                .map(course -> {
-                    updateDateAndStatus(course);
-                    return toDto(course);
-                });
+                .findByTitleContainingIgnoreCase(kw, pageable)
+                .map(this::toDto);
     }
 
     // =========================== HELPER METHODS ===============================
-
-    private void updateDateAndStatus(Course course) {
-        if (course.getStartDate() == null || course.getTotalSessions() <= 0) {
-            course.setStatus(CourseStatus.NOT_STARTED);
-            return;
-        }
-
-        LocalDate start = course.getStartDate();
-        LocalDate end = start.plusDays(course.getTotalSessions() - 1);
-
-        course.setEndDate(end);
-
-        LocalDate today = LocalDate.now();
-
-        if (today.isBefore(start)) {
-            course.setStatus(CourseStatus.NOT_STARTED);
-        } else if (!today.isAfter(end)) {
-            course.setStatus(CourseStatus.ONGOING);
-        } else {
-            course.setStatus(CourseStatus.ENDED);
-        }
-    }
 
     private CourseResponseDTO toDto(Course course) {
         return CourseResponseDTO.builder()
@@ -144,9 +103,6 @@ public class CourseServiceImpl implements ICourseService {
                 .description(course.getDescription())
                 .level(course.getLevel().name())
                 .totalSessions(course.getTotalSessions())
-                .startDate(course.getStartDate())
-                .endDate(course.getEndDate())      // ✔ thêm vào response
-                .status(course.getStatus().name()) // ✔ trạng thái
                 .createdAt(course.getCreatedAt())
                 .updatedAt(course.getUpdatedAt())
                 .build();

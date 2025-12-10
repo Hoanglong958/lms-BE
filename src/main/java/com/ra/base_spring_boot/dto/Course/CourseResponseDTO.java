@@ -30,6 +30,4 @@ public class CourseResponseDTO {
 
     private int totalSessions;
     private LocalDate startDate;
-    private LocalDate endDate;
-    private String status;
 }
