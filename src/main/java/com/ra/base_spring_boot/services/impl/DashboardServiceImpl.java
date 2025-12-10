@@ -109,7 +109,6 @@ public class DashboardServiceImpl implements IDashboardService {
                         .id(c.getId())
                         .title(c.getTitle())
                         .description(c.getDescription())
-                        .instructorName(c.getInstructorName())
                         .level(c.getLevel().name()) // convert enum -> String
                         .createdAt(c.getCreatedAt())
                         .build())
@@ -215,7 +214,6 @@ public class DashboardServiceImpl implements IDashboardService {
                         .id(c.getId())
                         .title(c.getTitle())
                         .description(c.getDescription())
-                        .instructorName(c.getInstructorName())
                         .level(c.getLevel().name()) // chuyển enum sang String
                         .createdAt(c.getCreatedAt())
                         .build()

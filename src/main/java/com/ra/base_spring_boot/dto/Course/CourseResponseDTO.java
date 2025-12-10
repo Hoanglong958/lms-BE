@@ -19,9 +19,6 @@ public class CourseResponseDTO {
     @Schema(example = "Learn how to build REST APIs with Spring Boot 3")
     private String description;
 
-    @Schema(example = "Nguyen Van A")
-    private String instructorName;
-
     @Schema(example = "BEGINNER")
     private String level;
 
@@ -33,4 +30,6 @@ public class CourseResponseDTO {
 
     private int totalSessions;
     private LocalDate startDate;
+    private LocalDate endDate;
+    private String status;
 }

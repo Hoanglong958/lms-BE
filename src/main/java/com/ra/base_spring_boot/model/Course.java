@@ -1,6 +1,7 @@
 package com.ra.base_spring_boot.model;
 
 import com.ra.base_spring_boot.model.constants.CourseLevel;
+import com.ra.base_spring_boot.model.constants.CourseStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -42,8 +43,17 @@ public class Course {
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column
+    private LocalDate endDate;
+
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    // ============================ NEW FIELDS =================================
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private CourseStatus status = CourseStatus.NOT_STARTED;
+    // =
 
     @PrePersist
     public void prePersist() {

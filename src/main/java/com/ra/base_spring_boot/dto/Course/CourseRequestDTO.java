@@ -13,9 +13,6 @@ public class CourseRequestDTO {
     @Schema(example = "Learn how to build REST APIs with Spring Boot 3")
     private String description;
 
-    @Schema(example = "Nguyen Van A")
-    private String instructorName;
-
     @Schema(example = "BEGINNER") // BEGINNER, INTERMEDIATE, ADVANCED
     private String level; // BEGINNER, INTERMEDIATE, ADVANCED
 
