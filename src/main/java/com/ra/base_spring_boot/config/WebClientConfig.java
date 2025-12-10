@@ -14,6 +14,7 @@ import reactor.netty.http.client.HttpClient;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
+import java.util.Objects;
 
 @Slf4j
 @Configuration
@@ -32,11 +33,12 @@ public class WebClientConfig {
                         conn.addHandlerLast(new ReadTimeoutHandler(props.getReadTimeout(), TimeUnit.MILLISECONDS))
                 );
 
+        String baseUrl = Objects.requireNonNull(props.getBaseUrl(), "external.api.baseUrl must not be null");
         return WebClient.builder()
-                .baseUrl(props.getBaseUrl())
-                .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .filter(logRequest())
-                .filter(logResponse())
+                .baseUrl(baseUrl)
+                .clientConnector(new ReactorClientHttpConnector(Objects.requireNonNull(httpClient)))
+                .filter(Objects.requireNonNull(logRequest()))
+                .filter(Objects.requireNonNull(logResponse()))
                 .build();
     }
 

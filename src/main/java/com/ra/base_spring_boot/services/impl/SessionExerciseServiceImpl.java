@@ -27,7 +27,7 @@ public class SessionExerciseServiceImpl implements ISessionExerciseService {
      */
     @Override
     public SessionExerciseResponseDTO create(SessionExerciseRequestDTO request) {
-        Session session = sessionRepository.findById(request.getSessionId())
+        Session session = sessionRepository.findById(java.util.Objects.requireNonNull(request.getSessionId(), "sessionId must not be null"))
                 .orElseThrow(() -> new RuntimeException("Session not found"));
 
         SessionExercise exercise = SessionExercise.builder()
@@ -39,7 +39,7 @@ public class SessionExerciseServiceImpl implements ISessionExerciseService {
                 .notes(request.getNotes())
                 .build();
 
-        sessionExerciseRepository.save(exercise);
+        sessionExerciseRepository.save(java.util.Objects.requireNonNull(exercise, "exercise must not be null"));
         return toResponse(exercise);
     }
 
@@ -48,7 +48,7 @@ public class SessionExerciseServiceImpl implements ISessionExerciseService {
      */
     @Override
     public SessionExerciseResponseDTO getById(Long id) {
-        SessionExercise exercise = sessionExerciseRepository.findById(id)
+        SessionExercise exercise = sessionExerciseRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new RuntimeException("Exercise not found"));
         return toResponse(exercise);
     }
@@ -58,7 +58,7 @@ public class SessionExerciseServiceImpl implements ISessionExerciseService {
      */
     @Override
     public List<SessionExerciseResponseDTO> getBySessionId(Long sessionId) {
-        return sessionExerciseRepository.findBySession_Id(sessionId)
+        return sessionExerciseRepository.findBySession_Id(java.util.Objects.requireNonNull(sessionId, "sessionId must not be null"))
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -69,7 +69,7 @@ public class SessionExerciseServiceImpl implements ISessionExerciseService {
      */
     @Override
     public SessionExerciseResponseDTO update(Long id, SessionExerciseRequestDTO request) {
-        SessionExercise exercise = sessionExerciseRepository.findById(id)
+        SessionExercise exercise = sessionExerciseRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new RuntimeException("Exercise not found"));
 
         exercise.setTitle(request.getTitle());
@@ -78,7 +78,7 @@ public class SessionExerciseServiceImpl implements ISessionExerciseService {
         exercise.setExampleCode(request.getExampleCode());
         exercise.setNotes(request.getNotes());
 
-        sessionExerciseRepository.save(exercise);
+        sessionExerciseRepository.save(java.util.Objects.requireNonNull(exercise, "exercise must not be null"));
         return toResponse(exercise);
     }
 
@@ -87,10 +87,10 @@ public class SessionExerciseServiceImpl implements ISessionExerciseService {
      */
     @Override
     public void delete(Long id) {
-        if (!sessionExerciseRepository.existsById(id)) {
+        if (!sessionExerciseRepository.existsById(java.util.Objects.requireNonNull(id, "id must not be null"))) {
             throw new RuntimeException("Exercise not found");
         }
-        sessionExerciseRepository.deleteById(id);
+        sessionExerciseRepository.deleteById(java.util.Objects.requireNonNull(id, "id must not be null"));
     }
 
     /**

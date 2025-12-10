@@ -30,9 +30,9 @@ public class QuizAttemptServiceImpl implements IQuizAttemptService {
 
     @Override
     public QuizAttemptResponse start(StartAttemptRequest request) {
-        LessonQuiz quiz = quizRepo.findById(request.getQuizId())
+        LessonQuiz quiz = quizRepo.findById(java.util.Objects.requireNonNull(request.getQuizId(), "quizId must not be null"))
                 .orElseThrow(() -> new IllegalArgumentException("Quiz not found: " + request.getQuizId()));
-        User user = userRepo.findById(request.getUserId())
+        User user = userRepo.findById(java.util.Objects.requireNonNull(request.getUserId(), "userId must not be null"))
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + request.getUserId()));
 
         int last = attemptRepo.maxAttemptNumberByQuizAndUser(quiz.getId(), user.getId());
@@ -43,13 +43,13 @@ public class QuizAttemptServiceImpl implements IQuizAttemptService {
                 .status(AttemptStatus.IN_PROGRESS)
                 .startTime(LocalDateTime.now())
                 .build();
-        attempt = attemptRepo.save(attempt);
+        attempt = attemptRepo.save(java.util.Objects.requireNonNull(attempt, "attempt must not be null"));
         return toDto(attempt);
     }
 
     @Override
     public QuizAttemptResponse submit(Long attemptId, SubmitAttemptRequest request) {
-        QuizAttempt attempt = attemptRepo.findById(attemptId)
+        QuizAttempt attempt = attemptRepo.findById(java.util.Objects.requireNonNull(attemptId, "attemptId must not be null"))
                 .orElseThrow(() -> new IllegalArgumentException("Attempt not found: " + attemptId));
         attempt.setEndTime(LocalDateTime.now());
         attempt.finalizeTiming();
@@ -58,27 +58,27 @@ public class QuizAttemptServiceImpl implements IQuizAttemptService {
         if (request.getTotalCount() != null) attempt.setTotalCount(request.getTotalCount());
         if (request.getPassed() != null) attempt.setPassed(request.getPassed());
         attempt.setStatus(AttemptStatus.SUBMITTED);
-        attempt = attemptRepo.save(attempt);
+        attempt = attemptRepo.save(java.util.Objects.requireNonNull(attempt, "attempt must not be null"));
         return toDto(attempt);
     }
 
     @Override
     @Transactional(readOnly = true)
     public QuizAttemptResponse get(Long attemptId) {
-        return attemptRepo.findById(attemptId).map(this::toDto)
+        return attemptRepo.findById(java.util.Objects.requireNonNull(attemptId, "attemptId must not be null")).map(this::toDto)
                 .orElseThrow(() -> new IllegalArgumentException("Attempt not found: " + attemptId));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<QuizAttemptResponse> byUser(Long userId) {
-        return attemptRepo.findByUser_IdOrderByCreatedAtDesc(userId).stream().map(this::toDto).collect(Collectors.toList());
+        return attemptRepo.findByUser_IdOrderByCreatedAtDesc(java.util.Objects.requireNonNull(userId, "userId must not be null")).stream().map(this::toDto).collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<QuizAttemptResponse> byQuiz(Long quizId) {
-        return attemptRepo.findByQuiz_IdOrderByCreatedAtDesc(quizId).stream().map(this::toDto).collect(Collectors.toList());
+        return attemptRepo.findByQuiz_IdOrderByCreatedAtDesc(java.util.Objects.requireNonNull(quizId, "quizId must not be null")).stream().map(this::toDto).collect(Collectors.toList());
     }
 
     private QuizAttemptResponse toDto(QuizAttempt a) {

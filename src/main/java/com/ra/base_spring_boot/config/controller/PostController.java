@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/v1/posts")
@@ -85,13 +86,11 @@ public class PostController {
             @Parameter(description = "Kích thước trang") @RequestParam(defaultValue = "10") int size,
             @Parameter(description = "Sắp xếp, ví dụ: createdAt,desc hoặc title,asc") @RequestParam(defaultValue = "createdAt,desc") String sort
     ) {
-        Sort sortObj;
-        String[] sortParts = sort.split(",");
-        if (sortParts.length == 2) {
-            sortObj = Sort.by(Sort.Direction.fromString(sortParts[1]), sortParts[0]);
-        } else {
-            sortObj = Sort.by(Sort.Direction.DESC, "createdAt");
-        }
+        String[] sortParts = sort != null ? sort.split(",") : new String[]{};
+        String property = (sortParts.length >= 1 && sortParts[0] != null && !sortParts[0].isBlank()) ? sortParts[0] : "createdAt";
+        String directionStr = (sortParts.length >= 2 && sortParts[1] != null && !sortParts[1].isBlank()) ? sortParts[1] : "DESC";
+        Sort.Direction direction = Sort.Direction.fromString(Objects.requireNonNull(directionStr));
+        Sort sortObj = Sort.by(direction, property);
 
         Pageable pageable = PageRequest.of(page, size, sortObj);
         Page<PostResponseDTO> posts = postService.getPublishedPosts(pageable.getPageNumber(), pageable.getPageSize());

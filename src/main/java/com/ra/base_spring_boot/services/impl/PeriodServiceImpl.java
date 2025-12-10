@@ -40,13 +40,13 @@ public class PeriodServiceImpl implements IPeriodService {
                 .dayOfWeek(request.getDayOfWeek())  // mapping dayOfWeek
                 .build();
 
-        periodRepository.save(period);
+        periodRepository.save(java.util.Objects.requireNonNull(period, "period must not be null"));
         return PeriodResponseDTO.fromEntity(period);
     }
 
     @Override
     public PeriodResponseDTO update(Long id, PeriodRequestDTO request) {
-        Period period = periodRepository.findById(id)
+        Period period = periodRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Ca học không tồn tại"));
 
         if (periodRepository.existsByNameAndIdNot(request.getName(), id)) {
@@ -57,7 +57,7 @@ public class PeriodServiceImpl implements IPeriodService {
             throw new HttpBadRequest("Thời gian bắt đầu phải trước thời gian kết thúc");
         }
 
-        if (periodRepository.existsOverlapExceptId(request.getStartTime(), request.getEndTime(), request.getDayOfWeek(), id)) {
+        if (periodRepository.existsOverlapExceptId(request.getStartTime(), request.getEndTime(), request.getDayOfWeek(), java.util.Objects.requireNonNull(id, "id must not be null"))) {
             throw new HttpBadRequest("Khoảng thời gian ca học bị trùng trong ngày " + request.getDayOfWeek());
         }
 
@@ -72,10 +72,10 @@ public class PeriodServiceImpl implements IPeriodService {
 
     @Override
     public void delete(Long id) {
-        if (!periodRepository.existsById(id)) {
+        if (!periodRepository.existsById(java.util.Objects.requireNonNull(id, "id must not be null"))) {
             throw new HttpBadRequest("Ca học không tồn tại");
         }
-        periodRepository.deleteById(id);
+        periodRepository.deleteById(java.util.Objects.requireNonNull(id, "id must not be null"));
     }
 
     @Override

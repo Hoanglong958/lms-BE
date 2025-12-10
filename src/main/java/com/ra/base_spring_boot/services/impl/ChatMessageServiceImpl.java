@@ -40,8 +40,9 @@ public class ChatMessageServiceImpl implements IChatMessageService {
 
     @Override
     public ChatMessage send(SendMessageRequest req) {
-        requireMember(req.getRoomId(), req.getSenderId());
-        ChatRoom room = roomRepo.findById(req.getRoomId()).orElseThrow();
+        Objects.requireNonNull(req, "request must not be null");
+        requireMember(Objects.requireNonNull(req.getRoomId(), "roomId must not be null"), Objects.requireNonNull(req.getSenderId(), "senderId must not be null"));
+        ChatRoom room = roomRepo.findById(Objects.requireNonNull(req.getRoomId(), "roomId must not be null")).orElseThrow();
         ChatMessage msg = ChatMessage.builder()
                 .room(room)
                 .senderId(req.getSenderId())
@@ -49,30 +50,30 @@ public class ChatMessageServiceImpl implements IChatMessageService {
                 .type(req.getType() == null ? ChatMessageType.TEXT : req.getType())
                 .fileUrl(req.getFileUrl())
                 .build();
-        return messageRepo.save(msg);
+        return messageRepo.save(Objects.requireNonNull(msg, "message must not be null"));
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ChatMessage> history(UUID roomId, Pageable pageable) {
-        return messageRepo.findByRoom_IdOrderByCreatedAtDesc(roomId, pageable);
+        return messageRepo.findByRoom_IdOrderByCreatedAtDesc(Objects.requireNonNull(roomId, "roomId must not be null"), Objects.requireNonNull(pageable, "pageable must not be null"));
     }
 
     @Override
     public void markRead(UUID messageId, Long userId) {
-        readRepo.findByMessage_IdAndUserId(messageId, userId)
-                .orElseGet(() -> readRepo.save(ChatMessageRead.builder()
-                        .message(messageRepo.findById(messageId).orElseThrow())
-                        .userId(userId)
-                        .build()));
+        readRepo.findByMessage_IdAndUserId(Objects.requireNonNull(messageId), Objects.requireNonNull(userId))
+                .orElseGet(() -> readRepo.save(Objects.requireNonNull(ChatMessageRead.builder()
+                        .message(messageRepo.findById(Objects.requireNonNull(messageId)).orElseThrow())
+                        .userId(Objects.requireNonNull(userId))
+                        .build(), "messageRead must not be null")));
     }
 
     @Override
     public void markReadAll(UUID roomId, Long userId) {
         // Đơn giản: load 50 tin đầu và đánh dấu
-        Page<ChatMessage> page = messageRepo.findByRoom_IdOrderByCreatedAtDesc(roomId, PageRequest.of(0, 50));
+        Page<ChatMessage> page = messageRepo.findByRoom_IdOrderByCreatedAtDesc(Objects.requireNonNull(roomId, "roomId must not be null"), PageRequest.of(0, 50));
         for (ChatMessage m : page.getContent()) {
-            markRead(m.getId(), userId);
+            markRead(m.getId(), Objects.requireNonNull(userId, "userId must not be null"));
         }
     }
 
@@ -84,27 +85,33 @@ public class ChatMessageServiceImpl implements IChatMessageService {
 
     @Override
     public void deleteForAll(UUID messageId, Long operatorUserId) {
-        ChatMessage msg = messageRepo.findById(messageId).orElseThrow();
+        ChatMessage msg = messageRepo.findById(Objects.requireNonNull(messageId, "messageId must not be null")).orElseThrow();
         UUID roomId = msg.getRoom().getId();
-        if (!isTeacher(roomId, operatorUserId) && !Objects.equals(operatorUserId, msg.getSenderId())) {
+        if (!isTeacher(roomId, Objects.requireNonNull(operatorUserId, "operatorUserId must not be null")) && !Objects.equals(operatorUserId, msg.getSenderId())) {
             throw new SecurityException("Only TEACHER or sender can delete for all");
         }
         msg.setDeleted(true);
-        messageRepo.save(msg);
+        messageRepo.save(Objects.requireNonNull(msg, "message must not be null"));
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ChatMessage> search(UUID roomId, String keyword, Pageable pageable) {
-        return messageRepo.findByRoom_IdAndContentContainingIgnoreCaseOrderByCreatedAtDesc(roomId, keyword, pageable);
+        return messageRepo.findByRoom_IdAndContentContainingIgnoreCaseOrderByCreatedAtDesc(
+                Objects.requireNonNull(roomId, "roomId must not be null"),
+                Objects.requireNonNull(keyword, "keyword must not be null"),
+                Objects.requireNonNull(pageable, "pageable must not be null")
+        );
     }
 
     @Override
     @Transactional(readOnly = true)
     public long unreadCount(UUID roomId, Long userId) {
         // Đếm đơn giản: tổng số message - số read-by-user (tối thiểu)
-        long total = messageRepo.findByRoom_IdOrderByCreatedAtDesc(roomId).size();
-        long reads = readRepo.findAll().stream().filter(r -> r.getMessage().getRoom().getId().equals(roomId) && Objects.equals(r.getUserId(), userId)).count();
+        UUID safeRoomId = Objects.requireNonNull(roomId, "roomId must not be null");
+        Long safeUserId = Objects.requireNonNull(userId, "userId must not be null");
+        long total = messageRepo.findByRoom_IdOrderByCreatedAtDesc(safeRoomId).size();
+        long reads = readRepo.findAll().stream().filter(r -> r.getMessage().getRoom().getId().equals(safeRoomId) && Objects.equals(r.getUserId(), safeUserId)).count();
         return Math.max(0, total - reads);
     }
 }

@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.config.controller;
 
 import com.ra.base_spring_boot.dto.upload.UploadResponseDTO;
-import com.ra.base_spring_boot.services.UploadService;
+import com.ra.base_spring_boot.services.IUploadService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Tag(name = "21 - Uploads", description = "Upload ảnh/video, trả về URL để sử dụng trong các chức năng")
 public class UploadController {
 
-    private final UploadService uploadService;
+    private final IUploadService uploadService;
 
     @PostMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")

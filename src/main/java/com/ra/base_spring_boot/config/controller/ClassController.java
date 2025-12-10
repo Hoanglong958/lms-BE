@@ -20,6 +20,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/v1/classes")
@@ -76,13 +77,11 @@ public class ClassController {
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "sort", defaultValue = "createdAt,desc") String sort
     ) {
-        String[] sortParts = sort.split(",");
-        Sort sortObj;
-        if (sortParts.length == 2) {
-            sortObj = Sort.by(Sort.Direction.fromString(sortParts[1]), sortParts[0]);
-        } else {
-            sortObj = Sort.by(Sort.Direction.DESC, "createdAt");
-        }
+        String[] sortParts = sort != null ? sort.split(",") : new String[]{};
+        String property = (sortParts.length >= 1 && sortParts[0] != null && !sortParts[0].isBlank()) ? sortParts[0] : "createdAt";
+        String directionStr = (sortParts.length >= 2 && sortParts[1] != null && !sortParts[1].isBlank()) ? sortParts[1] : "DESC";
+        Sort.Direction direction = Sort.Direction.fromString(Objects.requireNonNull(directionStr));
+        Sort sortObj = Sort.by(direction, property);
         Pageable pageable = PageRequest.of(page, size, sortObj);
         Page<ClassroomResponseDTO> result = (keyword != null && !keyword.isBlank())
                 ? classroomService.search(keyword, pageable)

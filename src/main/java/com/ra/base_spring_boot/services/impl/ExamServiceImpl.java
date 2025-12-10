@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,7 +33,9 @@ public class ExamServiceImpl implements IExamService {
     @Override
     @Transactional
     public ExamResponseDTO createExam(ExamRequestDTO dto) {
-        Course course = courseRepository.findById(dto.getCourseId())
+        Objects.requireNonNull(dto, "dto must not be null");
+        Long courseId = Objects.requireNonNull(dto.getCourseId(), "courseId must not be null");
+        Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new RuntimeException("Course not found"));
 
         Exam exam = Exam.builder()
@@ -65,8 +68,9 @@ public class ExamServiceImpl implements IExamService {
         } else if (dto.getQuestionIds() != null && !dto.getQuestionIds().isEmpty()) {
             int orderIndex = 1;
             for (Long qId : dto.getQuestionIds()) {
-                Question q = questionRepository.findById(qId)
-                        .orElseThrow(() -> new RuntimeException("Question not found: " + qId));
+                Long safeQId = Objects.requireNonNull(qId, "questionId must not be null");
+                Question q = questionRepository.findById(safeQId)
+                        .orElseThrow(() -> new RuntimeException("Question not found: " + safeQId));
                 ExamQuestion eq = ExamQuestion.builder()
                         .exam(exam)
                         .question(q)
@@ -107,7 +111,9 @@ public class ExamServiceImpl implements IExamService {
     @Override
     @Transactional
     public ExamResponseDTO updateExam(Long examId, ExamRequestDTO dto) {
-        Exam exam = examRepository.findById(examId)
+        Long safeExamId = Objects.requireNonNull(examId, "examId must not be null");
+        Objects.requireNonNull(dto, "dto must not be null");
+        Exam exam = examRepository.findById(safeExamId)
                 .orElseThrow(() -> new RuntimeException("Exam not found"));
 
         exam.setTitle(dto.getTitle());
@@ -127,7 +133,8 @@ public class ExamServiceImpl implements IExamService {
     @Override
     @Transactional
     public void deleteExam(Long examId) {
-        Exam exam = examRepository.findById(examId)
+        Long safeExamId = Objects.requireNonNull(examId, "examId must not be null");
+        Exam exam = examRepository.findById(safeExamId)
                 .orElseThrow(() -> new RuntimeException("Exam not found"));
 
         // Force load lazy collections trước khi xóa
@@ -150,7 +157,8 @@ public class ExamServiceImpl implements IExamService {
     @Override
     @Transactional(readOnly = true)
     public ExamResponseDTO getExam(Long examId) {
-        Exam exam = examRepository.findById(examId)
+        Long safeExamId = Objects.requireNonNull(examId, "examId must not be null");
+        Exam exam = examRepository.findById(safeExamId)
                 .orElseThrow(() -> new RuntimeException("Exam not found"));
         return mapToResponse(exam);
     }
@@ -169,15 +177,18 @@ public class ExamServiceImpl implements IExamService {
     @Override
     @Transactional
     public void addQuestionsToExam(Long examId, List<Long> questionIds) {
-        Exam exam = examRepository.findById(examId)
+        Long safeExamId = Objects.requireNonNull(examId, "examId must not be null");
+        List<Long> safeQuestionIds = Objects.requireNonNull(questionIds, "questionIds must not be null");
+        Exam exam = examRepository.findById(safeExamId)
                 .orElseThrow(() -> new RuntimeException("Exam not found"));
 
-        for (Long questionId : questionIds) {
-            Question question = questionRepository.findById(questionId)
-                    .orElseThrow(() -> new RuntimeException("Question not found: " + questionId));
+        for (Long questionId : safeQuestionIds) {
+            Long safeQuestionId = Objects.requireNonNull(questionId, "questionId must not be null");
+            Question question = questionRepository.findById(safeQuestionId)
+                    .orElseThrow(() -> new RuntimeException("Question not found: " + safeQuestionId));
 
             boolean exists = exam.getExamQuestions().stream()
-                    .anyMatch(eq -> eq.getQuestion().getId().equals(questionId));
+                    .anyMatch(eq -> eq.getQuestion().getId().equals(safeQuestionId));
             if (exists) continue;
 
             ExamQuestion eq = ExamQuestion.builder()

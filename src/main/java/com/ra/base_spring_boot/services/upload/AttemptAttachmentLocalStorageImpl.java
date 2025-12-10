@@ -28,7 +28,7 @@ public class AttemptAttachmentLocalStorageImpl implements AttemptAttachmentStora
             Path targetDir = Paths.get(uploadRoot, "attempts", String.valueOf(attemptId), dateDir);
             Files.createDirectories(targetDir);
             Path target = targetDir.resolve(newName);
-            file.transferTo(target);
+            file.transferTo(java.util.Objects.requireNonNull(target, "target must not be null"));
             return "/uploads/attempts/" + attemptId + "/" + dateDir + "/" + newName;
         } catch (IOException e) {
             throw new RuntimeException("Lưu file đính kèm thất bại", e);

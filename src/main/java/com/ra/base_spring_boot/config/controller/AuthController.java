@@ -12,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.Objects;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -51,7 +52,7 @@ public class AuthController {
     @ApiResponse(responseCode = "201", description = "Đăng ký thành công")
     public ResponseEntity<?> handleRegister(@Valid @RequestBody FormRegister formRegister) {
         authService.register(formRegister);
-        return ResponseEntity.created(URI.create("/api/v1/auth/register")).body(
+        return ResponseEntity.created(Objects.requireNonNull(URI.create("/api/v1/auth/register"))).body(
                 ResponseWrapper.builder()
                         .status(HttpStatus.CREATED)
                         .code(201)

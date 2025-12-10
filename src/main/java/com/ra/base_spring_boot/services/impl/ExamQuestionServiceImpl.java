@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,7 +28,8 @@ public class ExamQuestionServiceImpl implements IExamQuestionService {
     @Override
     @Transactional(readOnly = true)
     public List<ExamQuestionDTO> getByExam(Long examId) {
-        Exam exam = examRepository.findById(examId)
+        Long safeExamId = Objects.requireNonNull(examId, "examId must not be null");
+        Exam exam = examRepository.findById(safeExamId)
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy kỳ thi với id = " + examId));
         return exam.getExamQuestions()
                 .stream()
@@ -38,10 +40,14 @@ public class ExamQuestionServiceImpl implements IExamQuestionService {
     @Override
     @Transactional
     public ExamQuestionDTO create(ExamQuestionDTO dto) {
-        Exam exam = examRepository.findById(dto.getExamId())
-                .orElseThrow(() -> new HttpNotFound("Không tìm thấy kỳ thi với id = " + dto.getExamId()));
-        Question question = questionRepository.findById(dto.getQuestionId())
-                .orElseThrow(() -> new HttpNotFound("Không tìm thấy câu hỏi với id = " + dto.getQuestionId()));
+        Objects.requireNonNull(dto, "dto must not be null");
+        Long dtoExamId = Objects.requireNonNull(dto.getExamId(), "examId must not be null");
+        Long dtoQuestionId = Objects.requireNonNull(dto.getQuestionId(), "questionId must not be null");
+
+        Exam exam = examRepository.findById(dtoExamId)
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy kỳ thi với id = " + dtoExamId));
+        Question question = questionRepository.findById(dtoQuestionId)
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy câu hỏi với id = " + dtoQuestionId));
 
         ExamQuestion examQuestion = ExamQuestion.builder()
                 .exam(exam)
@@ -50,16 +56,17 @@ public class ExamQuestionServiceImpl implements IExamQuestionService {
                 .score(dto.getScore() != null ? dto.getScore() : 1)
                 .build();
 
-        ExamQuestion saved = examQuestionRepository.save(examQuestion);
+        ExamQuestion saved = examQuestionRepository.save(Objects.requireNonNull(examQuestion, "examQuestion must not be null"));
         return toDto(saved);
     }
 
     @Override
     @Transactional
     public void delete(Long id) {
-        ExamQuestion examQuestion = examQuestionRepository.findById(id)
+        Long safeId = Objects.requireNonNull(id, "id must not be null");
+        ExamQuestion examQuestion = examQuestionRepository.findById(safeId)
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy bản ghi exam_question với id = " + id));
-        examQuestionRepository.delete(examQuestion);
+        examQuestionRepository.delete(Objects.requireNonNull(examQuestion, "examQuestion must not be null"));
     }
 
     private ExamQuestionDTO toDto(ExamQuestion entity) {

@@ -22,7 +22,7 @@ public class SessionServiceImpl implements ISessionService {
 
     @Override
     public List<SessionResponseDTO> getByCourse(Long courseId) {
-        List<Session> sessions = sessionRepository.findByCourse_IdOrderByOrderIndexAsc(courseId);
+        List<Session> sessions = sessionRepository.findByCourse_IdOrderByOrderIndexAsc(java.util.Objects.requireNonNull(courseId, "courseId must not be null"));
         return sessions.stream()
                 .map(this::mapToResponse)
                 .toList();
@@ -30,14 +30,14 @@ public class SessionServiceImpl implements ISessionService {
 
     @Override
     public SessionResponseDTO getById(Long id) {
-        Session session = sessionRepository.findById(id)
+        Session session = sessionRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy buổi học với id = " + id));
         return mapToResponse(session);
     }
 
     @Override
     public SessionResponseDTO create(SessionRequestDTO dto) {
-        Course course = courseRepository.findById(dto.getCourseId())
+        Course course = courseRepository.findById(java.util.Objects.requireNonNull(dto.getCourseId(), "courseId must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học với id = " + dto.getCourseId()));
 
         Session session = Session.builder()
@@ -46,26 +46,26 @@ public class SessionServiceImpl implements ISessionService {
                 .course(course)
                 .build();
 
-        Session saved = sessionRepository.save(session);
+        Session saved = sessionRepository.save(java.util.Objects.requireNonNull(session, "session must not be null"));
         return mapToResponse(saved);
     }
 
     @Override
     public void delete(Long id) {
-        Session session = sessionRepository.findById(id)
+        Session session = sessionRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy buổi học với id = " + id));
-        sessionRepository.delete(session);
+        sessionRepository.delete(java.util.Objects.requireNonNull(session, "session must not be null"));
     }
 
     @Override
     public SessionResponseDTO update(Long id, SessionRequestDTO dto) {
-        Session session = sessionRepository.findById(id)
+        Session session = sessionRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy buổi học với id = " + id));
 
         if (dto.getTitle() != null) session.setTitle(dto.getTitle());
         if (dto.getOrderIndex() != null) session.setOrderIndex(dto.getOrderIndex());
 
-        Session saved = sessionRepository.save(session);
+        Session saved = sessionRepository.save(java.util.Objects.requireNonNull(session, "session must not be null"));
         return mapToResponse(saved);
     }
 

@@ -4,14 +4,11 @@ import com.ra.base_spring_boot.model.constants.RoleName;
 import com.ra.base_spring_boot.security.exception.AccessDenied;
 import com.ra.base_spring_boot.security.exception.JwtEntryPoint;
 import com.ra.base_spring_boot.security.jwt.JwtTokenFilter;
-import com.ra.base_spring_boot.security.principle.MyUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -32,7 +29,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final MyUserDetailsService userDetailsService;
     private final JwtEntryPoint jwtEntryPoint;
     private final AccessDenied accessDenied;
     private final JwtTokenFilter jwtTokenFilter;
@@ -87,7 +83,6 @@ public class SecurityConfig {
                         .authenticationEntryPoint(jwtEntryPoint)
                         .accessDeniedHandler(accessDenied)
                 )
-                .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
@@ -97,13 +92,7 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userDetailsService);
-        provider.setPasswordEncoder(passwordEncoder());
-        return provider;
-    }
+    
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration auth) throws Exception {

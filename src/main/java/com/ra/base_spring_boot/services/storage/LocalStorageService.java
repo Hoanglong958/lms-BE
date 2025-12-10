@@ -37,7 +37,7 @@ public class LocalStorageService implements StorageService {
             Path targetDir = Paths.get(uploadRoot, type, dateDir);
             Files.createDirectories(targetDir);
             Path target = targetDir.resolve(newName);
-            file.transferTo(target);
+            file.transferTo(java.util.Objects.requireNonNull(target, "target must not be null"));
             // public URL mapping via StaticResourceConfig -> /uploads/**
             return "/uploads/" + type + "/" + dateDir + "/" + newName;
         } catch (IOException e) {

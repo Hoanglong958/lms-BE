@@ -32,7 +32,7 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public UserResponse getById(Long id) {
-        User user = userRepository.findById(id)
+        User user = userRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpNotFound("User không tồn tại"));
         return toResponse(user);
     }
@@ -95,7 +95,7 @@ public class UserServiceImpl implements IUserService {
                 .build();
 
         try {
-            userRepository.save(user);
+            userRepository.save(java.util.Objects.requireNonNull(user, "user must not be null"));
 
 
         } catch (org.springframework.dao.DataIntegrityViolationException ex) {
@@ -107,7 +107,7 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public UserResponse update(Long id, UserUpdateRequest req) {
-        User user = userRepository.findById(id)
+        User user = userRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpNotFound("User không tồn tại"));
         if (req.getFullName() != null) {
             user.setFullName(req.getFullName());
@@ -118,24 +118,24 @@ public class UserServiceImpl implements IUserService {
         if (req.getIsActive() != null) {
             user.setIsActive(req.getIsActive());
         }
-        userRepository.save(user);
+        userRepository.save(java.util.Objects.requireNonNull(user, "user must not be null"));
         return toResponse(user);
     }
 
     @Override
     public void softDelete(Long id) {
-        User user = userRepository.findById(id)
+        User user = userRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpNotFound("User không tồn tại"));
         user.setIsActive(false);
-        userRepository.save(user);
+        userRepository.save(java.util.Objects.requireNonNull(user, "user must not be null"));
     }
 
     @Override
     public void toggleStatus(Long id, boolean active) {
-        User user = userRepository.findById(id)
+        User user = userRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpNotFound("User không tồn tại"));
         user.setIsActive(active);
-        userRepository.save(user);
+        userRepository.save(java.util.Objects.requireNonNull(user, "user must not be null"));
     }
 
     @Override

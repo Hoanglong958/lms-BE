@@ -33,7 +33,7 @@ public class QuestionServiceImpl implements IQuestionService {
     // Lấy câu hỏi theo ID
     @Override
     public QuestionResponseDTO getById(Long id) {
-        Question question = questionRepository.findById(id)
+        Question question = questionRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy câu hỏi với id = " + id));
         return toResponse(question);
     }
@@ -42,14 +42,14 @@ public class QuestionServiceImpl implements IQuestionService {
     @Override
     public QuestionResponseDTO create(QuestionRequestDTO request) {
         Question question = mapRequestToEntity(request);
-        questionRepository.save(question);
+        questionRepository.save(java.util.Objects.requireNonNull(question, "question must not be null"));
         return toResponse(question);
     }
 
     // Cập nhật câu hỏi
     @Override
     public QuestionResponseDTO update(Long id, QuestionRequestDTO request) {
-        Question question = questionRepository.findById(id)
+        Question question = questionRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy câu hỏi với id = " + id));
 
         Question updated = mapRequestToEntity(request);
@@ -60,17 +60,17 @@ public class QuestionServiceImpl implements IQuestionService {
         question.setExplanation(updated.getExplanation());
         question.setUpdatedAt(LocalDateTime.now());
 
-        questionRepository.save(question);
+        questionRepository.save(java.util.Objects.requireNonNull(question, "question must not be null"));
         return toResponse(question);
     }
 
     // Xóa câu hỏi
     @Override
     public void delete(Long id) {
-        if (!questionRepository.existsById(id)) {
+        if (!questionRepository.existsById(java.util.Objects.requireNonNull(id, "id must not be null"))) {
             throw new RuntimeException("Question not found");
         }
-        questionRepository.deleteById(id);
+        questionRepository.deleteById(java.util.Objects.requireNonNull(id, "id must not be null"));
     }
 
     // ===================== Helper =====================

@@ -23,20 +23,20 @@ public class LessonDocumentServiceImpl implements ILessonDocumentService {
 
     @Override
     public List<LessonDocumentResponseDTO> getByLesson(Long lessonId) {
-        List<LessonDocument> docs = documentRepository.findByLesson_IdOrderBySortOrderAsc(lessonId);
+        List<LessonDocument> docs = documentRepository.findByLesson_IdOrderBySortOrderAsc(java.util.Objects.requireNonNull(lessonId, "lessonId must not be null"));
         return docs.stream().map(this::mapToResponse).toList();
     }
 
     @Override
     public LessonDocumentResponseDTO getById(Long id) {
-        LessonDocument doc = documentRepository.findById(id)
+        LessonDocument doc = documentRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy document với id = " + id));
         return mapToResponse(doc);
     }
 
     @Override
     public LessonDocumentResponseDTO create(LessonDocumentRequestDTO dto) {
-        Lesson lesson = lessonRepository.findById(dto.getLessonId())
+        Lesson lesson = lessonRepository.findById(java.util.Objects.requireNonNull(dto.getLessonId(), "lessonId must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy lesson với id = " + dto.getLessonId()));
 
         // Validate lesson type must be DOCUMENT
@@ -63,17 +63,17 @@ public class LessonDocumentServiceImpl implements ILessonDocumentService {
                 .sortOrder(sortOrder)
                 .build();
 
-        LessonDocument saved = documentRepository.save(entity);
+        LessonDocument saved = documentRepository.save(java.util.Objects.requireNonNull(entity, "document must not be null"));
         return mapToResponse(saved);
     }
 
     @Override
     public LessonDocumentResponseDTO update(Long id, LessonDocumentRequestDTO dto) {
-        LessonDocument entity = documentRepository.findById(id)
+        LessonDocument entity = documentRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy document với id = " + id));
 
         if (dto.getLessonId() != null && (entity.getLesson() == null || !dto.getLessonId().equals(entity.getLesson().getId()))) {
-            Lesson lesson = lessonRepository.findById(dto.getLessonId())
+            Lesson lesson = lessonRepository.findById(java.util.Objects.requireNonNull(dto.getLessonId(), "lessonId must not be null"))
                     .orElseThrow(() -> new HttpBadRequest("Không tìm thấy lesson với id = " + dto.getLessonId()));
 
             // Validate reassignment respects lesson type DOCUMENT
@@ -88,15 +88,15 @@ public class LessonDocumentServiceImpl implements ILessonDocumentService {
         if (dto.getVideoUrl() != null) entity.setVideoUrl(dto.getVideoUrl());
         if (dto.getSortOrder() != null) entity.setSortOrder(dto.getSortOrder());
 
-        LessonDocument updated = documentRepository.save(entity);
+        LessonDocument updated = documentRepository.save(java.util.Objects.requireNonNull(entity, "document must not be null"));
         return mapToResponse(updated);
     }
 
     @Override
     public void delete(Long id) {
-        LessonDocument entity = documentRepository.findById(id)
+        LessonDocument entity = documentRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy document với id = " + id));
-        documentRepository.delete(entity);
+        documentRepository.delete(java.util.Objects.requireNonNull(entity, "document must not be null"));
     }
 
     private LessonDocumentResponseDTO mapToResponse(LessonDocument doc) {

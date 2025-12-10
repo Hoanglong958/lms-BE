@@ -169,22 +169,22 @@ public class UserProgressServiceImpl implements IUserProgressService {
 
     // ===== Helpers =====
     private User requireUser(Long userId) {
-        return userRepository.findById(userId)
+        return userRepository.findById(java.util.Objects.requireNonNull(userId, "userId must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy user với id = " + userId));
     }
 
     private Course requireCourse(Long courseId) {
-        return courseRepository.findById(courseId)
+        return courseRepository.findById(java.util.Objects.requireNonNull(courseId, "courseId must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học với id = " + courseId));
     }
 
     private Session requireSession(Long sessionId) {
-        return sessionRepository.findById(sessionId)
+        return sessionRepository.findById(java.util.Objects.requireNonNull(sessionId, "sessionId must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy session với id = " + sessionId));
     }
 
     private Lesson requireLesson(Long lessonId) {
-        return lessonRepository.findById(lessonId)
+        return lessonRepository.findById(java.util.Objects.requireNonNull(lessonId, "lessonId must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy lesson với id = " + lessonId));
     }
 

@@ -22,20 +22,20 @@ public class LessonServiceImpl implements ILessonService {
 
     @Override
     public List<LessonResponseDTO> getBySession(Long sessionId) {
-        List<Lesson> lessons = lessonRepository.findBySession_Id(sessionId);
+        List<Lesson> lessons = lessonRepository.findBySession_Id(java.util.Objects.requireNonNull(sessionId, "sessionId must not be null"));
         return lessons.stream().map(this::mapToResponse).toList();
     }
 
     @Override
     public LessonResponseDTO getById(Long id) {
-        Lesson lesson = lessonRepository.findById(id)
+        Lesson lesson = lessonRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Lesson not found with id = " + id));
         return mapToResponse(lesson);
     }
 
     @Override
     public LessonResponseDTO create(LessonRequestDTO dto) {
-        Session session = sessionRepository.findById(dto.getSessionId())
+        Session session = sessionRepository.findById(java.util.Objects.requireNonNull(dto.getSessionId(), "sessionId must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Session not found with id = " + dto.getSessionId()));
 
         Lesson lesson = Lesson.builder()
@@ -45,28 +45,28 @@ public class LessonServiceImpl implements ILessonService {
                 .session(session)
                 .build();
 
-        Lesson saved = lessonRepository.save(lesson);
+        Lesson saved = lessonRepository.save(java.util.Objects.requireNonNull(lesson, "lesson must not be null"));
         return mapToResponse(saved);
     }
 
     @Override
     public LessonResponseDTO update(Long id, LessonRequestDTO dto) {
-        Lesson lesson = lessonRepository.findById(id)
+        Lesson lesson = lessonRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Lesson not found with id = " + id));
 
         if (dto.getTitle() != null) lesson.setTitle(dto.getTitle());
         if (dto.getType() != null) lesson.setType(dto.getType());
         if (dto.getOrderIndex() != null) lesson.setOrderIndex(dto.getOrderIndex());
 
-        Lesson updated = lessonRepository.save(lesson);
+        Lesson updated = lessonRepository.save(java.util.Objects.requireNonNull(lesson, "lesson must not be null"));
         return mapToResponse(updated);
     }
 
     @Override
     public void delete(Long id) {
-        Lesson lesson = lessonRepository.findById(id)
+        Lesson lesson = lessonRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Lesson not found with id = " + id));
-        lessonRepository.delete(lesson);
+        lessonRepository.delete(java.util.Objects.requireNonNull(lesson, "lesson must not be null"));
     }
 
     private LessonResponseDTO mapToResponse(Lesson lesson) {

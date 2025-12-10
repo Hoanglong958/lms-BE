@@ -32,7 +32,7 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
     @Transactional
     public List<ScheduleItemResponseDTO> generateScheduleForCourse(GenerateScheduleRequestDTO req) {
         Long courseId = req.getCourseId();
-        Course course = courseRepository.findById(courseId)
+        Course course = courseRepository.findById(java.util.Objects.requireNonNull(courseId, "courseId must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy course với id = " + courseId));
 
         Integer totalSessions = course.getTotalSessions();
@@ -47,7 +47,7 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
         // Lấy periods: nếu client truyền danh sách id -> dùng; nếu không -> lấy toàn bộ active periods
         List<Period> periods;
         if (req.getPeriodIds() != null && !req.getPeriodIds().isEmpty()) {
-            periods = periodRepository.findAllById(req.getPeriodIds());
+            periods = periodRepository.findAllById(java.util.Objects.requireNonNull(req.getPeriodIds(), "periodIds must not be null"));
         } else {
             periods = periodRepository.findAll(); // hoặc findActive...
         }
@@ -63,7 +63,7 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                 .collect(Collectors.toList());
 
         // Xoá lịch cũ cho khóa (tuỳ nghiệp vụ: ở đây mình xóa trước khi tạo schedule mới)
-        scheduleItemRepository.deleteByCourseId(courseId);
+        scheduleItemRepository.deleteByCourseId(java.util.Objects.requireNonNull(courseId, "courseId must not be null"));
 
         List<ScheduleItem> created = new ArrayList<>();
         int createdCount = 0;
@@ -123,14 +123,14 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
 
     @Override
     public List<ScheduleItemResponseDTO> getScheduleByCourse(Long courseId) {
-        return scheduleItemRepository.findByCourseIdOrderBySessionNumber(courseId)
+        return scheduleItemRepository.findByCourseIdOrderBySessionNumber(java.util.Objects.requireNonNull(courseId, "courseId must not be null"))
                 .stream().map(this::toDto).collect(Collectors.toList());
     }
 
     @Override
     @Transactional
     public void clearScheduleForCourse(Long courseId) {
-        scheduleItemRepository.deleteByCourseId(courseId);
+        scheduleItemRepository.deleteByCourseId(java.util.Objects.requireNonNull(courseId, "courseId must not be null"));
     }
 
     private ScheduleItemResponseDTO toDto(ScheduleItem item) {

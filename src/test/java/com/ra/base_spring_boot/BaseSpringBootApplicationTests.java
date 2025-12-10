@@ -21,6 +21,7 @@ import com.ra.base_spring_boot.security.jwt.JwtTokenFilter;
         }
 )
 @AutoConfigureMockMvc(addFilters = false)
+@SuppressWarnings("removal")
 class BaseSpringBootApplicationTests
 {
 

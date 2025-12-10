@@ -39,7 +39,7 @@
             post.setContent(request.getContent());
 
             // set author
-            User author = userRepository.findById(request.getAuthorId())
+            User author = userRepository.findById(java.util.Objects.requireNonNull(request.getAuthorId(), "authorId must not be null"))
                     .orElseThrow(() -> new HttpBadRequest("User không tồn tại"));
             post.setAuthor(author);
 
@@ -62,16 +62,16 @@
 
         @Override
         public PostResponseDTO getPostById(Long id) {
-            Post post = postRepository.findById(id)
-                    .orElseThrow(() -> new HttpBadRequest("Post không tồn tại"));
+            Post post = postRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
+                .orElseThrow(() -> new HttpBadRequest("Post không tồn tại"));
             return toPostResponseDTO(post);
         }
 
         @Override
         @Transactional
         public PostResponseDTO updatePost(Long id, PostRequestDTO request) {
-            Post post = postRepository.findById(id)
-                    .orElseThrow(() -> new HttpBadRequest("Post không tồn tại"));
+            Post post = postRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
+                .orElseThrow(() -> new HttpBadRequest("Post không tồn tại"));
 
             post.setTitle(request.getTitle());
             post.setSlug(request.getSlug());
@@ -89,10 +89,10 @@
         @Override
         @Transactional
         public void deletePost(Long id) {
-            if(!postRepository.existsById(id)) {
+            if(!postRepository.existsById(java.util.Objects.requireNonNull(id, "id must not be null"))) {
                 throw new HttpBadRequest("Post không tồn tại");
             }
-            postRepository.deleteById(id);
+            postRepository.deleteById(java.util.Objects.requireNonNull(id, "id must not be null"));
         }
 
         // helper: entity -> DTO

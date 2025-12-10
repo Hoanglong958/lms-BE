@@ -1,4 +1,5 @@
 package com.ra.base_spring_boot.config.controller;
+
 import com.ra.base_spring_boot.model.PasswordResetToken;
 import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.repository.IPasswordResetTokenRepository;
@@ -30,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         }
 )
 @AutoConfigureMockMvc(addFilters = false)
+@SuppressWarnings("removal")
 class PasswordResetTokenControllerIntegrationTest {
 
     @Autowired

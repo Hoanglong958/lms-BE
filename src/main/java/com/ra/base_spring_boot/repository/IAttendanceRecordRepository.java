@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 import java.util.Optional;
 
-public interface AttendanceRecordRepository extends JpaRepository<AttendanceRecord, Long> {
+public interface IAttendanceRecordRepository extends JpaRepository<AttendanceRecord, Long> {
     List<AttendanceRecord> findBySession_Id(Long sessionId);
     Optional<AttendanceRecord> findBySession_IdAndStudent_Id(Long sessionId, Long studentId);
 

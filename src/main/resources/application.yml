@@ -18,8 +18,8 @@
       hibernate:
         ddl-auto: update
         naming:
-          'physical-strategy': org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-          'implicit-strategy': org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+          physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+          implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
       database-platform: org.hibernate.dialect.MySQLDialect
       show-sql: true
       open-in-view: false
@@ -50,8 +50,8 @@
   springdoc:
     swagger-ui:
       path: /docs
-      'tags-sorter': alpha
-      'operations-sorter': alpha
+      tags-sorter: alpha
+      operations-sorter: alpha
 
   jwt:
     secret:

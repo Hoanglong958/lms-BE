@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Objects;
 
 
 @Service
@@ -27,44 +28,50 @@ public class ExamParticipantServiceImpl implements IExamParticipantService {
     @Override
     public ExamParticipant joinExam(Long userId, Long examRoomId, LocalDateTime joinTime) {
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(Objects.requireNonNull(userId, "userId must not be null"))
                 .orElseThrow(() -> new RuntimeException("User không tồn tại"));
 
-        Exam exam = examRepository.findById(examRoomId)
+        Exam exam = examRepository.findById(Objects.requireNonNull(examRoomId, "examRoomId must not be null"))
                 .orElseThrow(() -> new RuntimeException("Exam không tồn tại"));
 
         ExamParticipant participant = ExamParticipant.builder()
                 .user(user)
                 .exam(exam)
-                .examRoomId(examRoomId)
+                .examRoomId(Objects.requireNonNull(examRoomId, "examRoomId must not be null"))
                 .joinTime(joinTime)
                 .started(true)
                 .submitted(false)
                 .build();
 
-        return participantRepository.save(participant);
+        return participantRepository.save(Objects.requireNonNull(participant, "participant must not be null"));
     }
 
     @Override
     public ExamParticipant submitExam(Long userId, Long examId, LocalDateTime submitTime) {
 
         ExamParticipant participant = participantRepository
-                .findByUser_IdAndExamRoomId(userId, examId)
+                .findByUser_IdAndExamRoomId(
+                        Objects.requireNonNull(userId, "userId must not be null"),
+                        Objects.requireNonNull(examId, "examId must not be null")
+                )
                 .orElseThrow(() -> new RuntimeException("User chưa join phòng thi"));
 
         participant.setSubmitted(true);
 
-        return participantRepository.save(participant);
+        return participantRepository.save(Objects.requireNonNull(participant, "participant must not be null"));
     }
 
     @Override
     public List<ExamParticipant> getParticipantsByRoom(Long examId) {
-        return participantRepository.findAllByExamRoomId(examId);
+        return participantRepository.findAllByExamRoomId(Objects.requireNonNull(examId, "examId must not be null"));
     }
 
     @Override
     public ExamParticipant getParticipant(Long userId, Long examRoomId) {
-        return participantRepository.findByUser_IdAndExamRoomId(userId, examRoomId)
+        return participantRepository.findByUser_IdAndExamRoomId(
+                Objects.requireNonNull(userId, "userId must not be null"),
+                Objects.requireNonNull(examRoomId, "examRoomId must not be null")
+        )
                 .orElseThrow(() -> new RuntimeException("User chưa join phòng thi"));
     }
 
