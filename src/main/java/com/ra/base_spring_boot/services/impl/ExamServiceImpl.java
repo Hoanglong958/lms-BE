@@ -109,7 +109,6 @@ public class ExamServiceImpl implements IExamService {
                     "new_exam",
                     Map.of(
                             "username", student.getFullName(),
-                            "courseName", exam.getCourse().getTitle(),
                             "examTitle", exam.getTitle(),
                             "startTime", exam.getStartTime(),
                             "endTime", exam.getEndTime()
