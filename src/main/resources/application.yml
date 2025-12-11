@@ -61,6 +61,9 @@
 
   server:
     port: 3900
+    error:
+      include-message: ALWAYS
+      include-stacktrace: ALWAYS
 
   app:
     upload:
@@ -80,3 +83,5 @@
   logging:
     level:
       "[org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsManagerConfigurer]": ERROR
+      org.springdoc: DEBUG
+      org.springframework.web: DEBUG

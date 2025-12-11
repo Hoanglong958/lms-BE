@@ -21,7 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/user-progress")
 @RequiredArgsConstructor
-@Tag(name = "18 - User Progress", description = "Tiến độ khóa học, session và lesson của người dùng")
+@Tag(name = "19 - User Progress", description = "Tiến độ khóa học, session và lesson của người dùng")
 public class UserProgressController {
 
     private final IUserProgressService userProgressService;

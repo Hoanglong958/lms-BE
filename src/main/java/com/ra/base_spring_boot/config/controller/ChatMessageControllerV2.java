@@ -17,7 +17,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
-@Tag(name = "29. Chat V2", description = "Gửi, đọc, tra cứu tin nhắn")
+@Tag(name = "28 - Chat V2", description = "Gửi, đọc, tra cứu tin nhắn")
 public class ChatMessageControllerV2 {
 
     private final IChatMessageService chatMessageService;

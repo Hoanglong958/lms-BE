@@ -60,6 +60,7 @@ public class SecurityConfig {
                                 "/api/v1/password-reset-tokens/validate",
                                 "/api/v1/password-reset-tokens/latest", // DEV endpoint: Lấy token mới nhất để test
                                 // Swagger and docs
+                                "/v3/api-docs",
                                 "/v3/api-docs/**",
                                 "/docs",
                                 "/docs/**",

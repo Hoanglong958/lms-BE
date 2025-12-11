@@ -16,7 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/lesson-documents")
 @RequiredArgsConstructor
-@Tag(name = "20 - Lesson Documents", description = "Quản lý tài liệu/văn bản của bài học")
+@Tag(name = "21 - Lesson Documents", description = "Quản lý tài liệu/văn bản của bài học")
 public class LessonDocumentController {
 
     private final ILessonDocumentService documentService;

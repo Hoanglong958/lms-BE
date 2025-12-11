@@ -15,7 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/classes")
 @RequiredArgsConstructor
-@Tag(name = "15 - Class Students", description = "Quản lý học viên trong lớp")
+@Tag(name = "16 - Class Students", description = "Quản lý học viên trong lớp")
 public class ClassStudentController {
 
     private final IClassService classroomService;

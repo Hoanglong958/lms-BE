@@ -20,7 +20,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/chat/rooms")
 @RequiredArgsConstructor
-@Tag(name = "29. Chat V2", description = "Quản lý phòng chat 1-1 & nhóm")
+@Tag(name = "28 - Chat V2", description = "Quản lý phòng chat 1-1 & nhóm")
 public class ChatRoomControllerV2 {
 
     private final IChatService chatService;

@@ -25,7 +25,7 @@ import java.util.Objects;
 @RestController
 @RequestMapping("/api/v1/posts")
 @RequiredArgsConstructor
-@Tag(name = "22 - Posts", description = "Quản lý bài viết")
+@Tag(name = "25 - Posts", description = "Quản lý bài viết")
 public class PostController {
 
     private final IPostService postService;

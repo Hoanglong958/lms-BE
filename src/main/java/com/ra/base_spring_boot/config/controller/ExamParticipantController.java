@@ -3,6 +3,7 @@ package com.ra.base_spring_boot.config.controller;
 import com.ra.base_spring_boot.model.ExamParticipant;
 import com.ra.base_spring_boot.services.IExamParticipantService;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/exam-participant")
+@Tag(name = "31 - Exam Participant", description = "Quản lý tham gia thi")
 public class ExamParticipantController {
 
     private final IExamParticipantService examParticipantService;

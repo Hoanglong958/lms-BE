@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Exam API Test</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.4;margin:24px;background:#0b1220;color:#e7eaf0}
+    h1,h2{margin:0 0 8px}
+    h2{margin-top:24px}
+    .card{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:16px;margin:16px 0}
+    label{display:block;margin:8px 0 4px;color:#9fb0ca}
+    input,textarea,select{width:100%;padding:10px;border-radius:8px;border:1px solid #334155;background:#0b1220;color:#e7eaf0}
+    button{background:#2563eb;border:none;color:#fff;padding:10px 14px;border-radius:8px;cursor:pointer}
+    button.secondary{background:#475569}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .muted{color:#94a3b8;font-size:12px}
+    pre{white-space:pre-wrap;background:#0b1220;border:1px solid #1e293b;padding:12px;border-radius:8px;max-height:300px;overflow:auto}
+    .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  </style>
+</head>
+<body>
+  <h1>Exam API Test</h1>
+  <div class="card">
+    <label>Base URL</label>
+    <input id="baseUrl" value="http://localhost:3900" />
+    <label>JWT (Authorization: Bearer ...)</label>
+    <input id="jwt" placeholder="dán token nếu API cần xác thực" />
+    <div class="muted">Để lấy token nhanh: gọi POST /api/v1/auth/login ở Swagger, copy accessToken.</div>
+  </div>
+
+  <div class="card">
+    <h2>Exams</h2>
+    <div class="row">
+      <div>
+        <label>Title</label>
+        <input id="examTitle" placeholder="Spring Boot Final" />
+      </div>
+      <div>
+        <label>Max Score</label>
+        <input id="examMaxScore" type="number" value="100" />
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Passing Score</label>
+        <input id="examPassingScore" type="number" value="70" />
+      </div>
+      <div>
+        <label>Duration Minutes</label>
+        <input id="examDuration" type="number" value="60" />
+      </div>
+    </div>
+    <button onclick="createExam()">POST /api/v1/exams</button>
+    <button class="secondary" onclick="listExams()">GET /api/v1/exams</button>
+    <div class="row">
+      <div>
+        <label>Exam ID (add questions)</label>
+        <input id="addQExamId" />
+      </div>
+      <div>
+        <label>Question IDs (comma)</label>
+        <input id="addQIds" placeholder="1,2,3" />
+      </div>
+    </div>
+    <button onclick="addQuestionsToExam()">POST /api/v1/exams/{id}/questions</button>
+    <pre id="examOut"></pre>
+  </div>
+
+  <div class="card">
+    <h2>Exam Questions</h2>
+    <div class="row">
+      <div>
+        <label>Exam ID (list)</label>
+        <input id="eqExamIdList" />
+      </div>
+      <div></div>
+    </div>
+    <button onclick="listExamQuestions()">GET /api/v1/exam-questions/by-exam/{examId}</button>
+    <div class="row">
+      <div>
+        <label>Exam ID</label>
+        <input id="eqExamId" />
+      </div>
+      <div>
+        <label>Question ID</label>
+        <input id="eqQuestionId" />
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Order Index</label>
+        <input id="eqOrder" type="number" />
+      </div>
+      <div>
+        <label>Score</label>
+        <input id="eqScore" type="number" value="1" />
+      </div>
+    </div>
+    <button onclick="createExamQuestion()">POST /api/v1/exam-questions</button>
+    <div class="row">
+      <div>
+        <label>ExamQuestion ID (delete)</label>
+        <input id="eqIdDelete" />
+      </div>
+      <div></div>
+    </div>
+    <button onclick="deleteExamQuestion()">DELETE /api/v1/exam-questions/{id}</button>
+    <pre id="eqOut"></pre>
+  </div>
+
+  <div class="card">
+    <h2>Exam Attempts</h2>
+    <div class="row">
+      <div>
+        <label>Exam ID</label>
+        <input id="attemptExamId" />
+      </div>
+      <div>
+        <label>User ID</label>
+        <input id="attemptUserId" />
+      </div>
+    </div>
+    <button onclick="startAttempt()">POST /api/v1/exam-attempts/start</button>
+    <div class="row">
+      <div>
+        <label>Attempt ID (submit)</label>
+        <input id="attemptIdSubmit" />
+      </div>
+      <div>
+        <label>Answers JSON (array)</label>
+        <input id="answersJson" placeholder='[{"questionId":1,"answer":"A"}]' />
+      </div>
+    </div>
+    <button onclick="submitAttempt()">POST /api/v1/exam-attempts/{id}/submit</button>
+    <pre id="attemptOut"></pre>
+  </div>
+
+  <div class="card">
+    <h2>Exam Answers</h2>
+    <div class="row">
+      <div>
+        <label>Attempt ID</label>
+        <input id="ansAttemptId" />
+      </div>
+      <div></div>
+    </div>
+    <button onclick="adminAnswers()">GET /api/v1/exam-answers/by-attempt/{attemptId} (ADMIN)</button>
+    <button class="secondary" onclick="myAnswers()">GET /api/v1/exam-answers/my/{attemptId} (USER)</button>
+    <pre id="answersOut"></pre>
+  </div>
+
+  <div class="card">
+    <h2>Exam Participant (REST test)</h2>
+    <div class="row">
+      <div>
+        <label>User ID</label>
+        <input id="epUserId" />
+      </div>
+      <div>
+        <label>Exam Room ID</label>
+        <input id="epRoomId" />
+      </div>
+    </div>
+    <button onclick="joinExam()">POST /api/exam-participant/join</button>
+    <button class="secondary" onclick="submitExamRoom()">POST /api/exam-participant/submit</button>
+    <div class="row">
+      <div>
+        <label>Exam Room ID (status)</label>
+        <input id="epRoomIdStatus" />
+      </div>
+      <div></div>
+    </div>
+    <button onclick="roomStatus()">GET /api/exam-participant/status</button>
+    <pre id="epOut"></pre>
+  </div>
+
+  <script>
+    function headers(){
+      const jwt = document.getElementById('jwt').value.trim();
+      const h = { 'Content-Type':'application/json' };
+      if(jwt){ h['Authorization'] = 'Bearer ' + jwt; }
+      return h;
+    }
+    function base(){ return document.getElementById('baseUrl').value.replace(/\/$/,''); }
+    async function request(method, path, body){
+      const res = await fetch(base()+path, {
+        method,
+        headers: headers(),
+        body: body!==undefined? JSON.stringify(body): undefined
+      });
+      let txt = await res.text();
+      try{ txt = JSON.stringify(JSON.parse(txt), null, 2); }catch(e){}
+      return { status: res.status, body: txt };
+    }
+
+    // Exams
+    async function createExam(){
+      const dto = {
+        title: document.getElementById('examTitle').value,
+        maxScore: Number(document.getElementById('examMaxScore').value || 100),
+        passingScore: Number(document.getElementById('examPassingScore').value || 70),
+        durationMinutes: Number(document.getElementById('examDuration').value || 60)
+      };
+      const r = await request('POST','/api/v1/exams', dto);
+      document.getElementById('examOut').textContent = r.status+'\n'+r.body;
+    }
+    async function listExams(){
+      const r = await request('GET','/api/v1/exams');
+      document.getElementById('examOut').textContent = r.status+'\n'+r.body;
+    }
+    async function addQuestionsToExam(){
+      const id = document.getElementById('addQExamId').value;
+      const qids = document.getElementById('addQIds').value.split(',').map(s=>Number(s.trim())).filter(n=>!isNaN(n));
+      const r = await request('POST', `/api/v1/exams/${id}/questions`, { questionIds: qids });
+      document.getElementById('examOut').textContent = r.status+'\n'+r.body;
+    }
+
+    // Exam Questions
+    async function listExamQuestions(){
+      const id = document.getElementById('eqExamIdList').value;
+      const r = await request('GET', `/api/v1/exam-questions/by-exam/${id}`);
+      document.getElementById('eqOut').textContent = r.status+'\n'+r.body;
+    }
+    async function createExamQuestion(){
+      const dto = {
+        examId: Number(document.getElementById('eqExamId').value),
+        questionId: Number(document.getElementById('eqQuestionId').value),
+        orderIndex: document.getElementById('eqOrder').value? Number(document.getElementById('eqOrder').value): null,
+        score: Number(document.getElementById('eqScore').value || 1)
+      };
+      const r = await request('POST','/api/v1/exam-questions', dto);
+      document.getElementById('eqOut').textContent = r.status+'\n'+r.body;
+    }
+    async function deleteExamQuestion(){
+      const id = document.getElementById('eqIdDelete').value;
+      const r = await request('DELETE', `/api/v1/exam-questions/${id}`);
+      document.getElementById('eqOut').textContent = r.status+'\n'+r.body;
+    }
+
+    // Exam Attempts
+    async function startAttempt(){
+      const dto = {
+        examId: Number(document.getElementById('attemptExamId').value),
+        userId: Number(document.getElementById('attemptUserId').value)
+      };
+      const r = await request('POST','/api/v1/exam-attempts/start', dto);
+      document.getElementById('attemptOut').textContent = r.status+'\n'+r.body;
+    }
+    async function submitAttempt(){
+      const id = document.getElementById('attemptIdSubmit').value;
+      const raw = document.getElementById('answersJson').value.trim();
+      let body = undefined;
+      if(raw){
+        try{ body = { answers: JSON.parse(raw) }; }catch(e){ alert('Answers JSON không hợp lệ'); return; }
+      }
+      const r = await request('POST', `/api/v1/exam-attempts/${id}/submit`, body);
+      document.getElementById('attemptOut').textContent = r.status+'\n'+r.body;
+    }
+
+    // Exam Answers
+    async function adminAnswers(){
+      const id = document.getElementById('ansAttemptId').value;
+      const r = await request('GET', `/api/v1/exam-answers/by-attempt/${id}`);
+      document.getElementById('answersOut').textContent = r.status+'\n'+r.body;
+    }
+    async function myAnswers(){
+      const id = document.getElementById('ansAttemptId').value;
+      const r = await request('GET', `/api/v1/exam-answers/my/${id}`);
+      document.getElementById('answersOut').textContent = r.status+'\n'+r.body;
+    }
+
+    // Exam Participant
+    async function joinExam(){
+      const uid = document.getElementById('epUserId').value;
+      const rid = document.getElementById('epRoomId').value;
+      const r = await request('POST', `/api/exam-participant/join?userId=${uid}&examRoomId=${rid}`);
+      document.getElementById('epOut').textContent = r.status+'\n'+r.body;
+    }
+    async function submitExamRoom(){
+      const uid = document.getElementById('epUserId').value;
+      const rid = document.getElementById('epRoomId').value;
+      const r = await request('POST', `/api/exam-participant/submit?userId=${uid}&examRoomId=${rid}`);
+      document.getElementById('epOut').textContent = r.status+'\n'+r.body;
+    }
+    async function roomStatus(){
+      const rid = document.getElementById('epRoomIdStatus').value;
+      const r = await request('GET', `/api/exam-participant/status?examRoomId=${rid}`);
+      document.getElementById('epOut').textContent = r.status+'\n'+r.body;
+    }
+  </script>
+</body>
+</html>

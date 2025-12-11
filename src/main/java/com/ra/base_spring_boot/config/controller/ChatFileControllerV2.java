@@ -19,7 +19,7 @@ import java.util.Objects;
 @RestController
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
-@Tag(name = "29. Chat V2", description = "Upload file/ảnh cho tin nhắn")
+@Tag(name = "28 - Chat V2", description = "Upload file/ảnh cho tin nhắn")
 public class ChatFileControllerV2 {
 
     private final IChatMessageService chatMessageService;

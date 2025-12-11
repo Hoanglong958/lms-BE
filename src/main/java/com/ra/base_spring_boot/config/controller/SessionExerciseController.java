@@ -16,7 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/session-exercises")
 @RequiredArgsConstructor
-@Tag(name = "19 - Session Exercises", description = "Quản lý bài tập của từng session")
+@Tag(name = "20 - Session Exercises", description = "Quản lý bài tập của từng session")
 public class SessionExerciseController {
 
     private final ISessionExerciseService sessionExerciseService;

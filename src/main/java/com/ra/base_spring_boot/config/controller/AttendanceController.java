@@ -13,7 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
-@Tag(name = "Attendance", description = "API điểm danh lớp học")
+@Tag(name = "30 - Attendance", description = "API điểm danh lớp học")
 public class AttendanceController {
 
     private final IAttendanceService attendanceService;

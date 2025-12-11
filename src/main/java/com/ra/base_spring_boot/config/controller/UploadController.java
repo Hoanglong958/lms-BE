@@ -14,7 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/v1/uploads")
 @RequiredArgsConstructor
-@Tag(name = "21 - Uploads", description = "Upload ảnh/video, trả về URL để sử dụng trong các chức năng")
+@Tag(name = "24 - Uploads", description = "Upload ảnh/video, trả về URL để sử dụng trong các chức năng")
 public class UploadController {
 
     private final IUploadService uploadService;

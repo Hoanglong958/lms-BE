@@ -95,14 +95,13 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
         attempt.setEndTime(LocalDateTime.now());
         attempt.setStatus(ExamAttempt.AttemptStatus.SUBMITTED);
 
-        // Lấy participant theo userId + examRoomId
-        ExamParticipant participant = participantRepository
+        // Cập nhật trạng thái participant nếu tồn tại (REST flow có thể không có examRoomId)
+        participantRepository
                 .findByUser_IdAndExamRoomId(attempt.getUser().getId(), attempt.getExam().getId())
-                .orElseThrow(() -> new RuntimeException("ExamParticipant not found"));
-
-
-        participant.setSubmitted(true);
-        participantRepository.save(participant);
+                .ifPresent(p -> {
+                    p.setSubmitted(true);
+                    participantRepository.save(p);
+                });
 
         return attemptRepository.save(attempt);
     }

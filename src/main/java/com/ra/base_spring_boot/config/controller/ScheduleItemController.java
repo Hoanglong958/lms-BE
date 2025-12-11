@@ -23,7 +23,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 @RestController
 @RequestMapping("/api/v1/schedules")
 @RequiredArgsConstructor
-@Tag(name = "24 - Schedules", description = "Quản lý thời khóa biểu")
+@Tag(name = "27 - Schedules", description = "Quản lý thời khóa biểu")
 public class ScheduleItemController {
 
     private final IScheduleItemService scheduleItemService;
