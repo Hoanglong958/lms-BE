@@ -28,7 +28,7 @@ public class ExamAttemptSocketController {
     // =================== WEBSOCKET ===================
     @MessageMapping("/exam/action")
     public void examAction(ExamMessageDTO message) {
-        ExamMessageDTO dto = process(message);
+        process(message);
         // Broadcast đã thực hiện trong process()
     }
 

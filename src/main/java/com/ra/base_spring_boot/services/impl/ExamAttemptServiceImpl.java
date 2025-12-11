@@ -72,7 +72,11 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
                 .status(ExamAttempt.AttemptStatus.IN_PROGRESS)
                 .build();
 
-        attemptRepository.save(Objects.requireNonNull(attempt, "attempt must not be null"));
+        // Thay thế: Kiểm tra null thủ công (nhưng attempt ở đây chắc chắn không null, có thể xóa luôn)
+        if (attempt == null) {
+            throw new IllegalArgumentException("attempt must not be null");
+        }
+        attemptRepository.save(attempt);
         return toDTO(attempt);
     }
 
@@ -140,7 +144,11 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
     // =====================================================================
     @Override
     public ExamAttemptResponseDTO submitAttempt(Long attemptId) {
-        ExamAttempt attempt = attemptRepository.findById(Objects.requireNonNull(attemptId, "attemptId must not be null"))
+        // Thay thế: Kiểm tra null thủ công
+        if (attemptId == null) {
+            throw new IllegalArgumentException("attemptId must not be null");
+        }
+        ExamAttempt attempt = attemptRepository.findById(attemptId)
                 .orElseThrow(() -> new RuntimeException("Attempt not found"));
 
         attempt.setEndTime(LocalDateTime.now());
@@ -152,7 +160,11 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
     // =====================================================================
     @Override
     public ExamAttemptResponseDTO gradeAttempt(Long attemptId) {
-        ExamAttempt attempt = attemptRepository.findById(Objects.requireNonNull(attemptId, "attemptId must not be null"))
+        // Thay thế: Kiểm tra null thủ công
+        if (attemptId == null) {
+            throw new IllegalArgumentException("attemptId must not be null");
+        }
+        ExamAttempt attempt = attemptRepository.findById(attemptId)
                 .orElseThrow(() -> new RuntimeException("Attempt not found"));
 
         attempt.setStatus(ExamAttempt.AttemptStatus.GRADED);
@@ -178,7 +190,11 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
     // =====================================================================
     @Override
     public List<ExamAttemptResponseDTO> getByExam(Long examId) {
-        return attemptRepository.findByExam_Id(Objects.requireNonNull(examId, "examId must not be null"))
+        // Thay thế: Kiểm tra null thủ công
+        if (examId == null) {
+            throw new IllegalArgumentException("examId must not be null");
+        }
+        return attemptRepository.findByExam_Id(examId)
                 .stream()
                 .map(this::toDTO)
                 .toList();
@@ -187,7 +203,11 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
     // =====================================================================
     @Override
     public List<ExamAttemptResponseDTO> getByUser(Long userId) {
-        return attemptRepository.findByUser_Id(Objects.requireNonNull(userId, "userId must not be null"))
+        // Thay thế: Kiểm tra null thủ công
+        if (userId == null) {
+            throw new IllegalArgumentException("userId must not be null");
+        }
+        return attemptRepository.findByUser_Id(userId)
                 .stream()
                 .map(this::toDTO)
                 .toList();

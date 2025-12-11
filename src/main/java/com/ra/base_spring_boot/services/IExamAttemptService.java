@@ -1,7 +1,6 @@
 package com.ra.base_spring_boot.services;
 
 import com.ra.base_spring_boot.dto.ExamAttempt.ExamAttemptResponseDTO;
-import com.ra.base_spring_boot.model.ExamAttempt;
 
 import java.util.List;
 import java.util.Map;

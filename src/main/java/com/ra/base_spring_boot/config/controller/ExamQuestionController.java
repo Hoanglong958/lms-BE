@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.config.controller;
 
+import com.ra.base_spring_boot.dto.Exam.CreateExamQuestionRequest;
 import com.ra.base_spring_boot.dto.Exam.ExamQuestionDTO;
 import com.ra.base_spring_boot.services.IExamQuestionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,8 +30,8 @@ public class ExamQuestionController {
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Thêm một câu hỏi vào kỳ thi")
-    public ResponseEntity<ExamQuestionDTO> create(@RequestBody ExamQuestionDTO dto) {
-        return ResponseEntity.ok(examQuestionService.create(dto));
+    public ResponseEntity<ExamQuestionDTO> create(@RequestBody CreateExamQuestionRequest request) {
+        return ResponseEntity.ok(examQuestionService.create(request));
     }
 
     @DeleteMapping("/{id}")

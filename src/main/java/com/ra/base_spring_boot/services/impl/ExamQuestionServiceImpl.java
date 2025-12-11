@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.services.impl;
 
+import com.ra.base_spring_boot.dto.Exam.CreateExamQuestionRequest;
 import com.ra.base_spring_boot.dto.Exam.ExamQuestionDTO;
 import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.model.Exam;
@@ -39,10 +40,10 @@ public class ExamQuestionServiceImpl implements IExamQuestionService {
 
     @Override
     @Transactional
-    public ExamQuestionDTO create(ExamQuestionDTO dto) {
-        Objects.requireNonNull(dto, "dto must not be null");
-        Long dtoExamId = Objects.requireNonNull(dto.getExamId(), "examId must not be null");
-        Long dtoQuestionId = Objects.requireNonNull(dto.getQuestionId(), "questionId must not be null");
+    public ExamQuestionDTO create(CreateExamQuestionRequest request) {
+        Objects.requireNonNull(request, "request must not be null");
+        Long dtoExamId = Objects.requireNonNull(request.getExamId(), "examId must not be null");
+        Long dtoQuestionId = Objects.requireNonNull(request.getQuestionId(), "questionId must not be null");
 
         Exam exam = examRepository.findById(dtoExamId)
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy kỳ thi với id = " + dtoExamId));
@@ -52,8 +53,8 @@ public class ExamQuestionServiceImpl implements IExamQuestionService {
         ExamQuestion examQuestion = ExamQuestion.builder()
                 .exam(exam)
                 .question(question)
-                .orderIndex(dto.getOrderIndex())
-                .score(dto.getScore() != null ? dto.getScore() : 1)
+                .orderIndex(request.getOrderIndex())
+                .score(request.getScore() != null ? request.getScore() : 1)
                 .build();
 
         ExamQuestion saved = examQuestionRepository.save(Objects.requireNonNull(examQuestion, "examQuestion must not be null"));
@@ -71,7 +72,6 @@ public class ExamQuestionServiceImpl implements IExamQuestionService {
 
     private ExamQuestionDTO toDto(ExamQuestion entity) {
         return ExamQuestionDTO.builder()
-                .id(entity.getId())
                 .examId(entity.getExam() != null ? entity.getExam().getId() : null)
                 .questionId(entity.getQuestion() != null ? entity.getQuestion().getId() : null)
                 .orderIndex(entity.getOrderIndex())

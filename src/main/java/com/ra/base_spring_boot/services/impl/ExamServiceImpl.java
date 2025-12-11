@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,7 +24,6 @@ import java.util.stream.Collectors;
 public class ExamServiceImpl implements IExamService {
 
     private final IExamRepository examRepository;
-    private final ICourseRepository courseRepository;
     private final IQuestionRepository questionRepository;
     private final GmailService gmailService;
     private final IClassStudentRepository classStudentRepository;

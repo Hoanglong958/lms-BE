@@ -54,10 +54,11 @@ public class UserController {
             @RequestParam(required = false) String keyword, // Từ khóa tìm kiếm
             @RequestParam(required = false) String role, // Lọc theo vai trò
             @RequestParam(required = false) Boolean isActive, // Lọc theo trạng thái kích hoạt
-            Pageable pageable // Hỗ trợ phân trang/sắp xếp
+            Pageable pageable, // Hỗ trợ phân trang/sắp xếp
+            @RequestParam(required = false) Integer limit // Giới hạn số lượng trả về
     ) {
         RoleName roleFilter = parseRole(role); // Chuyển role từ String sang enum
-        Pageable safePageable = sanitizePageable(pageable);
+        Pageable safePageable = applyLimit(sanitizePageable(pageable), limit);
         Page<UserResponse> page = userService.search(keyword, roleFilter, isActive, safePageable); // Gọi service tìm kiếm
 
         java.util.Map<String, Object> payload = new java.util.HashMap<>();
@@ -169,29 +170,40 @@ public class UserController {
     // ===================== Làm sạch tham số phân trang/sắp xếp =====================
     private Pageable sanitizePageable(Pageable pageable) {
         final int MAX_SIZE = 100;
+        final int DEFAULT_PAGE = 0;
+        final int DEFAULT_SIZE = 20;
+        final Sort DEFAULT_SORT = Sort.by(Sort.Direction.DESC, "createdAt");
+
         java.util.Set<String> allowed = java.util.Set.of(
                 "id", "fullName", "gmail", "phone", "role", "isActive", "createdAt"
         );
 
-        // Validate sort fields: if any invalid, throw 400
-        java.util.List<String> invalid = new java.util.ArrayList<>();
+        // Guard null pageable
+        if (pageable == null) {
+            return PageRequest.of(DEFAULT_PAGE, DEFAULT_SIZE, DEFAULT_SORT);
+        }
+
+        // Filter invalid sort fields instead of throwing 400
+        java.util.List<Sort.Order> validOrders = new java.util.ArrayList<>();
         for (Sort.Order o : pageable.getSort()) {
-            if (!allowed.contains(o.getProperty())) {
-                invalid.add(o.getProperty());
+            if (allowed.contains(o.getProperty())) {
+                validOrders.add(o);
             }
         }
-        if (!invalid.isEmpty()) {
-            throw new HttpBadRequest(
-                    "Invalid sort field(s): " + String.join(", ", invalid) +
-                            ". Allowed: " + allowed
-            );
-        }
 
-        Sort sort = pageable.getSort().isEmpty()
-                ? Sort.by(Sort.Direction.DESC, "createdAt")
-                : pageable.getSort();
+        Sort sort = validOrders.isEmpty() ? DEFAULT_SORT : Sort.by(validOrders);
 
-        int size = pageable.getPageSize() > MAX_SIZE ? MAX_SIZE : pageable.getPageSize();
-        return PageRequest.of(pageable.getPageNumber(), size, sort);
+        int page = Math.max(0, pageable.getPageNumber());
+        int requestedSize = pageable.getPageSize();
+        int size = Math.min(Math.max(1, requestedSize > 0 ? requestedSize : DEFAULT_SIZE), MAX_SIZE);
+
+        return PageRequest.of(page, size, sort);
+    }
+
+    private Pageable applyLimit(Pageable pageable, Integer limit) {
+        final int MAX_SIZE = 100;
+        if (limit == null || limit <= 0) return pageable;
+        int size = Math.min(limit, MAX_SIZE);
+        return PageRequest.of(0, size, pageable.getSort());
     }
 }

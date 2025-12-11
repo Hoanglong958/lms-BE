@@ -19,7 +19,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 @RestController
 @RequestMapping("/api/v1/exam-participants")
 @RequiredArgsConstructor
-@RequestMapping("/api/exam-participant")
 @Tag(name = "31 - Exam Participant", description = "Quản lý tham gia thi")
 public class ExamParticipantController {
 

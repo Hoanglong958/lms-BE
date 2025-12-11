@@ -161,7 +161,7 @@ public class ClassServiceImpl implements IClassService {
         ClassTeacher assignment = ClassTeacher.builder()
                 .clazz(aClass)
                 .teacher(teacher)
-                .role(parseTeacherRole(dto.getRole()))
+                .role(ClassTeacherRole.INSTRUCTOR)
                 .note(dto.getNote())
                 .build();
         classTeacherRepository.save(java.util.Objects.requireNonNull(assignment, "assignment must not be null"));
@@ -176,6 +176,7 @@ public class ClassServiceImpl implements IClassService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<ClassTeacherResponseDTO> findTeachers(Long classId) {
         return classTeacherRepository.findByClazzId(Objects.requireNonNull(classId, "classId must not be null"))
                 .stream()
@@ -230,6 +231,7 @@ public class ClassServiceImpl implements IClassService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ClassCourseResponseDTO> findCourses(Long classId) {
         return classCourseRepository.findByClazzId(Objects.requireNonNull(classId, "classId must not be null"))
                 .stream()
