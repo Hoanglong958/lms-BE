@@ -29,15 +29,14 @@ public class PeriodServiceImpl implements IPeriodService {
             throw new HttpBadRequest("Thời gian bắt đầu phải trước thời gian kết thúc");
         }
 
-        if (periodRepository.existsOverlap(request.getStartTime(), request.getEndTime(), request.getDayOfWeek())) {
-            throw new HttpBadRequest("Khoảng thời gian ca học bị trùng trong ngày " + request.getDayOfWeek());
+        if (periodRepository.existsOverlap(request.getStartTime(), request.getEndTime())) {
+            throw new HttpBadRequest("Khoảng thời gian ca học bị trùng với ca khác");
         }
 
         Period period = Period.builder()
                 .name(request.getName())
                 .startTime(request.getStartTime())
                 .endTime(request.getEndTime())
-                .dayOfWeek(request.getDayOfWeek())  // mapping dayOfWeek
                 .build();
 
         periodRepository.save(java.util.Objects.requireNonNull(period, "period must not be null"));
@@ -57,14 +56,13 @@ public class PeriodServiceImpl implements IPeriodService {
             throw new HttpBadRequest("Thời gian bắt đầu phải trước thời gian kết thúc");
         }
 
-        if (periodRepository.existsOverlapExceptId(request.getStartTime(), request.getEndTime(), request.getDayOfWeek(), java.util.Objects.requireNonNull(id, "id must not be null"))) {
-            throw new HttpBadRequest("Khoảng thời gian ca học bị trùng trong ngày " + request.getDayOfWeek());
+        if (periodRepository.existsOverlapExceptId(request.getStartTime(), request.getEndTime(), id)) {
+            throw new HttpBadRequest("Khoảng thời gian ca học bị trùng với ca khác");
         }
 
         period.setName(request.getName());
         period.setStartTime(request.getStartTime());
         period.setEndTime(request.getEndTime());
-        period.setDayOfWeek(request.getDayOfWeek()); // mapping dayOfWeek
 
         periodRepository.save(period);
         return PeriodResponseDTO.fromEntity(period);

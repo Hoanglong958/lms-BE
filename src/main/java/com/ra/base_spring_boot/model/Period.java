@@ -20,16 +20,13 @@ public class Period {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String name;
+    private String name;  // Ca 1, Ca 2, ...
 
     @Column(nullable = false)
     private LocalTime startTime;
 
     @Column(nullable = false)
     private LocalTime endTime;
-    // 1 = Monday ... 7 = Sunday (hoặc dùng java.time.DayOfWeek nếu muốn)
-    @Column(nullable = false)
-    private int dayOfWeek;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

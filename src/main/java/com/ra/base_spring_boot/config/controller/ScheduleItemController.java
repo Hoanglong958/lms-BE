@@ -1,7 +1,6 @@
 package com.ra.base_spring_boot.config.controller;
 
-import com.ra.base_spring_boot.dto.ScheduleItem.ScheduleItemResponseDTO;
-import com.ra.base_spring_boot.dto.ScheduleItem.GenerateScheduleRequestDTO;
+import com.ra.base_spring_boot.dto.ScheduleItem.*;
 import com.ra.base_spring_boot.services.IScheduleItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -28,58 +27,115 @@ public class ScheduleItemController {
 
     private final IScheduleItemService scheduleItemService;
 
-    // ======= Tạo thời khóa biểu (ADMIN) =======
+    // ===================================================================
+    // 1) AUTO GENERATE – Tạo thời khóa biểu tự động
+    // ===================================================================
     @PostMapping("/generate")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Operation(summary = "Tạo thời khóa biểu", description = "Chỉ ADMIN được phép tạo thời khóa biểu cho khóa học")
+    @Operation(summary = "Tạo thời khóa biểu tự động", description = "Chỉ ADMIN được phép tạo thời khóa biểu tự động theo cấu hình daysOfWeek + periodIds")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Tạo thành công",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = ScheduleItemResponseDTO.class))
+                    )),
+            @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ"),
+            @ApiResponse(responseCode = "401", description = "Chưa xác thực"),
+            @ApiResponse(responseCode = "403", description = "Không có quyền"),
+            @ApiResponse(responseCode = "500", description = "Lỗi hệ thống")
+    })
+    public ResponseEntity<List<ScheduleItemResponseDTO>> generateSchedule(
+            @RequestBody @Valid GenerateScheduleRequestDTO request
+    ) {
+        return ResponseEntity.ok(scheduleItemService.generateScheduleForCourse(request));
+    }
+
+    // ===================================================================
+    // 2) MANUAL GENERATE – Tạo thời khóa biểu thủ công
+    // ===================================================================
+    @PostMapping("/manual")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Tạo thời khóa biểu thủ công", description = "ADMIN chọn trực tiếp các ngày trong tuần và period tương ứng")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Tạo thành công",
                     content = @Content(mediaType = "application/json",
                             array = @ArraySchema(schema = @Schema(implementation = ScheduleItemResponseDTO.class)),
-                            examples = @ExampleObject(value = "[{\n  \"id\": 1,\n  \"courseId\": 1,\n  \"periodId\": 1,\n  \"sessionNumber\": 1,\n  \"date\": \"2025-12-01\",\n  \"startAt\": \"2025-12-01T08:00:00\",\n  \"endAt\": \"2025-12-01T10:00:00\",\n  \"status\": \"SCHEDULED\"\n}]"))),
-            @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
-            @ApiResponse(responseCode = "500", description = "Lỗi hệ thống", content = @Content)
+                            examples = @ExampleObject(value =
+                                    "{ \"courseId\": 1, \"daysOfWeek\": [2,4], \"periodIds\": [1,3] }"
+                            )
+                    )),
+            @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ"),
+            @ApiResponse(responseCode = "401", description = "Chưa xác thực"),
+            @ApiResponse(responseCode = "403", description = "Không có quyền"),
+            @ApiResponse(responseCode = "500", description = "Lỗi hệ thống")
     })
-    public ResponseEntity<List<ScheduleItemResponseDTO>> generateSchedule(
-            @RequestBody @Valid GenerateScheduleRequestDTO request) {
-        return ResponseEntity.ok(scheduleItemService.generateScheduleForCourse(request));
+    public ResponseEntity<List<ScheduleItemResponseDTO>> createManualSchedule(
+            @RequestBody @Valid CreateManualScheduleRequestDTO request
+    ) {
+        return ResponseEntity.ok(scheduleItemService.createManualSchedule(request));
     }
 
-    // ======= Lấy thời khóa biểu theo khóa học (ADMIN + USER) =======
+    // ===================================================================
+    // 3) Lấy toàn bộ lịch của khóa học
+    // ===================================================================
     @GetMapping("/course/{courseId}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
-    @Operation(summary = "Lấy thời khóa biểu theo khóa học", description = "Trả về tất cả buổi học của khóa")
+    @Operation(summary = "Lấy thời khóa biểu theo khóa học", description = "Trả về tất cả các buổi học của một khóa học")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Thành công",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ScheduleItemResponseDTO.class)),
-                            examples = @ExampleObject(value = "[{\n  \"id\": 1,\n  \"courseId\": 1,\n  \"periodId\": 1,\n  \"sessionNumber\": 1,\n  \"date\": \"2025-12-01\",\n  \"startAt\": \"2025-12-01T08:00:00\",\n  \"endAt\": \"2025-12-01T10:00:00\",\n  \"status\": \"SCHEDULED\"\n}]"))),
-            @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
-            @ApiResponse(responseCode = "500", description = "Lỗi hệ thống", content = @Content)
+                            array = @ArraySchema(schema = @Schema(implementation = ScheduleItemResponseDTO.class))
+                    )),
+            @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ"),
+            @ApiResponse(responseCode = "401", description = "Chưa xác thực"),
+            @ApiResponse(responseCode = "403", description = "Không có quyền"),
+            @ApiResponse(responseCode = "500", description = "Lỗi hệ thống")
     })
     public ResponseEntity<List<ScheduleItemResponseDTO>> getScheduleByCourse(
-            @Parameter(description = "Mã khóa học") @PathVariable Long courseId) {
+            @Parameter(description = "Mã khóa học") @PathVariable Long courseId
+    ) {
         return ResponseEntity.ok(scheduleItemService.getScheduleByCourse(courseId));
     }
 
-    // ======= Xoá thời khóa biểu của khóa học (ADMIN) =======
+    // ===================================================================
+    // 4) Xóa toàn bộ lịch của khóa học
+    // ===================================================================
     @DeleteMapping("/course/{courseId}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Operation(summary = "Xoá thời khóa biểu của khóa học", description = "Chỉ ADMIN được phép xoá toàn bộ lịch của khóa")
+    @Operation(summary = "Xóa thời khóa biểu của khóa học", description = "Chỉ ADMIN được phép xóa toàn bộ lịch của khóa")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Xoá thành công", content = @Content),
-            @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
-            @ApiResponse(responseCode = "500", description = "Lỗi hệ thống", content = @Content)
+            @ApiResponse(responseCode = "204", description = "Xóa thành công"),
+            @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ"),
+            @ApiResponse(responseCode = "401", description = "Chưa xác thực"),
+            @ApiResponse(responseCode = "403", description = "Không có quyền"),
+            @ApiResponse(responseCode = "500", description = "Lỗi hệ thống")
     })
     public ResponseEntity<Void> clearSchedule(
-            @Parameter(description = "Mã khóa học") @PathVariable Long courseId) {
+            @Parameter(description = "Mã khóa học") @PathVariable Long courseId
+    ) {
         scheduleItemService.clearScheduleForCourse(courseId);
         return ResponseEntity.noContent().build();
     }
+
+    // ===================================================================
+    // 5) Cập nhật 1 buổi học
+    // ===================================================================
+    @PutMapping("/schedule-items/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Cập nhật thông tin buổi học", description = "Dùng để đổi ngày, đổi period, đổi trạng thái…")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Cập nhật thành công",
+                    content = @Content(schema = @Schema(implementation = ScheduleItemResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ"),
+            @ApiResponse(responseCode = "401", description = "Chưa xác thực"),
+            @ApiResponse(responseCode = "403", description = "Không có quyền"),
+            @ApiResponse(responseCode = "500", description = "Lỗi hệ thống")
+    })
+    public ResponseEntity<ScheduleItemResponseDTO> updateScheduleItem(
+            @PathVariable Long id,
+            @RequestBody @Valid UpdateScheduleItemRequestDTO req
+    ) {
+        return ResponseEntity.ok(scheduleItemService.updateScheduleItem(id, req));
+    }
+
 }

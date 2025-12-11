@@ -25,4 +25,5 @@ public interface ICourseRepository extends JpaRepository<Course, Long> {
 
     @Query("SELECT c FROM Course c WHERE c.createdAt >= :since ORDER BY c.createdAt DESC")
     List<Course> findNewCoursesSince(LocalDateTime since);
+    Page<Course> findByTitleContainingIgnoreCase(String title, Pageable pageable);
 }

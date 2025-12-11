@@ -24,21 +24,19 @@ public class CourseServiceImpl implements ICourseService {
 
     @Override
     public CourseResponseDTO create(CourseRequestDTO dto) {
+
         CourseLevel level = parseLevel(dto.getLevel());
 
         Course course = Course.builder()
                 .title(dto.getTitle())
                 .description(dto.getDescription())
-                .instructorName(dto.getInstructorName())
                 .level(level)
                 .totalSessions(dto.getTotalSessions())
-                .weeks(dto.getWeeks())
-                .startDate(dto.getStartDate())
                 .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
 
-        course.setUpdatedAt(course.getCreatedAt());
-        courseRepository.save(Objects.requireNonNull(course, "course must not be null"));
+        courseRepository.save(course);
 
         return toDto(course);
     }
@@ -50,11 +48,8 @@ public class CourseServiceImpl implements ICourseService {
 
         course.setTitle(dto.getTitle());
         course.setDescription(dto.getDescription());
-        course.setInstructorName(dto.getInstructorName());
         course.setLevel(parseLevel(dto.getLevel()));
         course.setTotalSessions(dto.getTotalSessions());
-        course.setWeeks(dto.getWeeks());
-        course.setStartDate(dto.getStartDate());
         course.setUpdatedAt(LocalDateTime.now());
 
         courseRepository.save(java.util.Objects.requireNonNull(course, "course must not be null"));
@@ -73,6 +68,7 @@ public class CourseServiceImpl implements ICourseService {
     public CourseResponseDTO findById(Long id) {
         Course course = courseRepository.findById(Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học với id = " + id));
+
         return toDto(course);
     }
 
@@ -86,27 +82,28 @@ public class CourseServiceImpl implements ICourseService {
 
     @Override
     public Page<CourseResponseDTO> findAll(Pageable pageable) {
-        return courseRepository.findAll(Objects.requireNonNull(pageable, "pageable must not be null")).map(this::toDto);
+        return courseRepository.findAll(pageable)
+                .map(this::toDto);
     }
 
     @Override
     public Page<CourseResponseDTO> search(String keyword, Pageable pageable) {
         String kw = keyword == null ? "" : keyword.trim();
+
         return courseRepository
-                .findByTitleContainingIgnoreCaseOrInstructorNameContainingIgnoreCase(kw, kw, Objects.requireNonNull(pageable, "pageable must not be null"))
+                .findByTitleContainingIgnoreCase(kw, pageable)
                 .map(this::toDto);
     }
+
+    // =========================== HELPER METHODS ===============================
 
     private CourseResponseDTO toDto(Course course) {
         return CourseResponseDTO.builder()
                 .id(course.getId())
                 .title(course.getTitle())
                 .description(course.getDescription())
-                .instructorName(course.getInstructorName())
                 .level(course.getLevel().name())
                 .totalSessions(course.getTotalSessions())
-                .weeks(course.getWeeks())
-                .startDate(course.getStartDate())
                 .createdAt(course.getCreatedAt())
                 .updatedAt(course.getUpdatedAt())
                 .build();

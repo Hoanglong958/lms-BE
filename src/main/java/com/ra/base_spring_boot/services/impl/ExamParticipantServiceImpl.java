@@ -1,4 +1,3 @@
-// ================= ExamParticipantServiceImpl.java =================
 package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.model.Exam;
@@ -14,8 +13,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Objects;
-
 
 @Service
 @RequiredArgsConstructor
@@ -26,19 +23,26 @@ public class ExamParticipantServiceImpl implements IExamParticipantService {
     private final IExamRepository examRepository;
 
     @Override
-    public ExamParticipant joinExam(Long userId, Long examRoomId, LocalDateTime joinTime) {
+    public ExamParticipant joinExam(Long examId, Long userId, LocalDateTime joinTime) {
 
         User user = userRepository.findById(Objects.requireNonNull(userId, "userId must not be null"))
                 .orElseThrow(() -> new RuntimeException("User không tồn tại"));
 
-        Exam exam = examRepository.findById(Objects.requireNonNull(examRoomId, "examRoomId must not be null"))
+        Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new RuntimeException("Exam không tồn tại"));
+
+        // Nếu đã tham gia rồi thì trả về luôn
+        Optional<ExamParticipant> exists = participantRepository
+                .findByUser_IdAndExam_Id(userId, examId);
+
+        if (exists.isPresent()) {
+            return exists.get();
+        }
 
         ExamParticipant participant = ExamParticipant.builder()
                 .user(user)
                 .exam(exam)
-                .examRoomId(Objects.requireNonNull(examRoomId, "examRoomId must not be null"))
-                .joinTime(joinTime)
+                .joinTime(joinTime != null ? joinTime : LocalDateTime.now())
                 .started(true)
                 .submitted(false)
                 .build();
@@ -47,38 +51,32 @@ public class ExamParticipantServiceImpl implements IExamParticipantService {
     }
 
     @Override
-    public ExamParticipant submitExam(Long userId, Long examId, LocalDateTime submitTime) {
+    public ExamParticipant submitExam(Long examId, Long userId, LocalDateTime submitTime) {
 
         ExamParticipant participant = participantRepository
-                .findByUser_IdAndExamRoomId(
-                        Objects.requireNonNull(userId, "userId must not be null"),
-                        Objects.requireNonNull(examId, "examId must not be null")
-                )
-                .orElseThrow(() -> new RuntimeException("User chưa join phòng thi"));
+                .findByUser_IdAndExam_Id(userId, examId)
+                .orElseThrow(() -> new RuntimeException("User chưa join bài thi"));
 
         participant.setSubmitted(true);
+        participant.setSubmitTime(submitTime != null ? submitTime : LocalDateTime.now());
 
         return participantRepository.save(Objects.requireNonNull(participant, "participant must not be null"));
     }
 
     @Override
-    public List<ExamParticipant> getParticipantsByRoom(Long examId) {
-        return participantRepository.findAllByExamRoomId(Objects.requireNonNull(examId, "examId must not be null"));
+    public List<ExamParticipant> getParticipantsByExam(Long examId) {
+        return participantRepository.findAllByExam_Id(examId);
     }
 
     @Override
-    public ExamParticipant getParticipant(Long userId, Long examRoomId) {
-        return participantRepository.findByUser_IdAndExamRoomId(
-                Objects.requireNonNull(userId, "userId must not be null"),
-                Objects.requireNonNull(examRoomId, "examRoomId must not be null")
-        )
-                .orElseThrow(() -> new RuntimeException("User chưa join phòng thi"));
+    public ExamParticipant getParticipant(Long userId, Long examId) {
+        return participantRepository
+                .findByUser_IdAndExam_Id(userId, examId)
+                .orElseThrow(() -> new RuntimeException("User chưa join bài thi"));
     }
 
     @Override
-    public Optional<ExamParticipant> findByUserIdAndExamRoomId(Long userId, Long examRoomId) {
-        return Optional.empty();
+    public Optional<ExamParticipant> findByUserIdAndExamId(Long userId, Long examId) {
+        return participantRepository.findByUser_IdAndExam_Id(userId, examId);
     }
-
-
 }

@@ -7,8 +7,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface IExamParticipantRepository extends JpaRepository<ExamParticipant, Long> {
-    Optional<ExamParticipant> findByUser_IdAndExamRoomId(Long userId, Long examRoomId);
+    Optional<ExamParticipant> findByUser_IdAndExam_Id(Long userId, Long examId);
 
-    List<ExamParticipant> findAllByExamRoomId(Long examRoomId);
+    List<ExamParticipant> findAllByExam_Id(Long examId);
+
 
 }

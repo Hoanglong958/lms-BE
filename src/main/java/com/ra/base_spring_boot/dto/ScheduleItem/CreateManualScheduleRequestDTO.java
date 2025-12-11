@@ -6,13 +6,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Data
-public class GenerateScheduleRequestDTO {
+public class CreateManualScheduleRequestDTO {
     private Long courseId;
-    private int sessionsPerWeek;
+    private List<Integer> daysOfWeek;   // Ví dụ [2,4]
+    private List<Long> periodIds;       // Ví dụ [1,2]
     private Long classId;
-
 }

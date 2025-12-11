@@ -10,4 +10,6 @@ public interface IExamAttemptRepository extends JpaRepository<ExamAttempt, Long>
     List<ExamAttempt> findByExam_Id(Long examId);
     List<ExamAttempt> findByUser_Id(Long userId);
     Optional<ExamAttempt> findTopByExam_IdAndUser_IdOrderByAttemptNumberDesc(Long examId, Long userId);
+    Optional<ExamAttempt> findTopByExam_IdAndUser_IdAndStatus(Long examId, Long userId, ExamAttempt.AttemptStatus status);
+
 }

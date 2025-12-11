@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @Builder
 public class ScheduleItemResponseDTO {
     private Long id;
+    private Long classId;
     private Long courseId;
     private Long periodId;
     private int sessionNumber;

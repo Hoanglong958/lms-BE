@@ -41,8 +41,6 @@ public class ClassServiceImpl implements IClassService {
                 .maxStudents(dto.getMaxStudents() == null ? 30 : dto.getMaxStudents())
                 .startDate(parseDate(dto.getStartDate(), "Ngày bắt đầu lớp học không hợp lệ"))
                 .endDate(parseOptionalDate(dto.getEndDate()))
-                .scheduleInfo(dto.getScheduleInfo())
-                .status(parseStatus(dto.getStatus()))
                 .build();
         validateDateRange(aClass.getStartDate(), aClass.getEndDate());
         classroomRepository.save(Objects.requireNonNull(aClass, "class must not be null"));
@@ -57,8 +55,6 @@ public class ClassServiceImpl implements IClassService {
         if (dto.getMaxStudents() != null && dto.getMaxStudents() > 0) aClass.setMaxStudents(dto.getMaxStudents());
         if (dto.getStartDate() != null) aClass.setStartDate(parseDate(dto.getStartDate(), "Ngày bắt đầu lớp học không hợp lệ"));
         if (dto.getEndDate() != null) aClass.setEndDate(parseOptionalDate(dto.getEndDate()));
-        if (dto.getScheduleInfo() != null) aClass.setScheduleInfo(dto.getScheduleInfo());
-        if (dto.getStatus() != null) aClass.setStatus(parseStatus(dto.getStatus()));
         validateDateRange(aClass.getStartDate(), aClass.getEndDate());
         classroomRepository.save(aClass);
         return toClassroomDto(aClass);
@@ -289,6 +285,7 @@ public class ClassServiceImpl implements IClassService {
         long studentCount = classStudentRepository.countByClassroomId(classId);
         long teacherCount = classTeacherRepository.countByClazzId(classId);
         long courseCount = classCourseRepository.countByClazzId(classId);
+
         return ClassroomResponseDTO.builder()
                 .id(classId)
                 .className(aClass.getClassName())
@@ -297,7 +294,7 @@ public class ClassServiceImpl implements IClassService {
                 .startDate(aClass.getStartDate())
                 .endDate(aClass.getEndDate())
                 .scheduleInfo(aClass.getScheduleInfo())
-                .status(aClass.getStatus().name())
+                .status(calculateStatus(aClass).name())  // <- status động
                 .createdAt(aClass.getCreatedAt())
                 .updatedAt(aClass.getUpdatedAt())
                 .totalStudents(studentCount)
@@ -305,6 +302,22 @@ public class ClassServiceImpl implements IClassService {
                 .totalCourses(courseCount)
                 .build();
     }
+    private ClassStatus calculateStatus(Class aClass) {
+        LocalDate today = LocalDate.now();
+        if (aClass.getStartDate() != null && today.isBefore(aClass.getStartDate())) {
+            return ClassStatus.UPCOMING;
+        }
+        if (aClass.getEndDate() != null && today.isAfter(aClass.getEndDate())) {
+            return ClassStatus.COMPLETED;
+        }
+        if (aClass.getStartDate() != null && aClass.getEndDate() != null
+                && ( !today.isBefore(aClass.getStartDate()) && !today.isAfter(aClass.getEndDate()))) {
+            return ClassStatus.ONGOING;
+        }
+        return ClassStatus.UPCOMING; // mặc định
+    }
+
+
 
     private ClassStudentResponseDTO toStudentDto(ClassStudent classStudent) {
         return ClassStudentResponseDTO.builder()

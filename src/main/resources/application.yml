@@ -10,8 +10,8 @@
     datasource:
       url: jdbc:mysql://localhost:3306/lms_rikkei?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
       username: root
-      password: hanh3010
-    
+      password: 123456
+
       driver-class-name: com.mysql.cj.jdbc.Driver
 
     jpa:
@@ -60,10 +60,14 @@
       access: 3600000
 
   server:
+<<<<<<< HEAD
     port: 3900
     error:
       include-message: ALWAYS
       include-stacktrace: ALWAYS
+=======
+    port: 3999
+>>>>>>> 39439ec3d693d954bdd89aa9c5eacceb6c99bb97
 
   app:
     upload:

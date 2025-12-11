@@ -13,13 +13,9 @@ public class CourseRequestDTO {
     @Schema(example = "Learn how to build REST APIs with Spring Boot 3")
     private String description;
 
-    @Schema(example = "Nguyen Van A")
-    private String instructorName;
-
     @Schema(example = "BEGINNER") // BEGINNER, INTERMEDIATE, ADVANCED
     private String level; // BEGINNER, INTERMEDIATE, ADVANCED
 
     private int totalSessions;  // tổng số buổi học
-    private int weeks;          // số tuần học
     private LocalDate startDate; // ngày bắt đầu
 }

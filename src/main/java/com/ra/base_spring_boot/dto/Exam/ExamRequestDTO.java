@@ -13,8 +13,6 @@ import java.util.List;
 @Builder
 @Data
 public class ExamRequestDTO {
-
-    private Long courseId;
     private String title;
     private String description;
     private Integer totalQuestions;

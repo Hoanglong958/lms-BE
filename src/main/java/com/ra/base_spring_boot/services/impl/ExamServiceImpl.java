@@ -3,6 +3,7 @@ package com.ra.base_spring_boot.services.impl;
 import com.ra.base_spring_boot.dto.Exam.ExamRequestDTO;
 import com.ra.base_spring_boot.dto.Exam.ExamResponseDTO;
 import com.ra.base_spring_boot.dto.Gmail.EmailDTO;
+import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.model.constants.ExamStatus;
 import com.ra.base_spring_boot.repository.*;
@@ -29,17 +30,26 @@ public class ExamServiceImpl implements IExamService {
     private final GmailService gmailService;
     private final IClassStudentRepository classStudentRepository;
 
-    // ======= Tạo kỳ thi (ADMIN) =======
+    // =====================================================
+    // 1) TẠO KỲ THI
+    // =====================================================
     @Override
     @Transactional
     public ExamResponseDTO createExam(ExamRequestDTO dto) {
-        Objects.requireNonNull(dto, "dto must not be null");
-        Long courseId = Objects.requireNonNull(dto.getCourseId(), "courseId must not be null");
-        Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new RuntimeException("Course not found"));
 
+        // ========= VALIDATE =========
+        if (dto.getStartTime() == null || dto.getEndTime() == null) {
+            throw new HttpBadRequest("Thời gian bắt đầu/kết thúc không được để trống");
+        }
+        if (!dto.getStartTime().isBefore(dto.getEndTime())) {
+            throw new HttpBadRequest("Thời gian bắt đầu phải trước thời gian kết thúc");
+        }
+        if (dto.getPassingScore() > dto.getMaxScore()) {
+            throw new HttpBadRequest("Điểm đạt phải nhỏ hơn hoặc bằng điểm tối đa");
+        }
+
+        // ========= KHỞI TẠO EXAM =========
         Exam exam = Exam.builder()
-                .course(course)
                 .title(dto.getTitle())
                 .description(dto.getDescription())
                 .maxScore(dto.getMaxScore())
@@ -53,40 +63,44 @@ public class ExamServiceImpl implements IExamService {
                 .totalQuestions(0)
                 .build();
 
-        // ======= Thêm câu hỏi theo yêu cầu =======
+        // ========= THÊM CÂU HỎI =========
         if (dto.isAutoAddQuestions()) {
             List<Question> questions = questionRepository.findAll();
-            int orderIndex = 1;
+            int order = 1;
+
             for (Question q : questions) {
-                ExamQuestion eq = ExamQuestion.builder()
-                        .exam(exam)
-                        .question(q)
-                        .orderIndex(orderIndex++)
-                        .build();
-                exam.getExamQuestions().add(eq);
+                exam.getExamQuestions().add(
+                        ExamQuestion.builder()
+                                .exam(exam)
+                                .question(q)
+                                .orderIndex(order++)
+                                .build()
+                );
             }
+
         } else if (dto.getQuestionIds() != null && !dto.getQuestionIds().isEmpty()) {
-            int orderIndex = 1;
+            int order = 1;
+
             for (Long qId : dto.getQuestionIds()) {
-                Long safeQId = Objects.requireNonNull(qId, "questionId must not be null");
-                Question q = questionRepository.findById(safeQId)
-                        .orElseThrow(() -> new RuntimeException("Question not found: " + safeQId));
-                ExamQuestion eq = ExamQuestion.builder()
-                        .exam(exam)
-                        .question(q)
-                        .orderIndex(orderIndex++)
-                        .build();
-                exam.getExamQuestions().add(eq);
+                Question q = questionRepository.findById(qId)
+                        .orElseThrow(() -> new HttpBadRequest("Question not found: " + qId));
+
+                exam.getExamQuestions().add(
+                        ExamQuestion.builder()
+                                .exam(exam)
+                                .question(q)
+                                .orderIndex(order++)
+                                .build()
+                );
             }
         }
 
         exam.setTotalQuestions(exam.getExamQuestions().size());
 
-
         examRepository.save(exam);
-        // ====== Gửi email thông báo bài thi mới ======
-        List<ClassStudent> students = classStudentRepository.findByClassroomId(exam.getCourse().getId());
-// hoặc nếu có liên kết lớp-có khóa học thì lấy theo classId
+
+        // ========= GỬI EMAIL THÔNG BÁO =========
+        List<ClassStudent> students = classStudentRepository.findByClassroomId(exam.getId());
 
         for (ClassStudent s : students) {
             User student = s.getStudent();
@@ -96,7 +110,6 @@ public class ExamServiceImpl implements IExamService {
                     "new_exam",
                     Map.of(
                             "username", student.getFullName(),
-                            "courseName", exam.getCourse().getTitle(),
                             "examTitle", exam.getTitle(),
                             "startTime", exam.getStartTime(),
                             "endTime", exam.getEndTime()
@@ -107,15 +120,27 @@ public class ExamServiceImpl implements IExamService {
         return mapToResponse(exam);
     }
 
-    // ======= Cập nhật kỳ thi (ADMIN) =======
+    // =====================================================
+    // 2) CẬP NHẬT KỲ THI
+    // =====================================================
     @Override
     @Transactional
     public ExamResponseDTO updateExam(Long examId, ExamRequestDTO dto) {
-        Long safeExamId = Objects.requireNonNull(examId, "examId must not be null");
-        Objects.requireNonNull(dto, "dto must not be null");
-        Exam exam = examRepository.findById(safeExamId)
-                .orElseThrow(() -> new RuntimeException("Exam not found"));
+        Exam exam = examRepository.findById(examId)
+                .orElseThrow(() -> new HttpBadRequest("Exam not found"));
 
+        // ========= VALIDATE =========
+        if (dto.getStartTime() == null || dto.getEndTime() == null) {
+            throw new HttpBadRequest("Thời gian bắt đầu/kết thúc không được để trống");
+        }
+        if (!dto.getStartTime().isBefore(dto.getEndTime())) {
+            throw new HttpBadRequest("Thời gian bắt đầu phải trước thời gian kết thúc");
+        }
+        if (dto.getPassingScore() > dto.getMaxScore()) {
+            throw new HttpBadRequest("Điểm đạt phải nhỏ hơn hoặc bằng điểm tối đa");
+        }
+
+        // ========= UPDATE =========
         exam.setTitle(dto.getTitle());
         exam.setDescription(dto.getDescription());
         exam.setMaxScore(dto.getMaxScore());
@@ -129,41 +154,43 @@ public class ExamServiceImpl implements IExamService {
         return mapToResponse(exam);
     }
 
-    // ======= Xóa kỳ thi (ADMIN) =======
+    // =====================================================
+    // 3) XÓA KỲ THI
+    // =====================================================
     @Override
     @Transactional
     public void deleteExam(Long examId) {
-        Long safeExamId = Objects.requireNonNull(examId, "examId must not be null");
-        Exam exam = examRepository.findById(safeExamId)
-                .orElseThrow(() -> new RuntimeException("Exam not found"));
+        Exam exam = examRepository.findById(examId)
+                .orElseThrow(() -> new HttpBadRequest("Exam not found"));
 
-        // Force load lazy collections trước khi xóa
         exam.getExamQuestions().size();
         if (exam.getExamAttempts() != null) {
             exam.getExamAttempts().size();
         }
 
-        // Xóa tất cả child
         exam.getExamQuestions().clear();
         if (exam.getExamAttempts() != null) {
             exam.getExamAttempts().clear();
         }
 
-        // Xóa parent
         examRepository.delete(exam);
     }
 
-    // ======= Lấy kỳ thi theo ID =======
+    // =====================================================
+    // 4) LẤY CHI TIẾT KỲ THI
+    // =====================================================
     @Override
     @Transactional(readOnly = true)
     public ExamResponseDTO getExam(Long examId) {
-        Long safeExamId = Objects.requireNonNull(examId, "examId must not be null");
-        Exam exam = examRepository.findById(safeExamId)
-                .orElseThrow(() -> new RuntimeException("Exam not found"));
+        Exam exam = examRepository.findById(examId)
+                .orElseThrow(() -> new HttpBadRequest("Exam not found"));
+
         return mapToResponse(exam);
     }
 
-    // ======= Lấy danh sách tất cả kỳ thi =======
+    // =====================================================
+    // 5) LẤY TẤT CẢ KỲ THI
+    // =====================================================
     @Override
     @Transactional(readOnly = true)
     public List<ExamResponseDTO> getAllExams() {
@@ -173,39 +200,41 @@ public class ExamServiceImpl implements IExamService {
                 .collect(Collectors.toList());
     }
 
-    // ======= Thêm câu hỏi hiện có vào kỳ thi =======
+    // =====================================================
+    // 6) THÊM CÂU HỎI VÀO KỲ THI
+    // =====================================================
     @Override
     @Transactional
     public void addQuestionsToExam(Long examId, List<Long> questionIds) {
-        Long safeExamId = Objects.requireNonNull(examId, "examId must not be null");
-        List<Long> safeQuestionIds = Objects.requireNonNull(questionIds, "questionIds must not be null");
-        Exam exam = examRepository.findById(safeExamId)
-                .orElseThrow(() -> new RuntimeException("Exam not found"));
+        Exam exam = examRepository.findById(examId)
+                .orElseThrow(() -> new HttpBadRequest("Exam not found"));
 
-        for (Long questionId : safeQuestionIds) {
-            Long safeQuestionId = Objects.requireNonNull(questionId, "questionId must not be null");
-            Question question = questionRepository.findById(safeQuestionId)
-                    .orElseThrow(() -> new RuntimeException("Question not found: " + safeQuestionId));
+        for (Long qId : questionIds) {
+            Question q = questionRepository.findById(qId)
+                    .orElseThrow(() -> new HttpBadRequest("Question not found: " + qId));
 
             boolean exists = exam.getExamQuestions().stream()
-                    .anyMatch(eq -> eq.getQuestion().getId().equals(safeQuestionId));
+                    .anyMatch(eq -> eq.getQuestion().getId().equals(qId));
             if (exists) continue;
 
-            ExamQuestion eq = ExamQuestion.builder()
-                    .exam(exam)
-                    .question(question)
-                    .orderIndex(exam.getExamQuestions().size() + 1)
-                    .build();
-
-            exam.getExamQuestions().add(eq);
+            exam.getExamQuestions().add(
+                    ExamQuestion.builder()
+                            .exam(exam)
+                            .question(q)
+                            .orderIndex(exam.getExamQuestions().size() + 1)
+                            .build()
+            );
         }
 
         exam.setTotalQuestions(exam.getExamQuestions().size());
         examRepository.save(exam);
     }
 
-    // ======= Chuyển Entity -> DTO (bao gồm danh sách câu hỏi) =======
+    // =====================================================
+    // 7) MAP ENTITY → DTO
+    // =====================================================
     private ExamResponseDTO mapToResponse(Exam exam) {
+
         double pointPerQuestion = exam.getTotalQuestions() > 0
                 ? exam.getMaxScore() * 1.0 / exam.getTotalQuestions()
                 : 0;
@@ -223,7 +252,6 @@ public class ExamServiceImpl implements IExamService {
 
         return ExamResponseDTO.builder()
                 .id(exam.getId())
-                .courseId(exam.getCourse() != null ? exam.getCourse().getId() : null)
                 .title(exam.getTitle())
                 .description(exam.getDescription())
                 .totalQuestions(exam.getTotalQuestions())

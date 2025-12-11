@@ -19,8 +19,6 @@ public class PeriodResponseDTO {
     private LocalTime endTime;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private int dayOfWeek; // 1 = Monday ... 7 = Sunday
-
 
     public static PeriodResponseDTO fromEntity(Period period) {
         return PeriodResponseDTO.builder()
@@ -30,7 +28,6 @@ public class PeriodResponseDTO {
                 .endTime(period.getEndTime())
                 .createdAt(period.getCreatedAt())
                 .updatedAt(period.getUpdatedAt())
-                .dayOfWeek(period.getDayOfWeek())
                 .build();
     }
 }

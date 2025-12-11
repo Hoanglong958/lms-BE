@@ -3,7 +3,7 @@ package com.ra.base_spring_boot.model.constants;
 public enum ClassStatus {
     UPCOMING,
     ONGOING,
-    COMPLETED,
-    CANCELLED
+    COMPLETED
+
 }
 
