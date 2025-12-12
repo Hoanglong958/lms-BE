@@ -16,9 +16,6 @@ public class ClassStatsResponseDTO {
     @Schema(example = "Java Web K1")
     private String className;
 
-    @Schema(example = "30")
-    private Integer maxStudents;
-
     @Schema(example = "25")
     private Long totalStudents;
 

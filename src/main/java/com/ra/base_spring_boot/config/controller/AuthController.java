@@ -12,7 +12,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.Objects;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -52,7 +51,7 @@ public class AuthController {
     @ApiResponse(responseCode = "201", description = "Đăng ký thành công")
     public ResponseEntity<?> handleRegister(@Valid @RequestBody FormRegister formRegister) {
         authService.register(formRegister);
-        return ResponseEntity.created(Objects.requireNonNull(URI.create("/api/v1/auth/register"))).body(
+        return ResponseEntity.created(URI.create("/api/v1/auth/register")).body(
                 ResponseWrapper.builder()
                         .status(HttpStatus.CREATED)
                         .code(201)
@@ -103,18 +102,7 @@ public class AuthController {
     @Operation(summary = "Quên mật khẩu", description = "Tạo token và gửi link đặt lại mật khẩu qua email. Token chỉ hiển thị khi user click vào link.")
     @ApiResponse(responseCode = "200", description = "Gửi email thành công")
     public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        CreatePasswordResetTokenRequest createReq = new CreatePasswordResetTokenRequest();
-        createReq.setGmail(request.getGmail());
-        
-        // Tạo token (không trả token trong response - delayed reveal)
-        var tokenResponse = passwordResetTokenService.create(createReq);
-        
-        // Gửi email với link reset (demo: log ra console)
-        String resetLink = "http://localhost:5173/reset-password?token=" + tokenResponse.getToken();
-        System.out.println("🔗 Link đặt lại mật khẩu cho " + request.getGmail() + ":");
-        System.out.println(resetLink);
-        
-        
+        authService.forgotPassword(request);
         return ResponseEntity.ok(
                 ResponseWrapper.builder()
                         .status(HttpStatus.OK)

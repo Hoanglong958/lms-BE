@@ -24,9 +24,6 @@ public class ClassroomResponseDTO {
     @Schema(example = "Lớp học nền tảng Java Web cho người mới bắt đầu")
     private String description;
 
-    @Schema(example = "35")
-    private Integer maxStudents;
-
     @Schema(example = "2025-01-05")
     private LocalDate startDate;
 

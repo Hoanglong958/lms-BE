@@ -8,6 +8,7 @@ import com.ra.base_spring_boot.repository.IPasswordResetTokenRepository;
 import com.ra.base_spring_boot.repository.IUserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -18,6 +19,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,7 +47,7 @@ class PasswordResetTokenServiceImplTest {
 
         when(tokenRepository.findByToken("abc")).thenReturn(Optional.of(token));
         when(passwordEncoder.encode("new-pass")).thenReturn("encoded");
-        when(userRepository.save(org.mockito.ArgumentMatchers.<User>argThat(java.util.Objects::nonNull))).thenAnswer(invocation -> (User) java.util.Objects.requireNonNull(invocation.getArgument(0)));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         ResetPasswordRequest request = new ResetPasswordRequest();
         request.setToken("abc");
@@ -76,8 +78,8 @@ class PasswordResetTokenServiceImplTest {
 
         assertThrows(HttpBadRequest.class, () -> passwordResetTokenService.resetPassword(request));
 
-        verify(userRepository, never()).save(org.mockito.ArgumentMatchers.any(User.class));
-        verify(tokenRepository, never()).save(java.util.Objects.requireNonNull(token));
+        verify(userRepository, never()).save(any());
+        verify(tokenRepository, never()).save(token);
     }
 }
 

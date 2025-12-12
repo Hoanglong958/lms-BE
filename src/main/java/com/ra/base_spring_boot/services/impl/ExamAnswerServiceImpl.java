@@ -17,21 +17,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 public class ExamAnswerServiceImpl implements IExamAnswerService {
 
-    @SuppressWarnings("unused")
     private final IExamAnswerRepository examAnswerRepository;
     private final IExamAttemptRepository examAttemptRepository;
 
     @Override
     @Transactional(readOnly = true)
     public List<ExamAnswerDTO> getByAttempt(Long attemptId, boolean onlyCurrentUser) {
-        Long safeAttemptId = Objects.requireNonNull(attemptId, "attemptId must not be null");
-        ExamAttempt attempt = examAttemptRepository.findById(safeAttemptId)
+        ExamAttempt attempt = examAttemptRepository.findById(attemptId)
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy lượt làm bài với id = " + attemptId));
 
         if (onlyCurrentUser) {

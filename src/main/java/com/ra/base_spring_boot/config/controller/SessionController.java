@@ -10,7 +10,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.Objects;
 import java.util.List;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,7 +50,7 @@ public class SessionController {
     public ResponseEntity<SessionResponseDTO> create(@Valid @RequestBody SessionRequestDTO dto) {
         SessionResponseDTO created = sessionService.create(dto);
         // Trả về HTTP 201 Created + URI mới tạo
-        return ResponseEntity.created(Objects.requireNonNull(URI.create("/api/v1/sessions/" + created.getId()))).body(created);
+        return ResponseEntity.created(URI.create("/api/v1/sessions/" + created.getId())).body(created);
     }
 
     // ======= 4️⃣ Cập nhật session (ADMIN) =======

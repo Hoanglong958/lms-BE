@@ -1,6 +1,7 @@
 package com.ra.base_spring_boot.config.controller;
 
 import com.ra.base_spring_boot.model.ExamParticipant;
+import com.ra.base_spring_boot.dto.ExamParticipant.ExamParticipantResponseDTO;
 import com.ra.base_spring_boot.services.IExamParticipantService;
 import lombok.RequiredArgsConstructor;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,14 +32,14 @@ public class ExamParticipantController {
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @Operation(summary = "User tham gia kỳ thi")
     @ApiResponse(responseCode = "200", description = "Join thành công")
-    public ResponseEntity<ExamParticipant> joinExam(
+    public ResponseEntity<ExamParticipantResponseDTO> joinExam(
             @Parameter(description = "ID bài thi") @RequestParam Long examId,
             @Parameter(description = "ID người dùng") @RequestParam Long userId
     ) {
         ExamParticipant participant =
                 examParticipantService.joinExam(examId, userId, LocalDateTime.now());
 
-        return ResponseEntity.ok(participant);
+        return ResponseEntity.ok(toDto(participant));
     }
 
     // ==========================================
@@ -48,14 +49,14 @@ public class ExamParticipantController {
     @PreAuthorize("hasAuthority('ROLE_USER')")
     @Operation(summary = "User nộp bài thi")
     @ApiResponse(responseCode = "200", description = "Submit thành công")
-    public ResponseEntity<ExamParticipant> submitExam(
+    public ResponseEntity<ExamParticipantResponseDTO> submitExam(
             @Parameter(description = "ID bài thi") @RequestParam Long examId,
             @Parameter(description = "ID người dùng") @RequestParam Long userId
     ) {
         ExamParticipant participant =
                 examParticipantService.submitExam(examId, userId, LocalDateTime.now());
 
-        return ResponseEntity.ok(participant);
+        return ResponseEntity.ok(toDto(participant));
     }
 
     // ==========================================
@@ -65,9 +66,22 @@ public class ExamParticipantController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Lấy danh sách người tham gia kỳ thi")
     @ApiResponse(responseCode = "200", description = "Thành công")
-    public ResponseEntity<List<ExamParticipant>> getExamStatus(
+    public ResponseEntity<List<ExamParticipantResponseDTO>> getExamStatus(
             @Parameter(description = "ID bài thi") @RequestParam Long examId
     ) {
-        return ResponseEntity.ok(examParticipantService.getParticipantsByExam(examId));
+        List<ExamParticipant> participants = examParticipantService.getParticipantsByExam(examId);
+        return ResponseEntity.ok(participants.stream().map(this::toDto).toList());
+    }
+
+    private ExamParticipantResponseDTO toDto(ExamParticipant p) {
+        String status = p.getSubmitted() != null && p.getSubmitted()
+                ? "SUBMITTED"
+                : (p.getStarted() != null && p.getStarted() ? "JOINED" : "PENDING");
+        return ExamParticipantResponseDTO.builder()
+                .userId(p.getUser() != null ? p.getUser().getId() : null)
+                .startTime(p.getJoinTime())
+                .endTime(p.getSubmitTime())
+                .status(status)
+                .build();
     }
 }

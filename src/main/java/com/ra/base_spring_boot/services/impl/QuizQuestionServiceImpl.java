@@ -75,7 +75,6 @@ public class QuizQuestionServiceImpl implements IQuizQuestionService {
     }
 
     @Override
-
     public void delete(Long id) {
         QuizQuestion entity = quizQuestionRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy bản ghi quiz_question"));

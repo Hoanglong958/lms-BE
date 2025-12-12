@@ -25,6 +25,9 @@ public class ExamParticipant {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(name = "examRoomId", nullable = true)
+    private Long examRoomId;
+
     private LocalDateTime joinTime;
 
     @Builder.Default

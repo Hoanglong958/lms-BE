@@ -8,7 +8,6 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-import java.util.Objects;
 
 @Controller
 @RequiredArgsConstructor
@@ -25,6 +24,6 @@ public class ChatSocketControllerV2 {
 
     @MessageMapping("/chat.typing")
     public void typing(@Payload SendMessageRequest req) {
-        messagingTemplate.convertAndSend("/topic/rooms/" + req.getRoomId() + "/typing", Objects.requireNonNull(req.getSenderId()));
+        messagingTemplate.convertAndSend("/topic/rooms/" + req.getRoomId() + "/typing", req.getSenderId());
     }
 }

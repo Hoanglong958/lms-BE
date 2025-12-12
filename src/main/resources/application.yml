@@ -11,7 +11,7 @@
       url: jdbc:mysql://localhost:3306/lms_rikkei?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
       username: root
       password: hanh3010
-
+    
       driver-class-name: com.mysql.cj.jdbc.Driver
 
     jpa:
@@ -61,10 +61,6 @@
 
   server:
     port: 3900
-    error:
-      include-message: ALWAYS
-      include-stacktrace: ALWAYS
-
 
   app:
     upload:
@@ -84,5 +80,3 @@
   logging:
     level:
       "[org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsManagerConfigurer]": ERROR
-      "[org.springdoc]": DEBUG
-      "[org.springframework.web]": DEBUG

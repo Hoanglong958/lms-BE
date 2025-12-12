@@ -62,16 +62,16 @@
 
         @Override
         public PostResponseDTO getPostById(Long id) {
-            Post post = postRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
-                .orElseThrow(() -> new HttpBadRequest("Post không tồn tại"));
+            Post post = postRepository.findById(id)
+                    .orElseThrow(() -> new HttpBadRequest("Post không tồn tại"));
             return toPostResponseDTO(post);
         }
 
         @Override
         @Transactional
         public PostResponseDTO updatePost(Long id, PostRequestDTO request) {
-            Post post = postRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
-                .orElseThrow(() -> new HttpBadRequest("Post không tồn tại"));
+            Post post = postRepository.findById(id)
+                    .orElseThrow(() -> new HttpBadRequest("Post không tồn tại"));
 
             post.setTitle(request.getTitle());
             post.setSlug(request.getSlug());
@@ -89,10 +89,10 @@
         @Override
         @Transactional
         public void deletePost(Long id) {
-            if(!postRepository.existsById(java.util.Objects.requireNonNull(id, "id must not be null"))) {
+            if(!postRepository.existsById(id)) {
                 throw new HttpBadRequest("Post không tồn tại");
             }
-            postRepository.deleteById(java.util.Objects.requireNonNull(id, "id must not be null"));
+            postRepository.deleteById(id);
         }
 
         // helper: entity -> DTO

@@ -12,6 +12,7 @@ import com.ra.base_spring_boot.model.constants.RoleName;
 import com.ra.base_spring_boot.repository.*;
 import com.ra.base_spring_boot.services.IDashboardService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -112,7 +113,7 @@ public class DashboardServiceImpl implements IDashboardService {
                         .level(c.getLevel().name()) // convert enum -> String
                         .createdAt(c.getCreatedAt())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
 
 
 
@@ -217,7 +218,7 @@ public class DashboardServiceImpl implements IDashboardService {
                         .level(c.getLevel().name()) // chuyển enum sang String
                         .createdAt(c.getCreatedAt())
                         .build()
-        ).collect(Collectors.toList());
+        ).toList();
     }
 
 

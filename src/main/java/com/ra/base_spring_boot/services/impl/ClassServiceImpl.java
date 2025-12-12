@@ -38,7 +38,6 @@ public class ClassServiceImpl implements IClassService {
         Class aClass = Class.builder()
                 .className(requireText(dto.getClassName(), "Tên lớp học không được để trống"))
                 .description(dto.getDescription())
-                .maxStudents(dto.getMaxStudents() == null ? 30 : dto.getMaxStudents())
                 .startDate(parseDate(dto.getStartDate(), "Ngày bắt đầu lớp học không hợp lệ"))
                 .endDate(parseOptionalDate(dto.getEndDate()))
                 .build();
@@ -52,7 +51,6 @@ public class ClassServiceImpl implements IClassService {
         Class aClass = getClassroom(Objects.requireNonNull(id, "id must not be null"));
         if (dto.getClassName() != null) aClass.setClassName(dto.getClassName());
         if (dto.getDescription() != null) aClass.setDescription(dto.getDescription());
-        if (dto.getMaxStudents() != null && dto.getMaxStudents() > 0) aClass.setMaxStudents(dto.getMaxStudents());
         if (dto.getStartDate() != null) aClass.setStartDate(parseDate(dto.getStartDate(), "Ngày bắt đầu lớp học không hợp lệ"));
         if (dto.getEndDate() != null) aClass.setEndDate(parseOptionalDate(dto.getEndDate()));
         validateDateRange(aClass.getStartDate(), aClass.getEndDate());
@@ -102,9 +100,6 @@ public class ClassServiceImpl implements IClassService {
         }
         if (classStudentRepository.existsByClassroomIdAndStudentId(aClass.getId(), student.getId())) {
             throw new HttpBadRequest("Học viên đã tồn tại trong lớp");
-        }
-        if (classStudentRepository.countByClassroomId(aClass.getId()) >= aClass.getMaxStudents()) {
-            throw new HttpBadRequest("Lớp đã đủ sĩ số tối đa");
         }
         ClassStudent enrollment = ClassStudent.builder()
                 .classroom(aClass)
@@ -260,7 +255,6 @@ public class ClassServiceImpl implements IClassService {
         return ClassStatsResponseDTO.builder()
                 .classId(aClass.getId())
                 .className(aClass.getClassName())
-                .maxStudents(aClass.getMaxStudents())
                 .totalStudents(totalStudents)
                 .activeStudents(activeStudents)
                 .completedStudents(completedStudents)
@@ -292,7 +286,6 @@ public class ClassServiceImpl implements IClassService {
                 .id(classId)
                 .className(aClass.getClassName())
                 .description(aClass.getDescription())
-                .maxStudents(aClass.getMaxStudents())
                 .startDate(aClass.getStartDate())
                 .endDate(aClass.getEndDate())
                 .scheduleInfo(aClass.getScheduleInfo())

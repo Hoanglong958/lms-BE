@@ -6,10 +6,10 @@ import lombok.Data;
 @Data
 public class AttendanceRecordRequestDTO {
 
-    @Schema(example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(example = "1", required = true)
     private Long attendanceSessionId;
 
-    @Schema(example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(example = "1", required = true)
     private Long studentId;
 
     @Schema(example = "PRESENT")

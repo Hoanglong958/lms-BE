@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Roadmap API Tester</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; background:#f7f7f9; }
+    .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:20px; margin-bottom:16px; box-shadow:0 1px 2px rgba(0,0,0,0.04); }
+    .row { display:flex; gap:12px; flex-wrap:wrap; }
+    label { font-size:12px; color:#374151; display:block; margin-bottom:6px; }
+    input, textarea { width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; background:#fff; }
+    textarea { min-height:80px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .col { flex:1 1 220px; min-width:220px; }
+    .btns { display:flex; gap:10px; flex-wrap:wrap; }
+    button { background:#111827; color:#fff; border:none; border-radius:8px; padding:10px 14px; cursor:pointer; font-weight:600; }
+    button.secondary { background:#2563eb; }
+    button.danger { background:#dc2626; }
+    pre { background:#0b1020; color:#e5e7eb; padding:14px; border-radius:10px; overflow:auto; max-height:420px; }
+    .hint { font-size:12px; color:#6b7280; }
+  </style>
+</head>
+<body>
+  <h2>33 - Learning Roadmap • API Tester</h2>
+
+  <div class="card">
+    <div class="row">
+      <div class="col">
+        <label>Base URL</label>
+        <input id="baseUrl" value="http://localhost:3999/api/v1/roadmaps" />
+      </div>
+      <div class="col" style="flex:2 1 420px">
+        <label>Bearer Token <span class="hint">(yêu cầu ROLE_ADMIN cho assign/clear)</span></label>
+        <input id="token" placeholder="eyJhbGciOi..." />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col"><label>classId</label><input id="classId" type="number" placeholder="1" /></div>
+      <div class="col"><label>courseId</label><input id="courseId" type="number" placeholder="1" /></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">Assign Roadmap (POST /assign)</h3>
+    <div class="row">
+      <div class="col"><label>sessionIds (comma separated)</label><input id="sessionIds" placeholder="1,2,3" /></div>
+      <div class="col"><label>lessonIds (comma separated)</label><input id="lessonIds" placeholder="10,11" /></div>
+    </div>
+    <div class="btns" style="margin-top:12px">
+      <button class="secondary" onclick="assignRoadmap()">Assign</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">Get Roadmap (GET)</h3>
+    <div class="btns">
+      <button onclick="getRoadmap()">Get</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">Clear Roadmap (DELETE)</h3>
+    <div class="btns">
+      <button class="danger" onclick="clearRoadmap()">Clear</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">Response</h3>
+    <pre id="out">Ready.</pre>
+  </div>
+
+<script>
+function headers(includeJson=true) {
+  const h = {};
+  const t = document.getElementById('token').value.trim();
+  if (t) h['Authorization'] = 'Bearer ' + t;
+  if (includeJson) h['Content-Type'] = 'application/json';
+  return h;
+}
+
+function parseIds(val) {
+  if (!val) return [];
+  return val.split(',').map(s => s.trim()).filter(Boolean).map(Number).filter(n => !Number.isNaN(n));
+}
+
+function print(resp, data) {
+  const out = document.getElementById('out');
+  const header = `HTTP ${resp.status} ${resp.statusText}\n`;
+  const body = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+  out.textContent = header + body;
+}
+
+async function assignRoadmap() {
+  const base = document.getElementById('baseUrl').value.replace(/\/$/, '');
+  const classId = Number(document.getElementById('classId').value);
+  const courseId = Number(document.getElementById('courseId').value);
+  if (!classId || !courseId) { alert('Vui lòng nhập classId và courseId'); return; }
+  const sessionIds = parseIds(document.getElementById('sessionIds').value);
+  const lessonIds  = parseIds(document.getElementById('lessonIds').value);
+  const body = { classId, courseId };
+  if (sessionIds.length) body.sessionIds = sessionIds;
+  if (lessonIds.length)  body.lessonIds  = lessonIds;
+
+  try {
+    const resp = await fetch(base + '/assign', {
+      method: 'POST',
+      headers: headers(true),
+      body: JSON.stringify(body)
+    });
+    const text = await resp.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = text; }
+    print(resp, data);
+  } catch (e) {
+    print({ status: 0, statusText: 'Network error' }, String(e));
+  }
+}
+
+async function getRoadmap() {
+  const base = document.getElementById('baseUrl').value.replace(/\/$/, '');
+  const classId = Number(document.getElementById('classId').value);
+  const courseId = Number(document.getElementById('courseId').value);
+  if (!classId || !courseId) { alert('Vui lòng nhập classId và courseId'); return; }
+  const url = `${base}?classId=${encodeURIComponent(classId)}&courseId=${encodeURIComponent(courseId)}`;
+  try {
+    const resp = await fetch(url, { headers: headers(false) });
+    const text = await resp.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = text; }
+    print(resp, data);
+  } catch (e) {
+    print({ status: 0, statusText: 'Network error' }, String(e));
+  }
+}
+
+async function clearRoadmap() {
+  const base = document.getElementById('baseUrl').value.replace(/\/$/, '');
+  const classId = Number(document.getElementById('classId').value);
+  const courseId = Number(document.getElementById('courseId').value);
+  if (!classId || !courseId) { alert('Vui lòng nhập classId và courseId'); return; }
+  const url = `${base}?classId=${encodeURIComponent(classId)}&courseId=${encodeURIComponent(courseId)}`;
+  try {
+    const resp = await fetch(url, { method: 'DELETE', headers: headers(false) });
+    const text = await resp.text();
+    print(resp, text || '');
+  } catch (e) {
+    print({ status: 0, statusText: 'Network error' }, String(e));
+  }
+}
+</script>
+</body>
+</html>

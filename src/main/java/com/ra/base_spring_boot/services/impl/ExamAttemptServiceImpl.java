@@ -7,6 +7,7 @@ import com.ra.base_spring_boot.services.IExamAttemptService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,6 +28,7 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
 
     // =====================================================================
     @Override
+    @Transactional
     public ExamAttemptResponseDTO startAttempt(Long examId, Long userId) {
 
         Exam exam = examRepository.findById(examId)
@@ -82,6 +84,7 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
 
     // =====================================================================
     @Override
+    @Transactional
     public ExamAttemptResponseDTO submitExam(Long attemptId, Map<Long, String> answers) {
 
         ExamAttempt attempt = attemptRepository.findById(attemptId)
@@ -143,6 +146,7 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
 
     // =====================================================================
     @Override
+    @Transactional
     public ExamAttemptResponseDTO submitAttempt(Long attemptId) {
         // Thay thế: Kiểm tra null thủ công
         if (attemptId == null) {
@@ -159,6 +163,7 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
 
     // =====================================================================
     @Override
+    @Transactional
     public ExamAttemptResponseDTO gradeAttempt(Long attemptId) {
         // Thay thế: Kiểm tra null thủ công
         if (attemptId == null) {

@@ -22,7 +22,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/v1/courses")
@@ -146,11 +145,13 @@ public class CourseController {
             @Parameter(description = "Sắp xếp, ví dụ: createdAt,desc hoặc title,asc")
             @RequestParam(value = "sort", defaultValue = "createdAt,desc") String sort) {
 
-        String[] sortParts = sort != null ? sort.split(",") : new String[]{};
-        String property = (sortParts.length >= 1 && sortParts[0] != null && !sortParts[0].isBlank()) ? sortParts[0] : "createdAt";
-        String directionStr = (sortParts.length >= 2 && sortParts[1] != null && !sortParts[1].isBlank()) ? sortParts[1] : "DESC";
-        Sort.Direction direction = Sort.Direction.fromString(Objects.requireNonNull(directionStr));
-        Sort sortObj = Sort.by(direction, Objects.requireNonNull(property));
+        Sort sortObj;
+        String[] sortParts = sort.split(",");
+        if (sortParts.length == 2) {
+            sortObj = Sort.by(Sort.Direction.fromString(sortParts[1]), sortParts[0]);
+        } else {
+            sortObj = Sort.by(Sort.Direction.DESC, "createdAt");
+        }
         Pageable pageable = PageRequest.of(page, size, sortObj);
 
         Page<CourseResponseDTO> result = (q != null && !q.trim().isEmpty())

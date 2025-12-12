@@ -24,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -97,14 +96,14 @@ public class AuthServiceImpl implements IAuthService {
                 .gmail(formRegister.getGmail())
                 .password(passwordEncoder.encode(formRegister.getPassword())) // encode 1 lần
                 .phone(formRegister.getPhone())
-                .role(role)
+                .role(RoleName.ROLE_USER)          // mặc định user mới
                 .isActive(true)
                 .createdAt(LocalDateTime.now())
                 .build();
 
         try {
             // Lưu user vào DB
-            userRepository.save(Objects.requireNonNull(user, "user must not be null"));
+            userRepository.save(user);
 
             // Gửi email thông báo khi tài khoản được tạo
             gmailService.sendEmail(new EmailDTO(
@@ -230,8 +229,7 @@ public class AuthServiceImpl implements IAuthService {
         if (user == null || user.getId() == null) {
             throw new HttpBadRequest("Token không hợp lệ!");
         }
-        Long userId = Objects.requireNonNull(user.getId(), "userId must not be null");
-        User userToUpdate = userRepository.findById(userId)
+        User userToUpdate = userRepository.findById(user.getId())
                 .orElseThrow(() -> new HttpBadRequest("Người dùng không tồn tại!"));
         
         userToUpdate.setPassword(passwordEncoder.encode(request.getNewPassword()));
