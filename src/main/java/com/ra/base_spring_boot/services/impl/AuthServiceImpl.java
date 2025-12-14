@@ -96,7 +96,7 @@ public class AuthServiceImpl implements IAuthService {
                 .gmail(formRegister.getGmail())
                 .password(passwordEncoder.encode(formRegister.getPassword())) // encode 1 lần
                 .phone(formRegister.getPhone())
-                .role(RoleName.ROLE_USER)          // mặc định user mới
+                .role(role)          // set theo role đã validate ở trên
                 .isActive(true)
                 .createdAt(LocalDateTime.now())
                 .build();
