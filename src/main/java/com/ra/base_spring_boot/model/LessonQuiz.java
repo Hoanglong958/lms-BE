@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -12,6 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class LessonQuiz {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -34,6 +36,7 @@ public class LessonQuiz {
 
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
+
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true)
