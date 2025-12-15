@@ -146,6 +146,18 @@
                     .stream().map(this::toDto).toList();
         }
 
+        @Override
+        public List<ScheduleItemResponseDTO> getScheduleByCourseAndClass(Long courseId, Long classId) {
+            return scheduleItemRepository.findByCourse_IdAndClazz_IdOrderBySessionNumber(courseId, classId)
+                    .stream().map(this::toDto).toList();
+        }
+
+        @Override
+        public List<ScheduleItemResponseDTO> getScheduleByCourseAndClassFiltered(Long courseId, Long classId, String status, LocalDate from, LocalDate to, Long periodId) {
+            return scheduleItemRepository.findByCourseClassWithFilters(courseId, classId, status, from, to, periodId)
+                    .stream().map(this::toDto).toList();
+        }
+
         // =========================================================================
         // 3. CLEAR
         // =========================================================================

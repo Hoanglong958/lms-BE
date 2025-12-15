@@ -67,6 +67,14 @@ public class QuizQuestionServiceImpl implements IQuizQuestionService {
     }
 
     @Override
+    public List<QuizQuestionDTO> createBulk(List<CreateQuizQuestionRequest> requests) {
+        return java.util.Objects.requireNonNull(requests, "requests must not be null")
+                .stream()
+                .map(this::create)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public void delete(Long id) {
         QuizQuestion entity = quizQuestionRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy bản ghi quiz_question"));

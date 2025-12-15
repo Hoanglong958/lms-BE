@@ -40,39 +40,39 @@ public class QuizResultServiceImpl implements IQuizResultService {
 
     @Override
     public QuizResultResponseDTO findById(Long id) {
-        QuizResult result = quizResultRepository.findByIdAndDeletedFalse(id)
+        QuizResult result = quizResultRepository.findByIdAndDeletedFalse(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy kết quả quiz với id = " + id));
         return toDTO(result);
     }
 
     @Override
     public QuizResult save(QuizResult quizResult) {
-        return quizResultRepository.save(quizResult);
+        return quizResultRepository.save(java.util.Objects.requireNonNull(quizResult, "quizResult must not be null"));
     }
 
     @Override
     public void delete(Long id) {
-        QuizResult result = quizResultRepository.findByIdAndDeletedFalse(id)
+        QuizResult result = quizResultRepository.findByIdAndDeletedFalse(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy kết quả quiz với id = " + id));
         result.setDeleted(true);
-        quizResultRepository.save(result);
+        quizResultRepository.save(java.util.Objects.requireNonNull(result, "quizResult must not be null"));
     }
 
     @Override
     public void restore(Long id) {
-        QuizResult result = quizResultRepository.findById(id)
+        QuizResult result = quizResultRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy kết quả quiz với id = " + id));
         if (result.isDeleted()) {
             result.setDeleted(false);
-            quizResultRepository.save(result);
+            quizResultRepository.save(java.util.Objects.requireNonNull(result, "quizResult must not be null"));
         }
     }
 
     @Override
     public QuizResultResponseDTO submitQuiz(QuizSubmissionRequestDTO request) {
-        LessonQuiz quiz = lessonQuizRepository.findById(request.getQuizId())
+        LessonQuiz quiz = lessonQuizRepository.findById(java.util.Objects.requireNonNull(request.getQuizId(), "quizId must not be null"))
                 .orElseThrow(() -> new HttpNotFound("Quiz không tồn tại"));
-        User user = userRepository.findById(request.getUserId())
+        User user = userRepository.findById(java.util.Objects.requireNonNull(request.getUserId(), "userId must not be null"))
                 .orElseThrow(() -> new HttpNotFound("User không tồn tại"));
 
         Map<Long, String> submittedAnswers = request.getAnswers()
@@ -120,11 +120,12 @@ public class QuizResultServiceImpl implements IQuizResultService {
                 .totalCount(totalCount)
                 .score(score)
                 .isPassed(isPassed)
+                .passScore(passingScore)
                 .submittedAt(LocalDateTime.now())
                 .deleted(false)
                 .build();
 
-        result = quizResultRepository.save(result);
+        result = quizResultRepository.save(java.util.Objects.requireNonNull(result, "quizResult must not be null"));
         return toDTO(result);
     }
 

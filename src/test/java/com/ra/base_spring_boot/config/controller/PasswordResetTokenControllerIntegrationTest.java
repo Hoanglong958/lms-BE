@@ -1,4 +1,6 @@
 package com.ra.base_spring_boot.config.controller;
+
+import com.ra.base_spring_boot.dto.resp.PasswordResetTokenResponse;
 import com.ra.base_spring_boot.model.PasswordResetToken;
 import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.repository.IPasswordResetTokenRepository;

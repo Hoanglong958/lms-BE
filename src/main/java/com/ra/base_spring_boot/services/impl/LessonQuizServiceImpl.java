@@ -29,7 +29,7 @@ public class LessonQuizServiceImpl implements ILessonQuizService {
      */
     @Override
     public LessonQuizResponseDTO create(LessonQuizRequestDTO request) {
-        Lesson lesson = lessonRepository.findById(request.getLessonId())
+        Lesson lesson = lessonRepository.findById(java.util.Objects.requireNonNull(request.getLessonId(), "lessonId must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Lesson not found"));
 
         // Validate lesson type must be QUIZ
@@ -45,7 +45,7 @@ public class LessonQuizServiceImpl implements ILessonQuizService {
                 .passingScore(request.getPassingScore())
                 .build();
 
-        lessonQuizRepository.save(quiz);
+        lessonQuizRepository.save(java.util.Objects.requireNonNull(quiz, "quiz must not be null"));
         return toResponse(quiz);
     }
 
@@ -54,7 +54,7 @@ public class LessonQuizServiceImpl implements ILessonQuizService {
      */
     @Override
     public LessonQuizResponseDTO getById(Long id) {
-        LessonQuiz quiz = lessonQuizRepository.findById(id)
+        LessonQuiz quiz = lessonQuizRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new RuntimeException("Quiz not found"));
         return toResponse(quiz);
     }
@@ -64,7 +64,7 @@ public class LessonQuizServiceImpl implements ILessonQuizService {
      */
     @Override
     public List<LessonQuizResponseDTO> getByLesson(Long lessonId) {
-        return lessonQuizRepository.findByLesson_Id(lessonId)
+        return lessonQuizRepository.findByLesson_Id(java.util.Objects.requireNonNull(lessonId, "lessonId must not be null"))
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -75,7 +75,7 @@ public class LessonQuizServiceImpl implements ILessonQuizService {
      */
     @Override
     public LessonQuizResponseDTO update(Long id, LessonQuizRequestDTO request) {
-        LessonQuiz quiz = lessonQuizRepository.findById(id)
+        LessonQuiz quiz = lessonQuizRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new RuntimeException("Quiz not found"));
 
         quiz.setTitle(request.getTitle());
@@ -92,7 +92,7 @@ public class LessonQuizServiceImpl implements ILessonQuizService {
      */
     @Override
     public void delete(Long id) {
-        if (!lessonQuizRepository.existsById(id)) {
+        if (!lessonQuizRepository.existsById(java.util.Objects.requireNonNull(id, "id must not be null"))) {
             throw new RuntimeException("Quiz not found");
         }
         lessonQuizRepository.deleteById(id);

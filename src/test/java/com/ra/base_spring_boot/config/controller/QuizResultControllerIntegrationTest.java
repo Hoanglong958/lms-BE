@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -34,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         }
 )
 @org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc(addFilters = false)
+@SuppressWarnings("removal")
 class QuizResultControllerIntegrationTest {
 
     @Autowired
@@ -75,8 +77,8 @@ class QuizResultControllerIntegrationTest {
                 .build();
 
         mockMvc.perform(post("/api/v1/quiz-results/submit")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsBytes(request)))
+                        .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON, "mediaType must not be null"))
+                        .content(Objects.requireNonNull(objectMapper.writeValueAsBytes(request), "body must not be null")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(5L))
                 .andExpect(jsonPath("$.score").value(80));
@@ -94,8 +96,8 @@ class QuizResultControllerIntegrationTest {
                 .build();
 
         mockMvc.perform(post("/api/v1/quiz-results/submit")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsBytes(invalidRequest)))
+                        .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON, "mediaType must not be null"))
+                        .content(Objects.requireNonNull(objectMapper.writeValueAsBytes(invalidRequest), "body must not be null")))
                 .andExpect(status().isBadRequest());
     }
 }

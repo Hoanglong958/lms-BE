@@ -23,20 +23,20 @@ public class LessonVideoServiceImpl implements ILessonVideoService {
 
     @Override
     public List<LessonVideoResponseDTO> getByLesson(Long lessonId) {
-        List<LessonVideo> videos = lessonVideoRepository.findByLesson_Id(lessonId);
+        List<LessonVideo> videos = lessonVideoRepository.findByLesson_Id(java.util.Objects.requireNonNull(lessonId, "lessonId must not be null"));
         return videos.stream().map(this::mapToResponse).toList();
     }
 
     @Override
     public LessonVideoResponseDTO getById(Long id) {
-        LessonVideo video = lessonVideoRepository.findById(id)
+        LessonVideo video = lessonVideoRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy video với id = " + id));
         return mapToResponse(video);
     }
 
     @Override
     public LessonVideoResponseDTO create(LessonVideoRequestDTO dto) {
-        Lesson lesson = lessonRepository.findById(dto.getLessonId())
+        Lesson lesson = lessonRepository.findById(java.util.Objects.requireNonNull(dto.getLessonId(), "lessonId must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy bài học với id = " + dto.getLessonId()));
 
         // Validate lesson type must be VIDEO
@@ -56,13 +56,13 @@ public class LessonVideoServiceImpl implements ILessonVideoService {
                 .orderIndex(nextOrderIndex)
                 .build();
 
-        LessonVideo saved = lessonVideoRepository.save(video);
+        LessonVideo saved = lessonVideoRepository.save(java.util.Objects.requireNonNull(video, "video must not be null"));
         return mapToResponse(saved);
     }
 
     @Override
     public LessonVideoResponseDTO update(Long id, LessonVideoRequestDTO dto) {
-        LessonVideo video = lessonVideoRepository.findById(id)
+        LessonVideo video = lessonVideoRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy video với id = " + id));
 
         if (dto.getTitle() != null) video.setTitle(dto.getTitle());
@@ -70,15 +70,15 @@ public class LessonVideoServiceImpl implements ILessonVideoService {
         if (dto.getDurationSeconds() != null) video.setDurationSeconds(dto.getDurationSeconds());
         if (dto.getDescription() != null) video.setDescription(dto.getDescription());
 
-        LessonVideo updated = lessonVideoRepository.save(video);
+        LessonVideo updated = lessonVideoRepository.save(java.util.Objects.requireNonNull(video, "video must not be null"));
         return mapToResponse(updated);
     }
 
     @Override
     public void delete(Long id) {
-        LessonVideo video = lessonVideoRepository.findById(id)
+        LessonVideo video = lessonVideoRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy video với id = " + id));
-        lessonVideoRepository.delete(video);
+        lessonVideoRepository.delete(java.util.Objects.requireNonNull(video, "video must not be null"));
     }
 
     private LessonVideoResponseDTO mapToResponse(LessonVideo video) {

@@ -39,7 +39,7 @@
             post.setContent(request.getContent());
 
             // set author
-            User author = userRepository.findById(request.getAuthorId())
+            User author = userRepository.findById(java.util.Objects.requireNonNull(request.getAuthorId(), "authorId must not be null"))
                     .orElseThrow(() -> new HttpBadRequest("User không tồn tại"));
             post.setAuthor(author);
 

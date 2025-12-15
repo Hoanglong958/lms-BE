@@ -3,6 +3,7 @@ package com.ra.base_spring_boot.services.impl;
 import com.ra.base_spring_boot.dto.Gmail.EmailDTO;
 import com.ra.base_spring_boot.model.constants.EmailType;
 import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Value;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -12,6 +13,7 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -19,11 +21,14 @@ public class GmailService {
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
 
+    @Value("${spring.mail.username}")
+    private String fromEmail;
+
     @Async
     public void sendEmail(EmailType emailType, String to, Map<String, Object> variables) {
 
         Context context = new Context();
-        context.setVariables(variables);
+        context.setVariables(Objects.requireNonNull(variables, "variables must not be null"));
 
         String template = switch (emailType) {
             case USER_CREATED -> "user_created";
@@ -33,14 +38,17 @@ public class GmailService {
             case NEW_EXAM -> "new_exam";
         };
 
-        String html = templateEngine.process(template, context);
+        String html = templateEngine.process(Objects.requireNonNull(template, "template must not be null"), context);
 
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            helper.setTo(to);
+            if (fromEmail != null && !fromEmail.isBlank()) {
+                helper.setFrom(fromEmail);
+            }
+            helper.setTo(Objects.requireNonNull(to, "to must not be null"));
             helper.setSubject("📢 Thông báo từ hệ thống LMS");
-            helper.setText(html, true);
+            helper.setText(Objects.requireNonNull(html, "email html must not be null"), true);
 
             mailSender.send(message);
 
@@ -61,16 +69,19 @@ public class GmailService {
     @Async
     public void sendEmail(EmailDTO emailDTO) {
         Context context = new Context();
-        context.setVariables(emailDTO.getTemplateData());
+        context.setVariables(Objects.requireNonNull(emailDTO.getTemplateData(), "templateData must not be null"));
 
-        String html = templateEngine.process(emailDTO.getTemplateName(), context);
+        String html = templateEngine.process(Objects.requireNonNull(emailDTO.getTemplateName(), "templateName must not be null"), context);
 
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            helper.setTo(emailDTO.getTo());
-            helper.setSubject(emailDTO.getSubject());
-            helper.setText(html, true);
+            if (fromEmail != null && !fromEmail.isBlank()) {
+                helper.setFrom(fromEmail);
+            }
+            helper.setTo(Objects.requireNonNull(emailDTO.getTo(), "to must not be null"));
+            helper.setSubject(Objects.requireNonNull(emailDTO.getSubject(), "subject must not be null"));
+            helper.setText(Objects.requireNonNull(html, "email html must not be null"), true);
 
             mailSender.send(message);
 

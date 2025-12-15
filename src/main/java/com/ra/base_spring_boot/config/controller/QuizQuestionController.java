@@ -15,7 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/quiz-questions")
 @RequiredArgsConstructor
-@Tag(name = "12 - Quiz Questions", description = "Quản lý mối quan hệ quiz - question")
+@Tag(name = "13 - Quiz Questions", description = "Quản lý mối quan hệ quiz - question")
 public class QuizQuestionController {
 
     private final IQuizQuestionService quizQuestionService;
@@ -25,13 +25,20 @@ public class QuizQuestionController {
     @Operation(summary = "Danh sách câu hỏi của một quiz")
     public ResponseEntity<List<QuizQuestionDTO>> getByQuiz(@PathVariable Long quizId) {
         return ResponseEntity.ok(quizQuestionService.getByQuiz(quizId));
-    }
+        }
 
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Thêm một câu hỏi vào quiz")
     public ResponseEntity<QuizQuestionDTO> create(@RequestBody CreateQuizQuestionRequest request) {
         return ResponseEntity.ok(quizQuestionService.create(request));
+    }
+
+    @PostMapping("/bulk")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Thêm nhiều câu hỏi vào quiz (bulk)")
+    public ResponseEntity<List<QuizQuestionDTO>> createBulk(@RequestBody List<CreateQuizQuestionRequest> requests) {
+        return ResponseEntity.ok(quizQuestionService.createBulk(requests));
     }
 
     @DeleteMapping("/{id}")
@@ -42,4 +49,3 @@ public class QuizQuestionController {
         return ResponseEntity.noContent().build();
     }
 }
-

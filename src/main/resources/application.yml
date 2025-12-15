@@ -10,16 +10,16 @@
     datasource:
       url: jdbc:mysql://localhost:3306/lms_rikkei?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
       username: root
-      password: 123456
-
+      password: hanh3010
+    
       driver-class-name: com.mysql.cj.jdbc.Driver
 
     jpa:
       hibernate:
         ddl-auto: update
         naming:
-          'physical-strategy': org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-          'implicit-strategy': org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+          physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+          implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
       database-platform: org.hibernate.dialect.MySQLDialect
       show-sql: true
       open-in-view: false
@@ -50,8 +50,8 @@
   springdoc:
     swagger-ui:
       path: /docs
-      'tags-sorter': alpha
-      'operations-sorter': alpha
+      tags-sorter: alpha
+      operations-sorter: alpha
 
   jwt:
     secret:

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/password-reset-tokens")
 @RequiredArgsConstructor
-@Tag(name = "20 - Password Reset Tokens", description = "Quản lý token đặt lại mật khẩu (delayed OTP reveal flow)")
+@Tag(name = "22 - Password Reset Tokens", description = "Quản lý token đặt lại mật khẩu (delayed OTP reveal flow)")
 public class PasswordResetTokenController {
 
     private final IPasswordResetTokenService service;

@@ -19,7 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/quiz-attempts")
 @RequiredArgsConstructor
-@Tag(name = "Quiz Attempts", description = "Bắt đầu, nộp bài và quản lý lượt làm quiz")
+@Tag(name = "32 - Quiz Attempts", description = "Bắt đầu, nộp bài và quản lý lượt làm quiz")
 public class QuizAttemptController {
 
     private final IQuizAttemptService attemptService;

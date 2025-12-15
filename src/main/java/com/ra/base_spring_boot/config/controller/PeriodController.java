@@ -23,7 +23,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 @RestController
 @RequestMapping("/api/v1/periods")
 @RequiredArgsConstructor
-@Tag(name = "23 - Periods", description = "Quản lý ca học")
+@Tag(name = "26 - Periods", description = "Quản lý ca học")
 public class PeriodController {
 
     private final IPeriodService periodService;

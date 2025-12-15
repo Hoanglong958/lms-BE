@@ -12,6 +12,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @Component
@@ -22,10 +23,12 @@ public class BaseApiClient {
     private static final Duration DEFAULT_BLOCK_TIMEOUT = Duration.ofSeconds(15);
 
     public <T> Mono<T> get(String path, Class<T> responseType, Map<String, String> headers) {
+        Objects.requireNonNull(path, "path must not be null");
+        Objects.requireNonNull(responseType, "responseType must not be null");
         return externalWebClient.get()
                 .uri(path)
                 .headers(h -> applyHeaders(h, headers))
-                .accept(MediaType.APPLICATION_JSON)
+                .accept(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .retrieve()
                 .bodyToMono(responseType)
                 .doOnError(WebClientResponseException.class, ex ->
@@ -34,11 +37,14 @@ public class BaseApiClient {
     }
 
     public <B, T> Mono<T> post(String path, B body, Class<T> responseType, Map<String, String> headers) {
+        Objects.requireNonNull(path, "path must not be null");
+        Objects.requireNonNull(responseType, "responseType must not be null");
+        Objects.requireNonNull(body, "body must not be null");
         return externalWebClient.post()
                 .uri(path)
                 .headers(h -> applyHeaders(h, headers))
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                .accept(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                 .body(BodyInserters.fromValue(body))
                 .retrieve()
                 .bodyToMono(responseType)
@@ -48,10 +54,15 @@ public class BaseApiClient {
     }
 
     public <T> T getSync(String path, Class<T> responseType, Map<String, String> headers) {
+        Objects.requireNonNull(path, "path must not be null");
+        Objects.requireNonNull(responseType, "responseType must not be null");
         return get(path, responseType, headers).block(DEFAULT_BLOCK_TIMEOUT);
     }
 
     public <B, T> T postSync(String path, B body, Class<T> responseType, Map<String, String> headers) {
+        Objects.requireNonNull(path, "path must not be null");
+        Objects.requireNonNull(responseType, "responseType must not be null");
+        Objects.requireNonNull(body, "body must not be null");
         return post(path, body, responseType, headers).block(DEFAULT_BLOCK_TIMEOUT);
     }
 

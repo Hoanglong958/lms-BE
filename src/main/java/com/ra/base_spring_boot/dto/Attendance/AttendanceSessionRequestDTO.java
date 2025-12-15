@@ -6,13 +6,13 @@ import lombok.Data;
 @Data
 public class AttendanceSessionRequestDTO {
 
-    @Schema(example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(example = "1", required = true)
     private Long classId;
 
     @Schema(example = "Buổi 1 - Giới thiệu")
     private String title;
 
-    @Schema(example = "2025-01-15", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(example = "2025-01-15", required = true)
     private String sessionDate;
 
     @Schema(example = "08:00:00")

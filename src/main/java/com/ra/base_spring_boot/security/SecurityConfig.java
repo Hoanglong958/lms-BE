@@ -77,7 +77,7 @@ public class SecurityConfig {
                                 "/error/**"
                         ).permitAll()
                         .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.name())
-                        .requestMatchers("/api/v1/questions/**").hasAuthority(RoleName.ROLE_ADMIN.name())
+                        .requestMatchers("/api/v1/questions/**").hasAnyAuthority(RoleName.ROLE_ADMIN.name(), RoleName.ROLE_USER.name())
                         // Các endpoint quản lý user: chỉ ADMIN
                         .requestMatchers("/api/v1/users/**").hasAuthority(RoleName.ROLE_ADMIN.name())
                         .anyRequest().authenticated()
@@ -98,6 +98,7 @@ public class SecurityConfig {
     }
 
     @Bean
+    @SuppressWarnings("deprecation")
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(userDetailsService);

@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.stereotype.Service;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -14,6 +15,9 @@ public class EmailProducerService {
     private final ChannelTopic emailTopic;
 
     public void pushEmailToQueue(EmailDTO emailDTO) {
-        redisTemplate.convertAndSend(emailTopic.getTopic(), emailDTO);
+        redisTemplate.convertAndSend(
+                Objects.requireNonNull(emailTopic.getTopic(), "topic must not be null"),
+                Objects.requireNonNull(emailDTO, "emailDTO must not be null")
+        );
     }
 }

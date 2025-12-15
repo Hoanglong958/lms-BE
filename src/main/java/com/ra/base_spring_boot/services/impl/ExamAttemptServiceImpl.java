@@ -28,6 +28,7 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
 
     // =====================================================================
     @Override
+    @Transactional
     public ExamAttemptResponseDTO startAttempt(Long examId, Long userId) {
 
         Exam exam = examRepository.findById(examId)
@@ -73,6 +74,10 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
                 .status(ExamAttempt.AttemptStatus.IN_PROGRESS)
                 .build();
 
+        // Thay thế: Kiểm tra null thủ công (nhưng attempt ở đây chắc chắn không null, có thể xóa luôn)
+        if (attempt == null) {
+            throw new IllegalArgumentException("attempt must not be null");
+        }
         attemptRepository.save(attempt);
         return toDTO(attempt);
     }
@@ -141,7 +146,12 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
 
     // =====================================================================
     @Override
+    @Transactional
     public ExamAttemptResponseDTO submitAttempt(Long attemptId) {
+        // Thay thế: Kiểm tra null thủ công
+        if (attemptId == null) {
+            throw new IllegalArgumentException("attemptId must not be null");
+        }
         ExamAttempt attempt = attemptRepository.findById(attemptId)
                 .orElseThrow(() -> new RuntimeException("Attempt not found"));
 
@@ -153,7 +163,12 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
 
     // =====================================================================
     @Override
+    @Transactional
     public ExamAttemptResponseDTO gradeAttempt(Long attemptId) {
+        // Thay thế: Kiểm tra null thủ công
+        if (attemptId == null) {
+            throw new IllegalArgumentException("attemptId must not be null");
+        }
         ExamAttempt attempt = attemptRepository.findById(attemptId)
                 .orElseThrow(() -> new RuntimeException("Attempt not found"));
 
@@ -180,6 +195,10 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
     // =====================================================================
     @Override
     public List<ExamAttemptResponseDTO> getByExam(Long examId) {
+        // Thay thế: Kiểm tra null thủ công
+        if (examId == null) {
+            throw new IllegalArgumentException("examId must not be null");
+        }
         return attemptRepository.findByExam_Id(examId)
                 .stream()
                 .map(this::toDTO)
@@ -189,6 +208,10 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
     // =====================================================================
     @Override
     public List<ExamAttemptResponseDTO> getByUser(Long userId) {
+        // Thay thế: Kiểm tra null thủ công
+        if (userId == null) {
+            throw new IllegalArgumentException("userId must not be null");
+        }
         return attemptRepository.findByUser_Id(userId)
                 .stream()
                 .map(this::toDTO)

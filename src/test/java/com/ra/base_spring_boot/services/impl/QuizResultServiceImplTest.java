@@ -24,7 +24,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -59,8 +58,8 @@ class QuizResultServiceImplTest {
 
         when(lessonQuizRepository.findById(1L)).thenReturn(Optional.of(quiz));
         when(userRepository.findById(2L)).thenReturn(Optional.of(user));
-        when(quizResultRepository.save(any(QuizResult.class))).thenAnswer(invocation -> {
-            QuizResult entity = invocation.getArgument(0);
+        when(quizResultRepository.save(org.mockito.ArgumentMatchers.<QuizResult>argThat(java.util.Objects::nonNull))).thenAnswer(invocation -> {
+            QuizResult entity = (QuizResult) java.util.Objects.requireNonNull(invocation.getArgument(0));
             entity.setId(99L);
             return entity;
         });
@@ -84,7 +83,7 @@ class QuizResultServiceImplTest {
 
         ArgumentCaptor<QuizResult> captor = ArgumentCaptor.forClass(QuizResult.class);
         verify(quizResultRepository).save(captor.capture());
-        QuizResult saved = captor.getValue();
+        QuizResult saved = java.util.Objects.requireNonNull(captor.getValue());
         assertThat(saved.getSubmittedAt()).isBeforeOrEqualTo(LocalDateTime.now());
         assertThat(saved.isDeleted()).isFalse();
     }
@@ -106,7 +105,7 @@ class QuizResultServiceImplTest {
                 .build();
 
         assertThrows(HttpBadRequest.class, () -> quizResultService.submitQuiz(request));
-        verify(quizResultRepository, never()).save(any());
+        verify(quizResultRepository, never()).save(org.mockito.ArgumentMatchers.any(QuizResult.class));
     }
 }
 

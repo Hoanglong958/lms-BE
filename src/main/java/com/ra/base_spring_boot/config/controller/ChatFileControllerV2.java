@@ -14,11 +14,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
-@Tag(name = "29. Chat V2", description = "Upload file/ảnh cho tin nhắn")
+@Tag(name = "28 - Chat V2", description = "Upload file/ảnh cho tin nhắn")
 public class ChatFileControllerV2 {
 
     private final IChatMessageService chatMessageService;
@@ -29,7 +30,7 @@ public class ChatFileControllerV2 {
     public ResponseEntity<ChatMessage> sendFile(@RequestParam UUID roomId,
                                                 @RequestParam Long senderId,
                                                 @RequestPart("file") MultipartFile file) {
-        String contentType = file.getContentType() != null ? file.getContentType() : "application/octet-stream";
+        String contentType = Objects.requireNonNullElse(file.getContentType(), "application/octet-stream");
         boolean isImage = contentType.startsWith("image/");
         boolean isVideo = contentType.startsWith("video/");
         String url = isImage ? storageService.storeImage(file) : (isVideo ? storageService.storeVideo(file) : storageService.storeImage(file));

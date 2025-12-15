@@ -27,10 +27,6 @@ public class Class {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "max_students")
-    @Builder.Default
-    private Integer maxStudents = 30;
-
     @ManyToOne
     @JoinColumn(name = "course_id")
     private Course course;
@@ -64,9 +60,6 @@ public class Class {
         }
         if (updatedAt == null) {
             updatedAt = createdAt;
-        }
-        if (maxStudents == null) {
-            maxStudents = 30;
         }
     }
 

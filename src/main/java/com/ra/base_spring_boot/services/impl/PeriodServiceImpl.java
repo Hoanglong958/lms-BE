@@ -39,13 +39,13 @@ public class PeriodServiceImpl implements IPeriodService {
                 .endTime(request.getEndTime())
                 .build();
 
-        periodRepository.save(period);
+        periodRepository.save(java.util.Objects.requireNonNull(period, "period must not be null"));
         return PeriodResponseDTO.fromEntity(period);
     }
 
     @Override
     public PeriodResponseDTO update(Long id, PeriodRequestDTO request) {
-        Period period = periodRepository.findById(id)
+        Period period = periodRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Ca học không tồn tại"));
 
         if (periodRepository.existsByNameAndIdNot(request.getName(), id)) {
@@ -70,10 +70,10 @@ public class PeriodServiceImpl implements IPeriodService {
 
     @Override
     public void delete(Long id) {
-        if (!periodRepository.existsById(id)) {
+        if (!periodRepository.existsById(java.util.Objects.requireNonNull(id, "id must not be null"))) {
             throw new HttpBadRequest("Ca học không tồn tại");
         }
-        periodRepository.deleteById(id);
+        periodRepository.deleteById(java.util.Objects.requireNonNull(id, "id must not be null"));
     }
 
     @Override

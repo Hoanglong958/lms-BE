@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -37,21 +38,19 @@ public class ClassServiceImpl implements IClassService {
         Class aClass = Class.builder()
                 .className(requireText(dto.getClassName(), "Tên lớp học không được để trống"))
                 .description(dto.getDescription())
-                .maxStudents(dto.getMaxStudents() == null ? 30 : dto.getMaxStudents())
                 .startDate(parseDate(dto.getStartDate(), "Ngày bắt đầu lớp học không hợp lệ"))
                 .endDate(parseOptionalDate(dto.getEndDate()))
                 .build();
         validateDateRange(aClass.getStartDate(), aClass.getEndDate());
-        classroomRepository.save(aClass);
+        classroomRepository.save(Objects.requireNonNull(aClass, "class must not be null"));
         return toClassroomDto(aClass);
     }
 
     @Override
     public ClassroomResponseDTO update(Long id, ClassroomRequestDTO dto) {
-        Class aClass = getClassroom(id);
+        Class aClass = getClassroom(Objects.requireNonNull(id, "id must not be null"));
         if (dto.getClassName() != null) aClass.setClassName(dto.getClassName());
         if (dto.getDescription() != null) aClass.setDescription(dto.getDescription());
-        if (dto.getMaxStudents() != null && dto.getMaxStudents() > 0) aClass.setMaxStudents(dto.getMaxStudents());
         if (dto.getStartDate() != null) aClass.setStartDate(parseDate(dto.getStartDate(), "Ngày bắt đầu lớp học không hợp lệ"));
         if (dto.getEndDate() != null) aClass.setEndDate(parseOptionalDate(dto.getEndDate()));
         validateDateRange(aClass.getStartDate(), aClass.getEndDate());
@@ -61,13 +60,13 @@ public class ClassServiceImpl implements IClassService {
 
     @Override
     public void delete(Long id) {
-        Class aClass = getClassroom(id);
-        classroomRepository.delete(aClass);
+        Class aClass = getClassroom(Objects.requireNonNull(id, "id must not be null"));
+        classroomRepository.delete(Objects.requireNonNull(aClass, "class must not be null"));
     }
 
     @Override
     public ClassroomResponseDTO findById(Long id) {
-        return toClassroomDto(getClassroom(id));
+        return toClassroomDto(getClassroom(Objects.requireNonNull(id, "id must not be null")));
     }
 
     @Override
@@ -79,30 +78,37 @@ public class ClassServiceImpl implements IClassService {
 
     @Override
     public Page<ClassroomResponseDTO> findAll(Pageable pageable) {
-        return classroomRepository.findAll(pageable).map(this::toClassroomDto);
+        return classroomRepository.findAll(Objects.requireNonNull(pageable, "pageable must not be null")).map(this::toClassroomDto);
     }
 
     @Override
     public Page<ClassroomResponseDTO> search(String keyword, Pageable pageable) {
         String kw = keyword == null ? "" : keyword.trim();
-        return classroomRepository.findByClassNameContainingIgnoreCase(kw, pageable)
+        return classroomRepository.findByClassNameContainingIgnoreCase(kw, Objects.requireNonNull(pageable, "pageable must not be null"))
                 .map(this::toClassroomDto);
     }
 
     @Override
     @Transactional
     public ClassStudentResponseDTO enrollStudent(ClassStudentRequestDTO dto) {
-        Class aClass = getClassroom(dto.getClassId());
-        User student = userRepository.findById(dto.getStudentId())
-                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy học viên với id = " + dto.getStudentId()));
+        Objects.requireNonNull(dto, "dto must not be null");
+        Class aClass = getClassroom(Objects.requireNonNull(dto.getClassId(), "classId must not be null"));
+        // Cho phép tìm học viên bằng studentId hoặc gmail
+        User student;
+        if (dto.getStudentId() != null) {
+            student = userRepository.findById(dto.getStudentId())
+                    .orElseThrow(() -> new HttpBadRequest("Không tìm thấy học viên với id = " + dto.getStudentId()));
+        } else if (dto.getGmail() != null && !dto.getGmail().isBlank()) {
+            student = userRepository.findByGmailIgnoreCase(dto.getGmail().trim())
+                    .orElseThrow(() -> new HttpBadRequest("Không tìm thấy học viên với gmail = " + dto.getGmail()));
+        } else {
+            throw new HttpBadRequest("Phải cung cấp studentId hoặc gmail của học viên");
+        }
         if (student.getRole() != RoleName.ROLE_USER) {
             throw new HttpBadRequest("student_id chỉ chấp nhận tài khoản role STUDENT (ROLE_USER)");
         }
         if (classStudentRepository.existsByClassroomIdAndStudentId(aClass.getId(), student.getId())) {
             throw new HttpBadRequest("Học viên đã tồn tại trong lớp");
-        }
-        if (classStudentRepository.countByClassroomId(aClass.getId()) >= aClass.getMaxStudents()) {
-            throw new HttpBadRequest("Lớp đã đủ sĩ số tối đa");
         }
         ClassStudent enrollment = ClassStudent.builder()
                 .classroom(aClass)
@@ -112,7 +118,7 @@ public class ClassServiceImpl implements IClassService {
                 .attendanceRate(normalizeScore(dto.getAttendanceRate()))
                 .note(dto.getNote())
                 .build();
-        classStudentRepository.save(enrollment);
+        classStudentRepository.save(Objects.requireNonNull(enrollment, "enrollment must not be null"));
 
         // ======= Gửi email thông báo =======
         gmailService.sendEmail(new EmailDTO(
@@ -131,14 +137,14 @@ public class ClassServiceImpl implements IClassService {
 
     @Override
     public void removeStudent(Long classroomId, Long studentId) {
-        ClassStudent enrollment = classStudentRepository.findByClassroomIdAndStudentId(classroomId, studentId)
+        ClassStudent enrollment = classStudentRepository.findByClassroomIdAndStudentId(Objects.requireNonNull(classroomId, "classroomId must not be null"), Objects.requireNonNull(studentId, "studentId must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy học viên trong lớp"));
-        classStudentRepository.delete(enrollment);
+        classStudentRepository.delete(Objects.requireNonNull(enrollment, "enrollment must not be null"));
     }
 
     @Override
     public List<ClassStudentResponseDTO> findStudents(Long classroomId) {
-        return classStudentRepository.findByClassroomId(classroomId)
+        return classStudentRepository.findByClassroomIdWithRelations(Objects.requireNonNull(classroomId, "classroomId must not be null"))
                 .stream()
                 .map(this::toStudentDto)
                 .toList();
@@ -153,28 +159,30 @@ public class ClassServiceImpl implements IClassService {
         if (teacher.getRole() != RoleName.ROLE_TEACHER) {
             throw new HttpBadRequest("teacher_id chỉ chấp nhận tài khoản role TEACHER");
         }
-        if (classTeacherRepository.existsByClazzIdAndTeacherId(aClass.getId(), teacher.getId())) {
+        if (classTeacherRepository.existsByClazzIdAndTeacherId(Objects.requireNonNull(aClass.getId(), "classId must not be null"), Objects.requireNonNull(teacher.getId(), "teacherId must not be null"))) {
             throw new HttpBadRequest("Giảng viên đã được phân công cho lớp này");
         }
         ClassTeacher assignment = ClassTeacher.builder()
                 .clazz(aClass)
                 .teacher(teacher)
+                .role(ClassTeacherRole.INSTRUCTOR)
                 .note(dto.getNote())
                 .build();
-        classTeacherRepository.save(assignment);
+        classTeacherRepository.save(java.util.Objects.requireNonNull(assignment, "assignment must not be null"));
         return toTeacherDto(assignment);
     }
 
     @Override
     public void removeTeacher(Long classId, Long teacherId) {
-        ClassTeacher teacher = classTeacherRepository.findByClazzIdAndTeacherId(classId, teacherId)
+        ClassTeacher teacher = classTeacherRepository.findByClazzIdAndTeacherId(Objects.requireNonNull(classId, "classId must not be null"), Objects.requireNonNull(teacherId, "teacherId must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy giảng viên trong lớp"));
-        classTeacherRepository.delete(teacher);
+        classTeacherRepository.delete(Objects.requireNonNull(teacher, "teacher must not be null"));
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<ClassTeacherResponseDTO> findTeachers(Long classId) {
-        return classTeacherRepository.findByClazzId(classId)
+        return classTeacherRepository.findByClazzId(Objects.requireNonNull(classId, "classId must not be null"))
                 .stream()
                 .map(this::toTeacherDto)
                 .toList();
@@ -183,10 +191,10 @@ public class ClassServiceImpl implements IClassService {
     @Override
     @Transactional
     public ClassCourseResponseDTO assignCourse(ClassCourseRequestDTO dto) {
-        Class aClass = getClassroom(dto.getClassId());
-        Course course = courseRepository.findById(dto.getCourseId())
+        Class aClass = getClassroom(Objects.requireNonNull(dto.getClassId(), "classId must not be null"));
+        Course course = courseRepository.findById(Objects.requireNonNull(dto.getCourseId(), "courseId must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học với id = " + dto.getCourseId()));
-        if (classCourseRepository.existsByClazzIdAndCourseId(aClass.getId(), course.getId())) {
+        if (classCourseRepository.existsByClazzIdAndCourseId(Objects.requireNonNull(aClass.getId(), "classId must not be null"), Objects.requireNonNull(course.getId(), "courseId must not be null"))) {
             throw new HttpBadRequest("Khóa học đã được gán cho lớp");
         }
         ClassCourse classCourse = ClassCourse.builder()
@@ -194,10 +202,10 @@ public class ClassServiceImpl implements IClassService {
                 .course(course)
                 .note(dto.getNote())
                 .build();
-        classCourseRepository.save(classCourse);
+        classCourseRepository.save(java.util.Objects.requireNonNull(classCourse, "classCourse must not be null"));
 
 
-        List<ClassStudent> students = classStudentRepository.findByClassroomId(aClass.getId());
+        List<ClassStudent> students = classStudentRepository.findByClassroomId(Objects.requireNonNull(aClass.getId(), "classId must not be null"));
 
         for (ClassStudent s : students) {
             User student = s.getStudent();
@@ -221,14 +229,15 @@ public class ClassServiceImpl implements IClassService {
 
     @Override
     public void removeCourse(Long classId, Long courseId) {
-        ClassCourse classCourse = classCourseRepository.findByClazzIdAndCourseId(classId, courseId)
+        ClassCourse classCourse = classCourseRepository.findByClazzIdAndCourseId(Objects.requireNonNull(classId, "classId must not be null"), Objects.requireNonNull(courseId, "courseId must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học trong lớp"));
-        classCourseRepository.delete(classCourse);
+        classCourseRepository.delete(Objects.requireNonNull(classCourse, "classCourse must not be null"));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ClassCourseResponseDTO> findCourses(Long classId) {
-        return classCourseRepository.findByClazzId(classId)
+        return classCourseRepository.findByClazzId(Objects.requireNonNull(classId, "classId must not be null"))
                 .stream()
                 .map(this::toCourseDto)
                 .toList();
@@ -255,7 +264,6 @@ public class ClassServiceImpl implements IClassService {
         return ClassStatsResponseDTO.builder()
                 .classId(aClass.getId())
                 .className(aClass.getClassName())
-                .maxStudents(aClass.getMaxStudents())
                 .totalStudents(totalStudents)
                 .activeStudents(activeStudents)
                 .completedStudents(completedStudents)
@@ -272,7 +280,8 @@ public class ClassServiceImpl implements IClassService {
     // ==================== PRIVATE HELPERS ====================
 
     private Class getClassroom(Long id) {
-        return classroomRepository.findById(id)
+        Long safeId = Objects.requireNonNull(id, "id must not be null");
+        return classroomRepository.findById(safeId)
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy lớp học với id = " + id));
     }
 
@@ -286,7 +295,6 @@ public class ClassServiceImpl implements IClassService {
                 .id(classId)
                 .className(aClass.getClassName())
                 .description(aClass.getDescription())
-                .maxStudents(aClass.getMaxStudents())
                 .startDate(aClass.getStartDate())
                 .endDate(aClass.getEndDate())
                 .scheduleInfo(aClass.getScheduleInfo())

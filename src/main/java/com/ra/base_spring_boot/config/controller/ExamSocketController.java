@@ -7,6 +7,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
+import java.util.Objects;
 
 @Controller
 @RequiredArgsConstructor
@@ -25,6 +26,6 @@ public class ExamSocketController {
 
     // Gửi thông báo realtime từ Backend (ExamServiceImpl gọi hàm này)
     public void sendExamCreatedNotification(ExamResponseDTO exam) {
-        messagingTemplate.convertAndSend("/topic/exam-updates", exam);
+        messagingTemplate.convertAndSend("/topic/exam-updates", Objects.requireNonNull(exam));
     }
 }

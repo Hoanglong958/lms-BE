@@ -102,18 +102,7 @@ public class AuthController {
     @Operation(summary = "Quên mật khẩu", description = "Tạo token và gửi link đặt lại mật khẩu qua email. Token chỉ hiển thị khi user click vào link.")
     @ApiResponse(responseCode = "200", description = "Gửi email thành công")
     public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        CreatePasswordResetTokenRequest createReq = new CreatePasswordResetTokenRequest();
-        createReq.setGmail(request.getGmail());
-        
-        // Tạo token (không trả token trong response - delayed reveal)
-        var tokenResponse = passwordResetTokenService.create(createReq);
-        
-        // Gửi email với link reset (demo: log ra console)
-        String resetLink = "http://localhost:5173/reset-password?token=" + tokenResponse.getToken();
-        System.out.println("🔗 Link đặt lại mật khẩu cho " + request.getGmail() + ":");
-        System.out.println(resetLink);
-        
-        
+        authService.forgotPassword(request);
         return ResponseEntity.ok(
                 ResponseWrapper.builder()
                         .status(HttpStatus.OK)

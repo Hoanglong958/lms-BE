@@ -28,7 +28,7 @@ public class PasswordResetTokenServiceImpl implements IPasswordResetTokenService
     @Override
     @Transactional
     public PasswordResetTokenResponse create(CreatePasswordResetTokenRequest request) {
-        User user = userRepository.findByGmail(request.getGmail())
+        User user = userRepository.findByGmail(java.util.Objects.requireNonNull(request.getGmail(), "gmail must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Gmail không tồn tại trong hệ thống!"));
 
         tokenRepository.deleteByUser(user);
@@ -41,7 +41,7 @@ public class PasswordResetTokenServiceImpl implements IPasswordResetTokenService
                 .isUsed(false)
                 .createdAt(LocalDateTime.now())
                 .build();
-        entity = tokenRepository.save(entity);
+        entity = tokenRepository.save(java.util.Objects.requireNonNull(entity, "token entity must not be null"));
 
         return PasswordResetTokenResponse.builder()
                 .id(entity.getId())
@@ -55,7 +55,7 @@ public class PasswordResetTokenServiceImpl implements IPasswordResetTokenService
 
     @Override
     public boolean validateToken(String token) {
-        return tokenRepository.findByToken(token)
+        return tokenRepository.findByToken(java.util.Objects.requireNonNull(token, "token must not be null"))
                 .filter(t -> !Boolean.TRUE.equals(t.getIsUsed()))
                 .filter(t -> t.getExpiresAt().isAfter(LocalDateTime.now()))
                 .isPresent();
@@ -64,7 +64,7 @@ public class PasswordResetTokenServiceImpl implements IPasswordResetTokenService
     @Override
     @Transactional
     public void markUsed(String token) {
-        PasswordResetToken t = tokenRepository.findByToken(token)
+        PasswordResetToken t = tokenRepository.findByToken(java.util.Objects.requireNonNull(token, "token must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Token không hợp lệ!"));
         if (Boolean.TRUE.equals(t.getIsUsed())) {
             throw new HttpBadRequest("Token đã được sử dụng!");
@@ -73,13 +73,13 @@ public class PasswordResetTokenServiceImpl implements IPasswordResetTokenService
             throw new HttpBadRequest("Token đã hết hạn!");
         }
         t.setIsUsed(true);
-        tokenRepository.save(t);
+        tokenRepository.save(java.util.Objects.requireNonNull(t, "token entity must not be null"));
     }
 
     @Override
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
-        PasswordResetToken token = tokenRepository.findByToken(request.getToken())
+        PasswordResetToken token = tokenRepository.findByToken(java.util.Objects.requireNonNull(request.getToken(), "token must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Token không hợp lệ!"));
         if (Boolean.TRUE.equals(token.getIsUsed())) {
             throw new HttpBadRequest("Token đã được sử dụng!");
@@ -90,9 +90,9 @@ public class PasswordResetTokenServiceImpl implements IPasswordResetTokenService
 
         User user = token.getUser();
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        userRepository.save(user);
+        userRepository.save(java.util.Objects.requireNonNull(user, "user must not be null"));
 
         token.setIsUsed(true);
-        tokenRepository.save(token);
+        tokenRepository.save(java.util.Objects.requireNonNull(token, "token entity must not be null"));
     }
 }

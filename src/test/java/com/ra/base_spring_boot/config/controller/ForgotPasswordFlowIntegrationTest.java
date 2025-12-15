@@ -21,12 +21,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.Objects;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -53,35 +57,33 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 )
 @AutoConfigureMockMvc(addFilters = false) // Tắt security filter cho test
 @DisplayName("Forgot Password Flow Integration Test")
+@SuppressWarnings("removal")
 class ForgotPasswordFlowIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Autowired
     private IPasswordResetTokenService passwordResetTokenService;
 
-    @MockBean
+    @Autowired
     private IPasswordResetTokenRepository tokenRepository;
 
-    @MockBean
+    @Autowired
     private IUserRepository userRepository;
 
-    @MockBean
+    @Autowired
     private IAuthService authService;
 
-    @MockBean
-    private MyUserDetailsService myUserDetailsService;
-    @MockBean
-    private JwtProvider jwtProvider;
-    @MockBean
-    private JwtTokenFilter jwtTokenFilter;
-    @MockBean
-    private org.springframework.data.jpa.mapping.JpaMetamodelMappingContext jpaMetamodelMappingContext;
+    
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private User testUser;
     private PasswordResetToken testToken;
+
+    @SuppressWarnings("unused")
+    @MockBean
+    private JpaMetamodelMappingContext jpaMetamodelMappingContext;
 
     @BeforeEach
     void setUp() {
@@ -128,11 +130,11 @@ class ForgotPasswordFlowIntegrationTest {
                 .thenReturn(tokenResponse);
 
         mockMvc.perform(post("/api/v1/auth/forgot-password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(forgotRequest)))
+                        .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                        .content(Objects.requireNonNull(objectMapper.writeValueAsString(forgotRequest))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data").value(org.hamcrest.Matchers.containsString("Đã gửi link")));
+                .andExpect(jsonPath("$.data").value(Objects.requireNonNull(org.hamcrest.Matchers.containsString("Đã gửi link"))));
 
         verify(passwordResetTokenService).create(any());
 
@@ -169,11 +171,11 @@ class ForgotPasswordFlowIntegrationTest {
         doNothing().when(authService).resetPassword(any(ResetPasswordRequest.class));
 
         mockMvc.perform(post("/api/v1/auth/reset-password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(resetRequest)))
+                        .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                        .content(Objects.requireNonNull(objectMapper.writeValueAsString(resetRequest))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data").value(org.hamcrest.Matchers.containsString("Đặt lại mật khẩu thành công")));
+                .andExpect(jsonPath("$.data").value(Objects.requireNonNull(org.hamcrest.Matchers.containsString("Đặt lại mật khẩu thành công"))));
 
         verify(authService).resetPassword(any(ResetPasswordRequest.class));
     }
@@ -193,8 +195,8 @@ class ForgotPasswordFlowIntegrationTest {
                         .build());
 
         mockMvc.perform(post("/api/v1/auth/forgot-password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(forgotRequest)))
+                        .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                        .content(Objects.requireNonNull(objectMapper.writeValueAsString(forgotRequest))))
                 .andExpect(status().isOk());
 
         // Bước 2: Validate token không hợp lệ
@@ -215,9 +217,48 @@ class ForgotPasswordFlowIntegrationTest {
                 .when(authService).resetPassword(any(ResetPasswordRequest.class));
 
         mockMvc.perform(post("/api/v1/auth/reset-password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(resetRequest)))
+                        .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                        .content(Objects.requireNonNull(objectMapper.writeValueAsString(resetRequest))))
                 .andExpect(status().isBadRequest());
     }
-}
 
+    @TestConfiguration
+    static class MockConfig {
+        @Bean
+        IPasswordResetTokenService passwordResetTokenService() {
+            return org.mockito.Mockito.mock(IPasswordResetTokenService.class);
+        }
+
+        @Bean
+        IPasswordResetTokenRepository tokenRepository() {
+            return org.mockito.Mockito.mock(IPasswordResetTokenRepository.class);
+        }
+
+        @Bean
+        IUserRepository userRepository() {
+            return org.mockito.Mockito.mock(IUserRepository.class);
+        }
+
+        @Bean
+        IAuthService authService() {
+            return org.mockito.Mockito.mock(IAuthService.class);
+        }
+
+        @Bean
+        MyUserDetailsService myUserDetailsService() {
+            return org.mockito.Mockito.mock(MyUserDetailsService.class);
+        }
+
+        @Bean
+        JwtProvider jwtProvider() {
+            return org.mockito.Mockito.mock(JwtProvider.class);
+        }
+
+        @Bean
+        JwtTokenFilter jwtTokenFilter() {
+            return org.mockito.Mockito.mock(JwtTokenFilter.class);
+        }
+
+        
+    }
+}

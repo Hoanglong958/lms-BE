@@ -24,6 +24,13 @@ public class ExamParticipantServiceImpl implements IExamParticipantService {
 
     @Override
     public ExamParticipant joinExam(Long examId, Long userId, LocalDateTime joinTime) {
+        // Thay thế: Kiểm tra null thủ công cho params
+        if (examId == null) {
+            throw new IllegalArgumentException("examId must not be null");
+        }
+        if (userId == null) {
+            throw new IllegalArgumentException("userId must not be null");
+        }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User không tồn tại"));
@@ -47,11 +54,22 @@ public class ExamParticipantServiceImpl implements IExamParticipantService {
                 .submitted(false)
                 .build();
 
+        // Thay thế: Kiểm tra null thủ công (participant ở đây chắc chắn không null, có thể xóa nếu muốn)
+        if (participant == null) {
+            throw new IllegalArgumentException("participant must not be null");
+        }
         return participantRepository.save(participant);
     }
 
     @Override
     public ExamParticipant submitExam(Long examId, Long userId, LocalDateTime submitTime) {
+        // Thay thế: Kiểm tra null thủ công cho params
+        if (examId == null) {
+            throw new IllegalArgumentException("examId must not be null");
+        }
+        if (userId == null) {
+            throw new IllegalArgumentException("userId must not be null");
+        }
 
         ExamParticipant participant = participantRepository
                 .findByUser_IdAndExam_Id(userId, examId)
@@ -60,16 +78,31 @@ public class ExamParticipantServiceImpl implements IExamParticipantService {
         participant.setSubmitted(true);
         participant.setSubmitTime(submitTime != null ? submitTime : LocalDateTime.now());
 
+        // Thay thế: Kiểm tra null thủ công (participant ở đây chắc chắn không null, có thể xóa nếu muốn)
+        if (participant == null) {
+            throw new IllegalArgumentException("participant must not be null");
+        }
         return participantRepository.save(participant);
     }
 
     @Override
     public List<ExamParticipant> getParticipantsByExam(Long examId) {
+        // Thêm check null cho param để nhất quán
+        if (examId == null) {
+            throw new IllegalArgumentException("examId must not be null");
+        }
         return participantRepository.findAllByExam_Id(examId);
     }
 
     @Override
     public ExamParticipant getParticipant(Long userId, Long examId) {
+        // Thêm check null cho params để nhất quán
+        if (userId == null) {
+            throw new IllegalArgumentException("userId must not be null");
+        }
+        if (examId == null) {
+            throw new IllegalArgumentException("examId must not be null");
+        }
         return participantRepository
                 .findByUser_IdAndExam_Id(userId, examId)
                 .orElseThrow(() -> new RuntimeException("User chưa join bài thi"));
@@ -77,6 +110,13 @@ public class ExamParticipantServiceImpl implements IExamParticipantService {
 
     @Override
     public Optional<ExamParticipant> findByUserIdAndExamId(Long userId, Long examId) {
+        // Thêm check null cho params để nhất quán
+        if (userId == null) {
+            throw new IllegalArgumentException("userId must not be null");
+        }
+        if (examId == null) {
+            throw new IllegalArgumentException("examId must not be null");
+        }
         return participantRepository.findByUser_IdAndExam_Id(userId, examId);
     }
 }

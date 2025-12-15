@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -42,7 +43,7 @@ public class CourseServiceImpl implements ICourseService {
 
     @Override
     public CourseResponseDTO update(Long id, CourseRequestDTO dto) {
-        Course course = courseRepository.findById(id)
+        Course course = courseRepository.findById(Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học với id = " + id));
 
         course.setTitle(dto.getTitle());
@@ -51,21 +52,21 @@ public class CourseServiceImpl implements ICourseService {
         course.setTotalSessions(dto.getTotalSessions());
         course.setUpdatedAt(LocalDateTime.now());
 
-        courseRepository.save(course);
+        courseRepository.save(java.util.Objects.requireNonNull(course, "course must not be null"));
 
         return toDto(course);
     }
 
     @Override
     public void delete(Long id) {
-        Course course = courseRepository.findById(id)
+        Course course = courseRepository.findById(Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học với id = " + id));
-        courseRepository.delete(course);
+        courseRepository.delete(java.util.Objects.requireNonNull(course, "course must not be null"));
     }
 
     @Override
     public CourseResponseDTO findById(Long id) {
-        Course course = courseRepository.findById(id)
+        Course course = courseRepository.findById(Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học với id = " + id));
 
         return toDto(course);

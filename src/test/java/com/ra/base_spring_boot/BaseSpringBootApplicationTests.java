@@ -25,7 +25,6 @@ class BaseSpringBootApplicationTests
 {
 
     @Autowired
-    @SuppressWarnings("unused")
     private MockMvc mockMvc;
 
     @MockBean

@@ -1,0 +1,16 @@
+{
+  "properties": [
+    {"name": "jwt.secret.key", "type": "java.lang.String", "description": "JWT secret key"},
+    {"name": "jwt.expired.access", "type": "java.lang.Long", "description": "JWT access token expiration in ms"},
+
+    {"name": "app.upload.root", "type": "java.lang.String", "description": "Root upload folder"},
+
+    {"name": "cloudinary.cloud-name", "type": "java.lang.String", "description": "Cloudinary cloud name"},
+    {"name": "cloudinary.api-key", "type": "java.lang.String", "description": "Cloudinary API key"},
+    {"name": "cloudinary.api-secret", "type": "java.lang.String", "description": "Cloudinary API secret"},
+
+    {"name": "external.api.base-url", "type": "java.lang.String", "description": "External API base URL"},
+    {"name": "external.api.connect-timeout", "type": "java.lang.Integer", "description": "External API connect timeout"},
+    {"name": "external.api.read-timeout", "type": "java.lang.Integer", "description": "External API read timeout"}
+  ]
+}

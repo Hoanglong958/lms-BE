@@ -6,6 +6,7 @@ import com.ra.base_spring_boot.dto.req.UserUpdateRequest;
 import com.ra.base_spring_boot.dto.resp.UserResponse;
 import com.ra.base_spring_boot.model.constants.RoleName;
 import com.ra.base_spring_boot.services.IUserService;
+import com.ra.base_spring_boot.exception.HttpBadRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -53,16 +54,27 @@ public class UserController {
             @RequestParam(required = false) String keyword, // Từ khóa tìm kiếm
             @RequestParam(required = false) String role, // Lọc theo vai trò
             @RequestParam(required = false) Boolean isActive, // Lọc theo trạng thái kích hoạt
-            Pageable pageable // Hỗ trợ phân trang/sắp xếp
+            Pageable pageable, // Hỗ trợ phân trang/sắp xếp
+            @RequestParam(required = false) Integer limit // Giới hạn số lượng trả về
     ) {
         RoleName roleFilter = parseRole(role); // Chuyển role từ String sang enum
-        Pageable safePageable = sanitizePageable(pageable);
+        Pageable safePageable = applyLimit(sanitizePageable(pageable), limit);
         Page<UserResponse> page = userService.search(keyword, roleFilter, isActive, safePageable); // Gọi service tìm kiếm
+
+        java.util.Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("content", page.getContent());
+        java.util.Map<String, Object> pagination = new java.util.HashMap<>();
+        pagination.put("page", page.getNumber());
+        pagination.put("size", page.getSize());
+        pagination.put("totalPages", page.getTotalPages());
+        pagination.put("totalElements", page.getTotalElements());
+        payload.put("pagination", pagination);
+
         return ResponseEntity.ok(
                 ResponseWrapper.builder()
                         .status(HttpStatus.OK)
                         .code(200)
-                        .data(page) // Trả về danh sách dạng Page
+                        .data(payload)
                         .build()
         );
     }
@@ -144,30 +156,54 @@ public class UserController {
     // ===================== Chuyển role từ String sang Enum =====================
     private RoleName parseRole(String input) {
         if (input == null) return null;
-        String s = input.trim().toUpperCase();
-        if ("ADMIN".equals(s) || "ROLE_ADMIN".equals(s)) return RoleName.ROLE_ADMIN;
-        if ("USER".equals(s) || "ROLE_USER".equals(s)) return RoleName.ROLE_USER;
-        return null; // Nếu không hợp lệ trả về null
+        String normalized = input.trim().toUpperCase();
+        if (!normalized.startsWith("ROLE_")) {
+            normalized = "ROLE_" + normalized;
+        }
+        try {
+            return RoleName.valueOf(normalized);
+        } catch (IllegalArgumentException ex) {
+            return null; // Nếu không hợp lệ trả về null
+        }
     }
 
     // ===================== Làm sạch tham số phân trang/sắp xếp =====================
     private Pageable sanitizePageable(Pageable pageable) {
+        final int MAX_SIZE = 100;
+        final int DEFAULT_PAGE = 0;
+        final int DEFAULT_SIZE = 20;
+        final Sort DEFAULT_SORT = Sort.by(Sort.Direction.DESC, "createdAt");
+
         java.util.Set<String> allowed = java.util.Set.of(
                 "id", "fullName", "gmail", "phone", "role", "isActive", "createdAt"
         );
 
-        Sort incoming = pageable.getSort();
-        java.util.List<Sort.Order> safeOrders = new java.util.ArrayList<>();
-        for (Sort.Order o : incoming) {
+        // Guard null pageable
+        if (pageable == null) {
+            return PageRequest.of(DEFAULT_PAGE, DEFAULT_SIZE, DEFAULT_SORT);
+        }
+
+        // Filter invalid sort fields instead of throwing 400
+        java.util.List<Sort.Order> validOrders = new java.util.ArrayList<>();
+        for (Sort.Order o : pageable.getSort()) {
             if (allowed.contains(o.getProperty())) {
-                safeOrders.add(o);
+                validOrders.add(o);
             }
         }
 
-        Sort sort = safeOrders.isEmpty()
-                ? Sort.by(Sort.Direction.DESC, "createdAt")
-                : Sort.by(safeOrders);
+        Sort sort = validOrders.isEmpty() ? DEFAULT_SORT : Sort.by(validOrders);
 
-        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+        int page = Math.max(0, pageable.getPageNumber());
+        int requestedSize = pageable.getPageSize();
+        int size = Math.min(Math.max(1, requestedSize > 0 ? requestedSize : DEFAULT_SIZE), MAX_SIZE);
+
+        return PageRequest.of(page, size, sort);
+    }
+
+    private Pageable applyLimit(Pageable pageable, Integer limit) {
+        final int MAX_SIZE = 100;
+        if (limit == null || limit <= 0) return pageable;
+        int size = Math.min(limit, MAX_SIZE);
+        return PageRequest.of(0, size, pageable.getSort());
     }
 }
