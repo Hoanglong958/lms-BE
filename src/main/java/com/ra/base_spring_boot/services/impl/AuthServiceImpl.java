@@ -77,7 +77,7 @@ public class AuthServiceImpl implements IAuthService {
     }
 
         // ===== Validate Role =====
-        RoleName role = RoleName.ROLE_USER; // mặc định USER
+        RoleName role = RoleName.ROLE_USER; // mặc định USERa
         if (formRegister.getRole() != null) {
             try {
                 String normalizedRole = formRegister.getRole().trim().toUpperCase();

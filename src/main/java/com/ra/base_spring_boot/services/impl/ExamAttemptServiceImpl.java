@@ -7,6 +7,7 @@ import com.ra.base_spring_boot.services.IExamAttemptService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -78,6 +79,7 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
 
     // =====================================================================
     @Override
+    @Transactional
     public ExamAttemptResponseDTO submitExam(Long attemptId, Map<Long, String> answers) {
 
         ExamAttempt attempt = attemptRepository.findById(attemptId)

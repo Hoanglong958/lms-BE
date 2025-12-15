@@ -12,9 +12,6 @@ public class ClassTeacherRequestDTO {
     @Schema(example = "3")
     private Long teacherId;
 
-    @Schema(example = "INSTRUCTOR")
-    private String role;
-
     @Schema(example = "Giảng viên chính buổi tối")
     private String note;
 }

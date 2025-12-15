@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,6 @@ import java.util.stream.Collectors;
 public class ExamServiceImpl implements IExamService {
 
     private final IExamRepository examRepository;
-    private final ICourseRepository courseRepository;
     private final IQuestionRepository questionRepository;
     private final GmailService gmailService;
     private final IClassStudentRepository classStudentRepository;
@@ -45,6 +45,14 @@ public class ExamServiceImpl implements IExamService {
         }
         if (dto.getPassingScore() > dto.getMaxScore()) {
             throw new HttpBadRequest("Điểm đạt phải nhỏ hơn hoặc bằng điểm tối đa");
+        }
+
+        // ===== VALIDATE durationMinutes =====
+        long minutes = Duration.between(dto.getStartTime(), dto.getEndTime()).toMinutes();
+        if (minutes != dto.getDurationMinutes()) {
+            throw new HttpBadRequest(
+                    "Thời gian thi không hợp lệ. Khoảng cách giữa giờ bắt đầu và kết thúc phải đúng "
+                            + dto.getDurationMinutes() + " phút");
         }
 
         // ========= KHỞI TẠO EXAM =========
@@ -137,6 +145,14 @@ public class ExamServiceImpl implements IExamService {
         }
         if (dto.getPassingScore() > dto.getMaxScore()) {
             throw new HttpBadRequest("Điểm đạt phải nhỏ hơn hoặc bằng điểm tối đa");
+        }
+
+        // ===== VALIDATE durationMinutes =====
+        long minutes = Duration.between(dto.getStartTime(), dto.getEndTime()).toMinutes();
+        if (minutes != dto.getDurationMinutes()) {
+            throw new HttpBadRequest(
+                    "Thời gian thi không hợp lệ. Khoảng cách giữa giờ bắt đầu và kết thúc phải đúng "
+                            + dto.getDurationMinutes() + " phút");
         }
 
         // ========= UPDATE =========

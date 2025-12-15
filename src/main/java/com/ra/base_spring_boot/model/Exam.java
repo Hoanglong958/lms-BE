@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ra.base_spring_boot.model.constants.ExamStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -14,10 +15,10 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class Exam {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
 
     private String title;
 
@@ -47,7 +48,7 @@ public class Exam {
 
     private LocalDateTime updatedAt;
 
-    // ======= Quan hệ với ExamQuestion =======
+    // ================== EXAM QUESTIONS ==================
     @Builder.Default
     @OneToMany(
             mappedBy = "exam",
@@ -55,9 +56,10 @@ public class Exam {
             orphanRemoval = true,
             fetch = FetchType.LAZY
     )
+    @JsonIgnore   // <-- FIX QUAN TRỌNG (tránh lỗi JSON + Lazy + vòng lặp)
     private List<ExamQuestion> examQuestions = new ArrayList<>();
 
-    // ======= Quan hệ với ExamAttempt =======
+    // ================== EXAM ATTEMPTS ==================
     @Builder.Default
     @OneToMany(
             mappedBy = "exam",
@@ -65,9 +67,10 @@ public class Exam {
             orphanRemoval = true,
             fetch = FetchType.LAZY
     )
+    @JsonIgnore
     private List<ExamAttempt> examAttempts = new ArrayList<>();
 
-    // ======= Helper method để xóa tất cả child (tùy chọn) =======
+    // ================== CLEAR METHOD ==================
     public void clearAllRelations() {
         if (examQuestions != null) {
             examQuestions.clear();

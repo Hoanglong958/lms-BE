@@ -159,7 +159,6 @@ public class ClassServiceImpl implements IClassService {
         ClassTeacher assignment = ClassTeacher.builder()
                 .clazz(aClass)
                 .teacher(teacher)
-                .role(parseTeacherRole(dto.getRole()))
                 .note(dto.getNote())
                 .build();
         classTeacherRepository.save(assignment);
@@ -338,7 +337,6 @@ public class ClassServiceImpl implements IClassService {
                 .className(classTeacher.getClazz().getClassName())
                 .teacherId(classTeacher.getTeacher().getId())
                 .teacherName(classTeacher.getTeacher().getFullName())
-                .role(classTeacher.getRole().name())
                 .assignedAt(classTeacher.getAssignedAt())
                 .note(classTeacher.getNote())
                 .build();

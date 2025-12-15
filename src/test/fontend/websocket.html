@@ -9,7 +9,6 @@
 <body>
 <h2>Exam WebSocket STOMP Test Client</h2>
 
-<label>Room ID: </label><input id="roomId" placeholder="Room ID" value="1"/>
 <label>User ID: </label><input id="userId" placeholder="User ID" value="1001"/>
 <label>Exam ID: </label><input id="examId" placeholder="Exam ID" value="10"/>
 <br><br>
@@ -22,25 +21,25 @@
 
 <script>
     let stompClient = null;
-    const subscribedRooms = new Set();
+    let subscribedExam = new Set();
 
-    // TODO: Thay bằng JWT token thực tế sau khi login
+    // TODO: Replace with actual JWT token after login
     const JWT_TOKEN = "<JWT_TOKEN>";
 
     function connect(callback) {
         const socket = new SockJS('http://localhost:3999/ws');
         stompClient = Stomp.over(socket);
-        stompClient.debug = null; // tắt log debug
+        stompClient.debug = null;
 
         stompClient.connect(
             { "Authorization": "Bearer " + JWT_TOKEN },
             function(frame) {
-                console.log('Connected: ' + frame);
+                console.log('Connected:', frame);
                 callback();
             },
             function(error) {
                 console.error('STOMP error', error);
-                alert('WebSocket kết nối thất bại, thử lại sau.');
+                alert('WebSocket connection failed.');
             }
         );
     }
@@ -54,48 +53,47 @@
     }
 
     function sendJoinExam() {
-        const roomId = document.getElementById("roomId").value;
-        const userId = document.getElementById("userId").value;
-        const examId = document.getElementById("examId").value;
+        const userId = parseInt(document.getElementById("userId").value);
+        const examId = parseInt(document.getElementById("examId").value);
 
-        // Subscribe room topic nếu chưa subscribe
-        if (!subscribedRooms.has(roomId)) {
-            stompClient.subscribe('/topic/exam-room/' + roomId, function(messageOutput) {
+        // Subscribe exam notification channel (NO ROOM ID)
+        if (!subscribedExam.has(examId)) {
+            stompClient.subscribe('/topic/exam/updates/' + examId, function(messageOutput) {
                 const message = JSON.parse(messageOutput.body);
                 const li = document.createElement("li");
-                li.textContent = `[${message.type}] User ${message.userId || ''} Exam ${message.examId || ''}: ${message.content || ''}`;
+                li.textContent =
+                    `[${message.type}] User ${message.userId || ''} Exam ${message.examId || ''}: ${message.content || ''}`;
                 document.getElementById("messages").appendChild(li);
             });
-            subscribedRooms.add(roomId);
+
+            subscribedExam.add(examId);
         }
 
         const joinMessage = {
             type: "JOIN_EXAM",
-            examRoomId: roomId,
-            userId: parseInt(userId),
-            examId: parseInt(examId)
+            userId: userId,
+            examId: examId
         };
 
         stompClient.send("/app/exam/action", {}, JSON.stringify(joinMessage));
     }
 
     function submitExam() {
-        const roomId = document.getElementById("roomId").value;
-        const userId = document.getElementById("userId").value;
-        const examId = document.getElementById("examId").value;
+        const userId = parseInt(document.getElementById("userId").value);
+        const examId = parseInt(document.getElementById("examId").value);
 
-        // Ví dụ answers: map questionId -> answer
         const answers = {
             1: "A",
             2: "B",
-            3: "C"
+            3: "C",
+            4: "A",
+            5: "C"
         };
 
         const submitMessage = {
             type: "SUBMIT_EXAM",
-            examRoomId: roomId,
-            userId: parseInt(userId),
-            examId: parseInt(examId),
+            userId: userId,
+            examId: examId,
             answers: answers
         };
 
