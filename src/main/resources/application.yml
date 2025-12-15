@@ -37,8 +37,8 @@
     mail:
       host: smtp.gmail.com
       port: 587
-      username: namne2506@gmail.com
-      password: "yqnt kgzc wwrs jxwy"  # 16 ký tự App Password
+      username: mankai.12.edu@gmail.com
+      password: "xmsa ests sjji ftpl"  # 16 ký tự App Password
       protocol: smtp
       properties:
         mail:
@@ -60,7 +60,7 @@
       access: 3600000
 
   server:
-    port: 3999
+    port: 3900
 
   app:
     upload:
