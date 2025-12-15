@@ -4,6 +4,7 @@ import com.ra.base_spring_boot.model.ClassStudent;
 import com.ra.base_spring_boot.model.constants.ClassEnrollmentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -16,6 +17,9 @@ public interface IClassStudentRepository extends JpaRepository<ClassStudent, Lon
     Optional<ClassStudent> findByClassroomIdAndStudentId(Long classroomId, Long studentId);
 
     List<ClassStudent> findByClassroomId(Long classroomId);
+
+    @Query("SELECT cs FROM ClassStudent cs JOIN FETCH cs.classroom c JOIN FETCH cs.student s WHERE c.id = :classroomId")
+    List<ClassStudent> findByClassroomIdWithRelations(@Param("classroomId") Long classroomId);
 
     long countByClassroomId(Long classroomId);
 

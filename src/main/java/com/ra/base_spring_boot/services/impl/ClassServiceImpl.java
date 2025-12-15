@@ -93,8 +93,17 @@ public class ClassServiceImpl implements IClassService {
     public ClassStudentResponseDTO enrollStudent(ClassStudentRequestDTO dto) {
         Objects.requireNonNull(dto, "dto must not be null");
         Class aClass = getClassroom(Objects.requireNonNull(dto.getClassId(), "classId must not be null"));
-        User student = userRepository.findById(Objects.requireNonNull(dto.getStudentId(), "studentId must not be null"))
-                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy học viên với id = " + dto.getStudentId()));
+        // Cho phép tìm học viên bằng studentId hoặc gmail
+        User student;
+        if (dto.getStudentId() != null) {
+            student = userRepository.findById(dto.getStudentId())
+                    .orElseThrow(() -> new HttpBadRequest("Không tìm thấy học viên với id = " + dto.getStudentId()));
+        } else if (dto.getGmail() != null && !dto.getGmail().isBlank()) {
+            student = userRepository.findByGmailIgnoreCase(dto.getGmail().trim())
+                    .orElseThrow(() -> new HttpBadRequest("Không tìm thấy học viên với gmail = " + dto.getGmail()));
+        } else {
+            throw new HttpBadRequest("Phải cung cấp studentId hoặc gmail của học viên");
+        }
         if (student.getRole() != RoleName.ROLE_USER) {
             throw new HttpBadRequest("student_id chỉ chấp nhận tài khoản role STUDENT (ROLE_USER)");
         }
@@ -135,7 +144,7 @@ public class ClassServiceImpl implements IClassService {
 
     @Override
     public List<ClassStudentResponseDTO> findStudents(Long classroomId) {
-        return classStudentRepository.findByClassroomId(Objects.requireNonNull(classroomId, "classroomId must not be null"))
+        return classStudentRepository.findByClassroomIdWithRelations(Objects.requireNonNull(classroomId, "classroomId must not be null"))
                 .stream()
                 .map(this::toStudentDto)
                 .toList();

@@ -14,6 +14,8 @@ public class ClassStudentRequestDTO {
     @Schema(example = "5")
     private Long studentId;
 
+    private String gmail;
+
     @Schema(example = "ACTIVE")
     private String status;
 

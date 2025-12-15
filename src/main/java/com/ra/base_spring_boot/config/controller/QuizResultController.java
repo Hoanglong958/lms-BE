@@ -25,8 +25,7 @@ public class QuizResultController {
     private final IQuizResultService quizResultService;
 
     // ========== ADMIN: Xem tất cả kết quả ==========
-    @GetMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
     @Operation(summary = "Lấy danh sách kết quả quiz", description = "Chỉ ADMIN được xem toàn bộ kết quả")
     @ApiResponse(responseCode = "200", description = "Thành công",
             content = @Content(schema = @Schema(implementation = QuizResultResponseDTO.class)))
@@ -36,7 +35,7 @@ public class QuizResultController {
 
     // ========== ADMIN: Xem chi tiết kết quả ==========
     @GetMapping("/detail")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
     @Operation(summary = "Lấy chi tiết kết quả quiz", description = "Trả về kết quả quiz theo ID")
     public ResponseEntity<QuizResultResponseDTO> getById(@RequestParam Long id) {
         return ResponseEntity.ok(quizResultService.findById(id));

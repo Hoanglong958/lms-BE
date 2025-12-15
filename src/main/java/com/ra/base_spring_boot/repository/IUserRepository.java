@@ -17,6 +17,8 @@ public interface IUserRepository extends JpaRepository<User, Long> {
     // Dùng gmail để đăng nhập
     Optional<User> findByGmail(String gmail);
 
+    Optional<User> findByGmailIgnoreCase(String gmail);
+
     // Dùng cho quên mật khẩu
     Optional<User> findByResetToken(String token);
 
