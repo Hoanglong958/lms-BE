@@ -46,6 +46,18 @@ public class QuestionServiceImpl implements IQuestionService {
         return toResponse(question);
     }
 
+    // Tạo nhiều câu hỏi cùng lúc
+    @Override
+    public List<QuestionResponseDTO> createBulk(List<QuestionRequestDTO> requests) {
+        List<Question> entities = java.util.Objects.requireNonNull(requests, "requests must not be null")
+                .stream()
+                .map(this::mapRequestToEntity)
+                .collect(Collectors.toList());
+
+        List<Question> saved = questionRepository.saveAll(java.util.Objects.requireNonNull(entities, "entities must not be null"));
+        return saved.stream().map(this::toResponse).collect(Collectors.toList());
+    }
+
     // Cập nhật câu hỏi
     @Override
     public QuestionResponseDTO update(Long id, QuestionRequestDTO request) {

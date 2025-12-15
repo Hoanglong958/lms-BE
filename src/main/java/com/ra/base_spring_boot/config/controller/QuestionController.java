@@ -56,6 +56,19 @@ public class QuestionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    // ======= Tạo nhiều câu hỏi (ADMIN) =======
+    @PostMapping("/bulk")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Tạo nhiều câu hỏi",
+            description = "Chỉ ADMIN được phép tạo nhiều câu hỏi cùng lúc")
+    @ApiResponse(responseCode = "201", description = "Tạo nhiều câu hỏi thành công")
+    public ResponseEntity<List<QuestionResponseDTO>> createQuestionsBulk(
+            @Valid @RequestBody List<QuestionRequestDTO> requests
+    ) {
+        List<QuestionResponseDTO> responses = questionService.createBulk(requests);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responses);
+    }
+
     // ======= Cập nhật câu hỏi (ADMIN) =======
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
