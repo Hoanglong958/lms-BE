@@ -120,6 +120,7 @@ public class QuizResultServiceImpl implements IQuizResultService {
                 .totalCount(totalCount)
                 .score(score)
                 .isPassed(isPassed)
+                .passScore(passingScore)
                 .submittedAt(LocalDateTime.now())
                 .deleted(false)
                 .build();
