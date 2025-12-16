@@ -48,10 +48,9 @@
 
             int sessionsPerWeek = req.getSessionsPerWeek();
             int totalSessions = course.getTotalSessions();
-            LocalDate startDate = course.getStartDate();
+
 
             if (totalSessions <= 0) throw new HttpBadRequest("totalSessions không hợp lệ");
-            if (startDate == null) throw new HttpBadRequest("startDate của khóa học chưa thiết lập");
             if (sessionsPerWeek > 5) throw new HttpBadRequest("sessionsPerWeek không được quá 5");
 
             // weekday T2–T6

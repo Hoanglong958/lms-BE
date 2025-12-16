@@ -17,5 +17,4 @@ public class CourseRequestDTO {
     private String level; // BEGINNER, INTERMEDIATE, ADVANCED
 
     private int totalSessions;  // tổng số buổi học
-    private LocalDate startDate; // ngày bắt đầu
 }

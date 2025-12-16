@@ -29,5 +29,4 @@ public class CourseResponseDTO {
     private LocalDateTime updatedAt;
 
     private int totalSessions;
-    private LocalDate startDate;
 }
