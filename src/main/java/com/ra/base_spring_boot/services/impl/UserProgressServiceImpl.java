@@ -104,17 +104,7 @@ public class UserProgressServiceImpl implements IUserProgressService {
         if (progress.getStatus() == LessonProgressStatus.COMPLETED && progress.getCompletedAt() == null) {
             progress.setCompletedAt(LocalDateTime.now());
         }
-        if (progress.getStatus() != LessonProgressStatus.COMPLETED
-                && course.getEndDate() != null
-                && java.time.LocalDate.now().isAfter(course.getEndDate())) {
-            progress.setStatus(LessonProgressStatus.DELAYED);
-        }
-        if (progress.getStatus() != LessonProgressStatus.COMPLETED
-                && course.getStartDate() != null && course.getEndDate() != null
-                && session.getOrderIndex() != null
-                && isPastPlannedDate(course, session.getOrderIndex(), course.getTotalSessions())) {
-            progress.setStatus(LessonProgressStatus.SLOW);
-        }
+
 
         userSessionProgressRepository.save(progress);
         List<ClassStudent> enrollments = classStudentRepository.findByStudent_Id(user.getId());
@@ -211,17 +201,7 @@ public class UserProgressServiceImpl implements IUserProgressService {
         if (progress.getStatus() == LessonProgressStatus.COMPLETED && progress.getCompletedAt() == null) {
             progress.setCompletedAt(LocalDateTime.now());
         }
-        if (progress.getStatus() != LessonProgressStatus.COMPLETED
-                && course.getEndDate() != null
-                && java.time.LocalDate.now().isAfter(course.getEndDate())) {
-            progress.setStatus(LessonProgressStatus.DELAYED);
-        }
-        if (progress.getStatus() != LessonProgressStatus.COMPLETED
-                && course.getStartDate() != null && course.getEndDate() != null
-                && session.getOrderIndex() != null
-                && isPastPlannedDate(course, session.getOrderIndex(), course.getTotalSessions())) {
-            progress.setStatus(LessonProgressStatus.SLOW);
-        }
+
 
         userLessonProgressRepository.save(progress);
         // Đồng bộ trạng thái lộ trình ở mức tổng thể nếu có thể suy ra
@@ -396,15 +376,6 @@ public class UserProgressServiceImpl implements IUserProgressService {
             // Đồng bộ 1 assignment là đủ
             break;
         }
-    }
-
-    private boolean isPastPlannedDate(Course course, int orderIndex, int totalSessions) {
-        if (totalSessions <= 0 || orderIndex == 0) return false;
-        long totalDays = java.time.temporal.ChronoUnit.DAYS.between(course.getStartDate(), course.getEndDate());
-        if (totalDays <= 0) return false;
-        double ratio = Math.min(1.0, Math.max(0.0, (double) orderIndex / (double) totalSessions));
-        java.time.LocalDate plannedDate = course.getStartDate().plusDays((long) Math.floor(totalDays * ratio));
-        return java.time.LocalDate.now().isAfter(plannedDate);
     }
 
     private int computeCompletedRoadmapItems(User user, RoadmapAssignment ra) {
