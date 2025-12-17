@@ -25,8 +25,6 @@ public class ClassTeacherResponseDTO {
     @Schema(example = "Trần Thị C")
     private String teacherName;
 
-    @Schema(example = "INSTRUCTOR")
-    private String role;
 
     @Schema(example = "2025-01-02T09:00:00")
     private LocalDateTime assignedAt;

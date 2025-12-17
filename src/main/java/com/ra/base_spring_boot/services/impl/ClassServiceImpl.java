@@ -153,8 +153,8 @@ public class ClassServiceImpl implements IClassService {
     @Override
     @Transactional
     public ClassTeacherResponseDTO assignTeacher(ClassTeacherRequestDTO dto) {
-        Class aClass = getClassroom(Objects.requireNonNull(dto.getClassId(), "classId must not be null"));
-        User teacher = userRepository.findById(Objects.requireNonNull(dto.getTeacherId(), "teacherId must not be null"))
+        Class aClass = getClassroom(dto.getClassId());
+        User teacher = userRepository.findById(dto.getTeacherId())
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy giảng viên với id = " + dto.getTeacherId()));
         if (teacher.getRole() != RoleName.ROLE_TEACHER) {
             throw new HttpBadRequest("teacher_id chỉ chấp nhận tài khoản role TEACHER");
@@ -345,7 +345,6 @@ public class ClassServiceImpl implements IClassService {
                 .className(classTeacher.getClazz().getClassName())
                 .teacherId(classTeacher.getTeacher().getId())
                 .teacherName(classTeacher.getTeacher().getFullName())
-                .role(classTeacher.getRole().name())
                 .assignedAt(classTeacher.getAssignedAt())
                 .note(classTeacher.getNote())
                 .build();

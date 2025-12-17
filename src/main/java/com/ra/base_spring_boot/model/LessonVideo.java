@@ -26,27 +26,21 @@ public class LessonVideo {
     @JoinColumn(name = "lesson_id", nullable = false)
     private Lesson lesson;
 
-    // Tiêu đề video
     @Column(nullable = false, length = 200)
     private String title;
 
-    // Mô tả ngắn hoặc nội dung chi tiết
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    // URL video (link YouTube, file upload,...)
     @Column(name = "video_url", nullable = false)
     private String videoUrl;
 
-    // Thời lượng video (tính bằng giây hoặc phút)
     @Column(name = "duration_seconds")
     private Integer durationSeconds;
 
-    // Thứ tự hiển thị trong bài học
     @Column(name = "order_index", nullable = false)
     private Integer orderIndex;
 
-    // Ngày tạo và cập nhật (sử dụng Auditing)
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ra.base_spring_boot.model.constants.RoleName;
 import jakarta.persistence.*;
 import lombok.*;
@@ -23,6 +24,7 @@ public class User {
     private String gmail;
 
     @Column(nullable = false)
+    @JsonIgnore
     private String password;
 
     @Column(unique = true)

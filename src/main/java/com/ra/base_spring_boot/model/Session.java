@@ -6,6 +6,8 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "sessions")
@@ -29,6 +31,15 @@ public class Session {
     @ManyToOne
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
+
+    // 🔥 QUAN TRỌNG
+    @OneToMany(
+            mappedBy = "session",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @Builder.Default
+    private List<Lesson> lessons = new ArrayList<>();
 
     @CreatedDate
     @Column(name = "created_at", updatable = false)
