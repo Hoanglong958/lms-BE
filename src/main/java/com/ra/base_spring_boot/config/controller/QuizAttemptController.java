@@ -61,7 +61,7 @@ public class QuizAttemptController {
     @Operation(summary = "Upload file đính kèm cho lượt làm", description = "Kiểm tra file và lưu local, trả URL công khai")
     @PostMapping(value = "/{attemptId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> upload(@PathVariable Long attemptId,
-                                         @RequestPart("file") MultipartFile file) {
+                                         @RequestParam("file") MultipartFile file) {
         fileValidator.validate(file);
         String url = attachmentStorage.storeAttemptFile(attemptId, file);
         return ResponseEntity.ok(url);

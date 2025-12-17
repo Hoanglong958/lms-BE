@@ -20,6 +20,13 @@ public interface IUserProgressService {
     UserLessonProgressResponseDTO upsertLessonProgress(UserLessonProgressRequestDTO dto);
 
     List<UserLessonProgressResponseDTO> getLessonProgressByUserAndCourse(Long userId, Long courseId);
+
+    // ===== Roadmap (Assignment) =====
+    UserRoadmapProgressResponseDTO upsertRoadmapProgress(UserRoadmapProgressRequestDTO dto);
+
+    List<UserRoadmapProgressResponseDTO> getRoadmapProgressByUser(Long userId);
+
+    UserRoadmapProgressResponseDTO getRoadmapProgressByUserAndRoadmap(Long userId, Long roadmapId);
 }
 
 

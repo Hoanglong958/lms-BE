@@ -18,6 +18,8 @@ public interface IClassStudentRepository extends JpaRepository<ClassStudent, Lon
 
     List<ClassStudent> findByClassroomId(Long classroomId);
 
+    List<ClassStudent> findByStudent_Id(Long studentId);
+
     @Query("SELECT cs FROM ClassStudent cs JOIN FETCH cs.classroom c JOIN FETCH cs.student s WHERE c.id = :classroomId")
     List<ClassStudent> findByClassroomIdWithRelations(@Param("classroomId") Long classroomId);
 

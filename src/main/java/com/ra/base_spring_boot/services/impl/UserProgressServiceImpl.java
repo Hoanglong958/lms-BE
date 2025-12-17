@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,9 @@ public class UserProgressServiceImpl implements IUserProgressService {
     private final IUserCourseProgressRepository userCourseProgressRepository;
     private final IUserSessionProgressRepository userSessionProgressRepository;
     private final IUserLessonProgressRepository userLessonProgressRepository;
+    private final IRoadmapAssignmentRepository roadmapAssignmentRepository;
+    private final IUserRoadmapProgressRepository userRoadmapProgressRepository;
+    private final IClassStudentRepository classStudentRepository;
 
     // ===== Khóa học =====
     @Override
@@ -100,8 +104,61 @@ public class UserProgressServiceImpl implements IUserProgressService {
         if (progress.getStatus() == LessonProgressStatus.COMPLETED && progress.getCompletedAt() == null) {
             progress.setCompletedAt(LocalDateTime.now());
         }
+        if (progress.getStatus() != LessonProgressStatus.COMPLETED
+                && course.getEndDate() != null
+                && java.time.LocalDate.now().isAfter(course.getEndDate())) {
+            progress.setStatus(LessonProgressStatus.DELAYED);
+        }
+        if (progress.getStatus() != LessonProgressStatus.COMPLETED
+                && course.getStartDate() != null && course.getEndDate() != null
+                && session.getOrderIndex() != null
+                && isPastPlannedDate(course, session.getOrderIndex(), course.getTotalSessions())) {
+            progress.setStatus(LessonProgressStatus.SLOW);
+        }
 
         userSessionProgressRepository.save(progress);
+        List<ClassStudent> enrollments = classStudentRepository.findByStudent_Id(user.getId());
+        for (ClassStudent cs : enrollments) {
+            Long classId = cs.getClassroom().getId();
+            Long courseId = course.getId();
+            RoadmapAssignment ra = roadmapAssignmentRepository
+                    .findByClazz_IdAndCourse_Id(classId, courseId)
+                    .orElse(null);
+            if (ra == null) continue;
+
+            UserRoadmapProgress rp = userRoadmapProgressRepository
+                    .findByUserIdAndAssignmentId(user.getId(), ra.getId())
+                    .orElseGet(() -> UserRoadmapProgress.builder()
+                            .user(user)
+                            .assignment(ra)
+                            .totalItems(ra.getItems() != null ? ra.getItems().size() : 0)
+                            .build());
+
+            if (ra.getItems() != null) {
+                ra.getItems().stream()
+                        .filter(i -> i.getSession() != null && Objects.equals(i.getSession().getId(), session.getId()))
+                        .findFirst()
+                        .ifPresent(rp::setCurrentItem);
+            }
+
+            if (progress.getStatus() == LessonProgressStatus.IN_PROGRESS && rp.getStartedAt() == null) {
+                rp.setStartedAt(LocalDateTime.now());
+                rp.setStatus(LessonProgressStatus.IN_PROGRESS);
+            }
+            int total = ra.getItems() != null ? ra.getItems().size() : 0;
+            int completed = computeCompletedRoadmapItems(user, ra);
+            rp.setTotalItems(total);
+            rp.setCompletedItems(completed);
+            if (total > 0 && completed >= total) {
+                rp.setStatus(LessonProgressStatus.COMPLETED);
+                if (rp.getCompletedAt() == null) rp.setCompletedAt(LocalDateTime.now());
+            } else if (completed > 0 && rp.getStatus() == LessonProgressStatus.NOT_STARTED) {
+                rp.setStatus(LessonProgressStatus.IN_PROGRESS);
+            }
+
+            userRoadmapProgressRepository.save(rp);
+            break;
+        }
         return toSessionDto(progress);
     }
 
@@ -154,8 +211,21 @@ public class UserProgressServiceImpl implements IUserProgressService {
         if (progress.getStatus() == LessonProgressStatus.COMPLETED && progress.getCompletedAt() == null) {
             progress.setCompletedAt(LocalDateTime.now());
         }
+        if (progress.getStatus() != LessonProgressStatus.COMPLETED
+                && course.getEndDate() != null
+                && java.time.LocalDate.now().isAfter(course.getEndDate())) {
+            progress.setStatus(LessonProgressStatus.DELAYED);
+        }
+        if (progress.getStatus() != LessonProgressStatus.COMPLETED
+                && course.getStartDate() != null && course.getEndDate() != null
+                && session.getOrderIndex() != null
+                && isPastPlannedDate(course, session.getOrderIndex(), course.getTotalSessions())) {
+            progress.setStatus(LessonProgressStatus.SLOW);
+        }
 
         userLessonProgressRepository.save(progress);
+        // Đồng bộ trạng thái lộ trình ở mức tổng thể nếu có thể suy ra
+        trySyncRoadmapProgress(user, course, lesson, progress.getStatus());
         return toLessonDto(progress);
     }
 
@@ -186,6 +256,174 @@ public class UserProgressServiceImpl implements IUserProgressService {
     private Lesson requireLesson(Long lessonId) {
         return lessonRepository.findById(java.util.Objects.requireNonNull(lessonId, "lessonId must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy lesson với id = " + lessonId));
+    }
+
+    // ===== Roadmap Progress =====
+    @Override
+    @Transactional
+    public UserRoadmapProgressResponseDTO upsertRoadmapProgress(UserRoadmapProgressRequestDTO dto) {
+        User user = requireUser(dto.getUserId());
+        Long roadmapId = Objects.requireNonNull(dto.getRoadmapId(), "roadmapId must not be null");
+        RoadmapAssignment assignment = roadmapAssignmentRepository.findById(roadmapId)
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy roadmap với id = " + roadmapId));
+
+        if (!classStudentRepository.existsByClassroomIdAndStudentId(assignment.getClazz().getId(), user.getId())) {
+            throw new HttpBadRequest("User không thuộc lớp của roadmap này");
+        }
+
+        UserRoadmapProgress rp = userRoadmapProgressRepository
+                .findByUserIdAndAssignmentId(user.getId(), assignment.getId())
+                .orElseGet(() -> UserRoadmapProgress.builder()
+                        .user(user)
+                        .assignment(assignment)
+                        .totalItems(assignment.getItems() != null ? assignment.getItems().size() : 0)
+                        .build());
+
+        if (dto.getStatus() != null) {
+            rp.setStatus(parseProgressStatus(dto.getStatus()));
+            if (rp.getStatus() == LessonProgressStatus.IN_PROGRESS && rp.getStartedAt() == null) {
+                rp.setStartedAt(LocalDateTime.now());
+            }
+            if (rp.getStatus() == LessonProgressStatus.COMPLETED && rp.getCompletedAt() == null) {
+                rp.setCompletedAt(LocalDateTime.now());
+            }
+        }
+
+        if (dto.getCurrentItemId() != null && assignment.getItems() != null) {
+            RoadmapItem current = assignment.getItems().stream()
+                    .filter(i -> Objects.equals(i.getId(), dto.getCurrentItemId()))
+                    .findFirst()
+                    .orElseThrow(() -> new HttpBadRequest("currentItemId không thuộc roadmap"));
+            rp.setCurrentItem(current);
+        }
+
+        int total = assignment.getItems() != null ? assignment.getItems().size() : 0;
+        int completed = computeCompletedRoadmapItems(user, assignment);
+        rp.setTotalItems(total);
+        rp.setCompletedItems(completed);
+        if (total > 0 && completed >= total) {
+            rp.setStatus(LessonProgressStatus.COMPLETED);
+            if (rp.getCompletedAt() == null) rp.setCompletedAt(LocalDateTime.now());
+        } else if (completed > 0 && rp.getStatus() == LessonProgressStatus.NOT_STARTED) {
+            rp.setStatus(LessonProgressStatus.IN_PROGRESS);
+            if (rp.getStartedAt() == null) rp.setStartedAt(LocalDateTime.now());
+        }
+
+        userRoadmapProgressRepository.save(rp);
+        return toRoadmapDto(rp);
+    }
+
+    @Override
+    public List<UserRoadmapProgressResponseDTO> getRoadmapProgressByUser(Long userId) {
+        return userRoadmapProgressRepository.findByUserId(Objects.requireNonNull(userId, "userId must not be null"))
+                .stream().map(this::toRoadmapDto).toList();
+    }
+
+    @Override
+    public UserRoadmapProgressResponseDTO getRoadmapProgressByUserAndRoadmap(Long userId, Long roadmapId) {
+        Objects.requireNonNull(userId, "userId must not be null");
+        Objects.requireNonNull(roadmapId, "roadmapId must not be null");
+        RoadmapAssignment assignment = roadmapAssignmentRepository.findById(roadmapId)
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy roadmap với id = " + roadmapId));
+        User user = requireUser(userId);
+
+        UserRoadmapProgress rp = userRoadmapProgressRepository
+                .findByUserIdAndAssignmentId(userId, assignment.getId())
+                .orElseGet(() -> UserRoadmapProgress.builder()
+                        .user(user)
+                        .assignment(assignment)
+                        .totalItems(assignment.getItems() != null ? assignment.getItems().size() : 0)
+                        .build());
+
+        int total = assignment.getItems() != null ? assignment.getItems().size() : 0;
+        int completed = computeCompletedRoadmapItems(user, assignment);
+        rp.setTotalItems(total);
+        rp.setCompletedItems(completed);
+        if (total > 0 && completed >= total) {
+            rp.setStatus(LessonProgressStatus.COMPLETED);
+            if (rp.getCompletedAt() == null) rp.setCompletedAt(LocalDateTime.now());
+        } else if (completed > 0 && rp.getStatus() == LessonProgressStatus.NOT_STARTED) {
+            rp.setStatus(LessonProgressStatus.IN_PROGRESS);
+        }
+
+        return toRoadmapDto(rp);
+    }
+
+    private void trySyncRoadmapProgress(User user, Course course, Lesson lesson, LessonProgressStatus status) {
+        // Tìm roadmap assignment phù hợp: theo các lớp mà user thuộc và có assignment cho course này
+        List<ClassStudent> enrollments = classStudentRepository.findByStudent_Id(user.getId());
+        for (ClassStudent cs : enrollments) {
+            Long classId = cs.getClassroom().getId();
+            Long courseId = course.getId();
+            RoadmapAssignment ra = roadmapAssignmentRepository
+                    .findByClazz_IdAndCourse_Id(classId, courseId)
+                    .orElse(null);
+            if (ra == null) continue;
+
+            // Lấy/khởi tạo bản ghi roadmap progress
+            UserRoadmapProgress rp = userRoadmapProgressRepository
+                    .findByUserIdAndAssignmentId(user.getId(), ra.getId())
+                    .orElseGet(() -> UserRoadmapProgress.builder()
+                            .user(user)
+                            .assignment(ra)
+                            .totalItems(ra.getItems() != null ? ra.getItems().size() : 0)
+                            .build());
+
+            // Cập nhật current item theo lesson tương ứng (nếu có trong roadmap)
+            if (ra.getItems() != null) {
+                ra.getItems().stream()
+                        .filter(i -> i.getLesson() != null && Objects.equals(i.getLesson().getId(), lesson.getId()))
+                        .findFirst()
+                        .ifPresent(rp::setCurrentItem);
+            }
+
+            if (status == LessonProgressStatus.IN_PROGRESS && rp.getStartedAt() == null) {
+                rp.setStartedAt(LocalDateTime.now());
+                rp.setStatus(LessonProgressStatus.IN_PROGRESS);
+            }
+            int total = ra.getItems() != null ? ra.getItems().size() : 0;
+            int completed = computeCompletedRoadmapItems(user, ra);
+            rp.setTotalItems(total);
+            rp.setCompletedItems(completed);
+            if (total > 0 && completed >= total) {
+                rp.setStatus(LessonProgressStatus.COMPLETED);
+                if (rp.getCompletedAt() == null) rp.setCompletedAt(LocalDateTime.now());
+            } else if (completed > 0 && rp.getStatus() == LessonProgressStatus.NOT_STARTED) {
+                rp.setStatus(LessonProgressStatus.IN_PROGRESS);
+            }
+
+            userRoadmapProgressRepository.save(rp);
+            // Đồng bộ 1 assignment là đủ
+            break;
+        }
+    }
+
+    private boolean isPastPlannedDate(Course course, int orderIndex, int totalSessions) {
+        if (totalSessions <= 0 || orderIndex == 0) return false;
+        long totalDays = java.time.temporal.ChronoUnit.DAYS.between(course.getStartDate(), course.getEndDate());
+        if (totalDays <= 0) return false;
+        double ratio = Math.min(1.0, Math.max(0.0, (double) orderIndex / (double) totalSessions));
+        java.time.LocalDate plannedDate = course.getStartDate().plusDays((long) Math.floor(totalDays * ratio));
+        return java.time.LocalDate.now().isAfter(plannedDate);
+    }
+
+    private int computeCompletedRoadmapItems(User user, RoadmapAssignment ra) {
+        if (ra.getItems() == null) return 0;
+        int done = 0;
+        for (RoadmapItem item : ra.getItems()) {
+            if (item.getLesson() != null) {
+                var lp = userLessonProgressRepository.findByUserIdAndLessonId(user.getId(), item.getLesson().getId());
+                if (lp.isPresent() && lp.get().getStatus() == LessonProgressStatus.COMPLETED) {
+                    done++;
+                }
+            } else if (item.getSession() != null) {
+                var sp = userSessionProgressRepository.findByUserIdAndSessionId(user.getId(), item.getSession().getId());
+                if (sp.isPresent() && sp.get().getStatus() == LessonProgressStatus.COMPLETED) {
+                    done++;
+                }
+            }
+        }
+        return done;
     }
 
     private BigDecimal normalizePercent(BigDecimal value) {
@@ -267,6 +505,21 @@ public class UserProgressServiceImpl implements IUserProgressService {
                 .progressPercent(progress.getProgressPercent())
                 .startedAt(progress.getStartedAt())
                 .completedAt(progress.getCompletedAt())
+                .build();
+    }
+
+    private UserRoadmapProgressResponseDTO toRoadmapDto(UserRoadmapProgress rp) {
+        return UserRoadmapProgressResponseDTO.builder()
+                .id(rp.getId())
+                .userId(rp.getUser().getId())
+                .roadmapId(rp.getAssignment().getId())
+                .status(rp.getStatus().name())
+                .currentItemId(rp.getCurrentItem() != null ? rp.getCurrentItem().getId() : null)
+                .completedItems(rp.getCompletedItems())
+                .totalItems(rp.getTotalItems())
+                .startedAt(rp.getStartedAt())
+                .completedAt(rp.getCompletedAt())
+                .updatedAt(rp.getUpdatedAt())
                 .build();
     }
 }
