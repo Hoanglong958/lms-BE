@@ -39,7 +39,7 @@ public class CourseController {
             @ApiResponse(responseCode = "200", description = "Tạo thành công",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = CourseResponseDTO.class),
-                            examples = @ExampleObject(name = "CreatedCourse", value = "{\n  \"id\": 1,\n  \"title\": \"Spring Boot Fundamentals\",\n  \"description\": \"Learn how to build REST APIs with Spring Boot 3\",\n  \"instructorName\": \"Nguyen Van A\",\n  \"level\": \"BEGINNER\",\n  \"createdAt\": \"2025-11-14T09:30:00\"\n}"))),
+                            examples = @ExampleObject(name = "CreatedCourse", value = "{\n  \"id\": 1,\n  \"title\": \"Spring Boot Fundamentals\",\n  \"description\": \"Learn how to build REST APIs with Spring Boot 3\",\n  \"level\": \"BEGINNER\",\n  \"createdAt\": \"2025-11-14T09:30:00\"\n}"))),
             @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
             @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
             @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
@@ -57,7 +57,7 @@ public class CourseController {
             @ApiResponse(responseCode = "200", description = "Cập nhật thành công",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = CourseResponseDTO.class),
-                            examples = @ExampleObject(name = "UpdatedCourse", value = "{\n  \"id\": 1,\n  \"title\": \"Spring Boot Advanced\",\n  \"description\": \"Deep dive into Spring Boot internals\",\n  \"instructorName\": \"Nguyen Van A\",\n  \"level\": \"INTERMEDIATE\",\n  \"createdAt\": \"2025-11-14T10:00:00\"\n}"))),
+                            examples = @ExampleObject(name = "UpdatedCourse", value = "{\n  \"id\": 1,\n  \"title\": \"Spring Boot Advanced\",\n  \"description\": \"Deep dive into Spring Boot internals\",\n   \"level\": \"INTERMEDIATE\",\n  \"createdAt\": \"2025-11-14T10:00:00\"\n}"))),
             @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
             @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
             @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
@@ -93,7 +93,7 @@ public class CourseController {
             @ApiResponse(responseCode = "200", description = "Thành công",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = CourseResponseDTO.class),
-                            examples = @ExampleObject(name = "CourseDetail", value = "{\n  \"id\": 1,\n  \"title\": \"Spring Boot Fundamentals\",\n  \"description\": \"Learn how to build REST APIs with Spring Boot 3\",\n  \"instructorName\": \"Nguyen Van A\",\n  \"level\": \"BEGINNER\",\n  \"createdAt\": \"2025-11-14T09:30:00\"\n}"))),
+                            examples = @ExampleObject(name = "CourseDetail", value = "{\n  \"id\": 1,\n  \"title\": \"Spring Boot Fundamentals\",\n  \"description\": \"Learn how to build REST APIs with Spring Boot 3\",\n   \"level\": \"BEGINNER\",\n  \"createdAt\": \"2025-11-14T09:30:00\"\n}"))),
             @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
             @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
             @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
@@ -111,7 +111,7 @@ public class CourseController {
             @ApiResponse(responseCode = "200", description = "Thành công",
                     content = @Content(mediaType = "application/json",
                             array = @ArraySchema(schema = @Schema(implementation = CourseResponseDTO.class)),
-                            examples = @ExampleObject(name = "CourseList", value = "[{\n  \"id\": 1,\n  \"title\": \"Spring Boot Fundamentals\",\n  \"description\": \"Learn how to build REST APIs with Spring Boot 3\",\n  \"instructorName\": \"Nguyen Van A\",\n  \"level\": \"BEGINNER\",\n  \"createdAt\": \"2025-11-14T09:30:00\"\n}]"))),
+                            examples = @ExampleObject(name = "CourseList", value = "[{\n  \"id\": 1,\n  \"title\": \"Spring Boot Fundamentals\",\n  \"description\": \"Learn how to build REST APIs with Spring Boot 3\",\n   \"level\": \"BEGINNER\",\n  \"createdAt\": \"2025-11-14T09:30:00\"\n}]"))),
             @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
             @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
             @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
@@ -129,14 +129,14 @@ public class CourseController {
             @ApiResponse(responseCode = "200", description = "Thành công",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = CourseResponseDTO.class),
-                            examples = @ExampleObject(name = "PagedCourse", value = "{\n  \"content\": [{\n    \"id\": 1,\n    \"title\": \"Spring Boot Fundamentals\",\n    \"description\": \"Learn how to build REST APIs with Spring Boot 3\",\n    \"instructorName\": \"Nguyen Van A\",\n    \"level\": \"BEGINNER\",\n    \"createdAt\": \"2025-11-14T09:30:00\"\n  }],\n  \"pageable\": {\n    \"pageNumber\": 0,\n    \"pageSize\": 10\n  },\n  \"totalElements\": 1,\n  \"totalPages\": 1,\n  \"first\": true,\n  \"last\": true\n}"))),
+                            examples = @ExampleObject(name = "PagedCourse", value = "{\n  \"content\": [{\n    \"id\": 1,\n    \"title\": \"Spring Boot Fundamentals\",\n    \"description\": \"Learn how to build REST APIs with Spring Boot 3\",\n    \"level\": \"BEGINNER\",\n    \"createdAt\": \"2025-11-14T09:30:00\"\n  }],\n  \"pageable\": {\n    \"pageNumber\": 0,\n    \"pageSize\": 10\n  },\n  \"totalElements\": 1,\n  \"totalPages\": 1,\n  \"first\": true,\n  \"last\": true\n}"))),
             @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
             @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
             @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
             @ApiResponse(responseCode = "500", description = "Lỗi hệ thống", content = @Content)
     })
     public ResponseEntity<Page<CourseResponseDTO>> getCoursesPaging(
-            @Parameter(description = "Từ khóa tìm kiếm theo title hoặc instructorName")
+            @Parameter(description = "Từ khóa tìm kiếm theo title ")
             @RequestParam(value = "q", required = false) String q,
             @Parameter(description = "Trang bắt đầu từ 0")
             @RequestParam(value = "page", defaultValue = "0") int page,

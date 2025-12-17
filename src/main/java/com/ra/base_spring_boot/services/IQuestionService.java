@@ -2,10 +2,16 @@ package com.ra.base_spring_boot.services;
 
 import com.ra.base_spring_boot.dto.Question.QuestionRequestDTO;
 import com.ra.base_spring_boot.dto.Question.QuestionResponseDTO;
+import org.springframework.data.domain.Page;
+
 import java.util.List;
 
 public interface IQuestionService {
-    List<QuestionResponseDTO> getAll();
+    Page<QuestionResponseDTO> getQuestions(
+            int page,
+            int size,
+            String keyword
+    );
     QuestionResponseDTO getById(Long id);
     QuestionResponseDTO create(QuestionRequestDTO request);
     List<QuestionResponseDTO> createBulk(List<QuestionRequestDTO> requests);

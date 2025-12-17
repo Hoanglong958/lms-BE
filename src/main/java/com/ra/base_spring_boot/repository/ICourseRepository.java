@@ -12,7 +12,6 @@ import java.util.List;
 
 @Repository
 public interface ICourseRepository extends JpaRepository<Course, Long> {
-    Page<Course> findByTitleContainingIgnoreCaseOrInstructorNameContainingIgnoreCase(String title, String instructorName, Pageable pageable);
 
     @Query("SELECT COUNT(c) FROM Course c")
     long countAll();

@@ -23,15 +23,22 @@ public class QuestionController {
 
     private final IQuestionService questionService;
 
-    // ======= Lấy danh sách toàn bộ câu hỏi =======
-    @GetMapping
+    @GetMapping("/page")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
-    @Operation(summary = "Lấy danh sách tất cả câu hỏi",
-            description = "Cho phép ADMIN và USER xem danh sách câu hỏi")
-    @ApiResponse(responseCode = "200", description = "Lấy danh sách thành công")
-    public ResponseEntity<List<QuestionResponseDTO>> getAllQuestions() {
-        return ResponseEntity.ok(questionService.getAll());
+    @Operation(
+            summary = "Lấy danh sách câu hỏi (phân trang + tìm kiếm)",
+            description = "Hỗ trợ phân trang và tìm theo nội dung câu hỏi"
+    )
+    public ResponseEntity<?> getQuestionsPaging(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword
+    ) {
+        return ResponseEntity.ok(
+                questionService.getQuestions(page, size, keyword)
+        );
     }
+
 
     // ======= Lấy chi tiết 1 câu hỏi theo ID =======
     @GetMapping("/detail")

@@ -3,6 +3,7 @@ package com.ra.base_spring_boot.model;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -39,8 +40,9 @@ public class ExamAttempt {
     @Builder.Default
     private Integer attemptNumber = 1;
 
+    @Builder.Default
     @OneToMany(mappedBy = "attempt", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ExamAnswer> answers;
+    private List<ExamAnswer> answers = new ArrayList<>();
 
     public enum AttemptStatus {
         IN_PROGRESS, SUBMITTED, GRADED

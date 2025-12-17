@@ -7,6 +7,10 @@ import com.ra.base_spring_boot.model.Question;
 import com.ra.base_spring_boot.repository.IQuestionRepository;
 import com.ra.base_spring_boot.services.IQuestionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,14 +25,31 @@ public class QuestionServiceImpl implements IQuestionService {
 
     private final IQuestionRepository questionRepository;
 
-    // Lấy tất cả câu hỏi
     @Override
-    public List<QuestionResponseDTO> getAll() {
-        return questionRepository.findAll()
-                .stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+    public Page<QuestionResponseDTO> getQuestions(
+            int page,
+            int size,
+            String keyword
+    ) {
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("createdAt").descending()
+        );
+
+        Page<Question> pageData;
+
+        if (keyword != null && !keyword.isBlank()) {
+            pageData = questionRepository
+                    .findByQuestionTextContainingIgnoreCase(keyword, pageable);
+        } else {
+            pageData = questionRepository.findAll(pageable);
+        }
+
+        return pageData.map(this::toResponse);
     }
+
 
     // Lấy câu hỏi theo ID
     @Override

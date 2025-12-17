@@ -28,4 +28,8 @@ public interface IScheduleItemRepository extends JpaRepository<ScheduleItem, Lon
             @Param("to") LocalDate to,
             @Param("periodId") Long periodId
     );
+
+    void deleteByCourse_IdAndClazz_Id(Long id, Long id1);
+
+
 }
