@@ -3,11 +3,14 @@ package com.ra.base_spring_boot.services.impl;
 import com.ra.base_spring_boot.dto.Gmail.EmailDTO;
 import com.ra.base_spring_boot.dto.req.*;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
+import com.ra.base_spring_boot.dto.resp.VerifyOtpResponse;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
+import com.ra.base_spring_boot.model.PasswordResetOtp;
 import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.model.constants.RoleName;
 import com.ra.base_spring_boot.repository.IUserRepository;
 import com.ra.base_spring_boot.repository.IPasswordResetTokenRepository;
+import com.ra.base_spring_boot.repository.IPasswordResetOtpRepository;
 import com.ra.base_spring_boot.model.PasswordResetToken;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
@@ -24,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +39,7 @@ public class AuthServiceImpl implements IAuthService {
     private final JwtProvider jwtProvider;
     private final IPasswordResetTokenRepository passwordResetTokenRepository;
     private final IPasswordResetTokenService passwordResetTokenService;
+    private final IPasswordResetOtpRepository passwordResetOtpRepository;
     private final GmailService gmailService;
 
 
@@ -166,33 +171,6 @@ public class AuthServiceImpl implements IAuthService {
         userRepository.save(user);
     }
 
-    @Override
-    public void forgotPassword(ForgotPasswordRequest request) {
-        // 1️⃣ Tạo token reset
-        CreatePasswordResetTokenRequest createReq = new CreatePasswordResetTokenRequest();
-        createReq.setGmail(request.getGmail());
-        var tokenResp = passwordResetTokenService.create(createReq);
-
-        // 2️⃣ Tạo link reset hoàn chỉnh
-        String resetLink = "http://localhost:5173/reset-password?token=" + tokenResp.getToken();
-
-        // 3️⃣ Gửi mail
-        gmailService.sendEmail(new EmailDTO(
-                request.getGmail(),                  // Người nhận
-                "Đặt lại mật khẩu",                  // Tiêu đề mail
-                "forgot_password",                   // Template Thymeleaf
-                Map.of(
-                        "username", request.getGmail(),
-                        "resetLink", resetLink
-                )
-        ));
-
-        // 4️⃣ Không cần in ra console nữa, backend đã gửi email
-    }
-
-
-
-
     // ======================= Đặt lại mật khẩu =========================
     @Override
     @Transactional
@@ -237,5 +215,79 @@ public class AuthServiceImpl implements IAuthService {
 
         token.setIsUsed(true);
         passwordResetTokenRepository.save(token);
+    }
+
+    // ======================= OTP cho quên mật khẩu =========================
+    @Override
+    @Transactional
+    public void forgotPasswordOtp(ForgotPasswordRequest request) {
+        User user = userRepository.findByGmail(request.getGmail())
+                .orElseThrow(() -> new HttpBadRequest("Gmail không tồn tại trong hệ thống!"));
+
+        passwordResetOtpRepository.deleteByUser(user);
+
+        String code = String.format("%06d", new Random().nextInt(1_000_000));
+        PasswordResetOtp otp = PasswordResetOtp.builder()
+                .user(user)
+                .code(code)
+                .expiresAt(LocalDateTime.now().plusMinutes(5))
+                .attempts(0)
+                .maxAttempts(5)
+                .isUsed(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+        passwordResetOtpRepository.save(otp);
+
+        try {
+            gmailService.sendEmail(new EmailDTO(
+                    user.getGmail(),
+                    "Mã OTP đặt lại mật khẩu",
+                    "forgot_password_otp",
+                    Map.of(
+                            "username", user.getFullName() != null ? user.getFullName() : user.getGmail(),
+                            "otp", code,
+                            "expiredMinutes", 5
+                    )
+            ));
+        } catch (Exception e) {
+            // Tránh 500 nếu cấu hình mail lỗi: chỉ log và tiếp tục, vì OTP đã tạo trong hệ thống
+            System.err.println("[WARN] Gửi email OTP thất bại, nhưng OTP đã được tạo: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public VerifyOtpResponse verifyOtp(VerifyOtpRequest request) {
+        User user = userRepository.findByGmail(request.getGmail())
+                .orElseThrow(() -> new HttpBadRequest("Gmail không tồn tại trong hệ thống!"));
+
+        PasswordResetOtp otp = passwordResetOtpRepository.findTopByUserOrderByCreatedAtDesc(user)
+                .orElseThrow(() -> new HttpBadRequest("Chưa có OTP nào được gửi!"));
+
+        if (Boolean.TRUE.equals(otp.getIsUsed())) {
+            throw new HttpBadRequest("OTP đã được sử dụng!");
+        }
+        if (otp.getExpiresAt() == null || otp.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new HttpBadRequest("OTP đã hết hạn, vui lòng yêu cầu lại!");
+        }
+        if (otp.getAttempts() != null && otp.getMaxAttempts() != null && otp.getAttempts() >= otp.getMaxAttempts()) {
+            throw new HttpBadRequest("Bạn đã nhập sai quá số lần cho phép. Vui lòng yêu cầu OTP mới!");
+        }
+        if (!otp.getCode().equals(request.getOtp())) {
+            otp.setAttempts((otp.getAttempts() == null ? 0 : otp.getAttempts()) + 1);
+            passwordResetOtpRepository.save(otp);
+            throw new HttpBadRequest("OTP không đúng!");
+        }
+
+        otp.setIsUsed(true);
+        passwordResetOtpRepository.save(otp);
+
+        CreatePasswordResetTokenRequest createReq = new CreatePasswordResetTokenRequest();
+        createReq.setGmail(user.getGmail());
+        var tokenResp = passwordResetTokenService.create(createReq);
+
+        return VerifyOtpResponse.builder()
+                .token(tokenResp.getToken())
+                .expiresAt(tokenResp.getExpiresAt())
+                .build();
     }
 }

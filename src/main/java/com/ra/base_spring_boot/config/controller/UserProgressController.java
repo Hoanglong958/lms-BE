@@ -247,6 +247,93 @@ public class UserProgressController {
             @Parameter(description = "ID khóa học") @PathVariable Long courseId) {
         return ResponseEntity.ok(userProgressService.getLessonProgressByUserAndCourse(userId, courseId));
     }
+
+    // ===== Roadmap (Assignment) Progress =====
+    @PostMapping("/roadmaps")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @Operation(summary = "Tạo/Cập nhật trạng thái lộ trình của user")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Trạng thái lộ trình sau khi cập nhật",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = UserRoadmapProgressResponseDTO.class),
+                            examples = @ExampleObject(
+                                    name = "RoadmapProgressExample",
+                                    value = "{\n" +
+                                            "  \"id\": 1,\n" +
+                                            "  \"userId\": 5,\n" +
+                                            "  \"roadmapId\": 12,\n" +
+                                            "  \"status\": \"IN_PROGRESS\",\n" +
+                                            "  \"currentItemId\": 101,\n" +
+                                            "  \"completedItems\": 3,\n" +
+                                            "  \"totalItems\": 10\n" +
+                                            "}"
+                            ))),
+            @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Lỗi hệ thống", content = @Content)
+    })
+    public ResponseEntity<UserRoadmapProgressResponseDTO> upsertRoadmapProgress(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Thông tin trạng thái lộ trình cần cập nhật",
+                    content = @Content(schema = @Schema(implementation = UserRoadmapProgressRequestDTO.class),
+                            examples = @ExampleObject(
+                                    name = "RoadmapProgressRequest",
+                                    value = "{\n" +
+                                            "  \"userId\": 5,\n" +
+                                            "  \"roadmapId\": 12,\n" +
+                                            "  \"status\": \"IN_PROGRESS\",\n" +
+                                            "  \"currentItemId\": 101\n" +
+                                            "}"
+                            ))
+            )
+            @RequestBody UserRoadmapProgressRequestDTO dto) {
+        return ResponseEntity.ok(userProgressService.upsertRoadmapProgress(dto));
+    }
+
+    @GetMapping("/roadmaps/{userId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @Operation(summary = "Danh sách trạng thái lộ trình theo user")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Danh sách trạng thái lộ trình",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = UserRoadmapProgressResponseDTO.class)))
+            ),
+            @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Lỗi hệ thống", content = @Content)
+    })
+    public ResponseEntity<List<UserRoadmapProgressResponseDTO>> getRoadmapProgressByUser(
+            @Parameter(description = "ID người dùng") @PathVariable Long userId) {
+        return ResponseEntity.ok(userProgressService.getRoadmapProgressByUser(userId));
+    }
+
+    @GetMapping("/roadmaps/{userId}/{roadmapId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @Operation(summary = "Trạng thái lộ trình cụ thể theo user + roadmap")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Trạng thái lộ trình",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = UserRoadmapProgressResponseDTO.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
+            @ApiResponse(responseCode = "500", description = "Lỗi hệ thống", content = @Content)
+    })
+    public ResponseEntity<UserRoadmapProgressResponseDTO> getRoadmapProgressByUserAndRoadmap(
+            @Parameter(description = "ID người dùng") @PathVariable Long userId,
+            @Parameter(description = "ID roadmap (assignment)") @PathVariable Long roadmapId) {
+        return ResponseEntity.ok(userProgressService.getRoadmapProgressByUserAndRoadmap(userId, roadmapId));
+    }
 }
 
 

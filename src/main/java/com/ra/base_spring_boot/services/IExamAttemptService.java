@@ -1,6 +1,7 @@
 package com.ra.base_spring_boot.services;
 
 import com.ra.base_spring_boot.dto.ExamAttempt.ExamAttemptResponseDTO;
+import com.ra.base_spring_boot.model.ExamAttempt;
 
 import java.util.List;
 import java.util.Map;
@@ -30,4 +31,10 @@ public interface IExamAttemptService {
 
     // Get theo user
     List<ExamAttemptResponseDTO> getByUser(Long userId);
+
+    // Xóa attempt
+    void delete(Long id);
+
+    // Cập nhật trạng thái
+    ExamAttemptResponseDTO updateStatus(Long id, ExamAttempt.AttemptStatus status);
 }

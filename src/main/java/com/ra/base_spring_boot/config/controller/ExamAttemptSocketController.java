@@ -53,8 +53,8 @@ public class ExamAttemptSocketController {
 
             case "JOIN_EXAM" -> {
                 ExamParticipant participant = examParticipantService.joinExam(
-                        message.getUserId(),
                         message.getExamId(),
+                        message.getUserId(),
                         LocalDateTime.now()
                 );
 

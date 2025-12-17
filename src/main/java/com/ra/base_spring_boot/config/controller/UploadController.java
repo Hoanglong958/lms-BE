@@ -22,14 +22,14 @@ public class UploadController {
     @PostMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Upload ảnh", description = "Nhận MultipartFile, validate và lưu, trả về URL public")
-    public ResponseEntity<UploadResponseDTO> uploadImage(@RequestPart("file") MultipartFile file) {
+    public ResponseEntity<UploadResponseDTO> uploadImage(@RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(uploadService.uploadImage(file));
     }
 
     @PostMapping(value = "/video", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Upload video", description = "Nhận MultipartFile, validate và lưu, trả về URL public")
-    public ResponseEntity<UploadResponseDTO> uploadVideo(@RequestPart("file") MultipartFile file) {
+    public ResponseEntity<UploadResponseDTO> uploadVideo(@RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(uploadService.uploadVideo(file));
     }
 }

@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.services;
 
 import com.ra.base_spring_boot.dto.req.*;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
+import com.ra.base_spring_boot.dto.resp.VerifyOtpResponse;
 
 public interface IAuthService
 {
@@ -12,8 +13,10 @@ public interface IAuthService
 
     void changePassword(String username, ChangePasswordRequest request);
 
-    void forgotPassword(ForgotPasswordRequest request);
     void resetPassword(ResetPasswordRequest request);
+
+    void forgotPasswordOtp(ForgotPasswordRequest request);
+    VerifyOtpResponse verifyOtp(VerifyOtpRequest request);
 
 
 }

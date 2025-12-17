@@ -79,6 +79,7 @@ public class ExamParticipantController {
                 : (p.getStarted() != null && p.getStarted() ? "JOINED" : "PENDING");
         return ExamParticipantResponseDTO.builder()
                 .userId(p.getUser() != null ? p.getUser().getId() : null)
+                .examRoomId(null)
                 .startTime(p.getJoinTime())
                 .endTime(p.getSubmitTime())
                 .status(status)

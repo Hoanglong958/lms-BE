@@ -14,5 +14,6 @@ import java.util.Map;
 public class ExamParticipantRequestDTO {
     private Long userId;
     private Long examId;
+    private Long examRoomId;
     private Map<Long, String> answers; // optional, chỉ dùng khi submit
 }

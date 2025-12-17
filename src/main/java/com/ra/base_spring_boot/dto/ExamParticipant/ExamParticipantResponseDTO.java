@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @Builder
 public class ExamParticipantResponseDTO {
     private Long userId;
+    private Long examRoomId;
     private LocalDateTime startTime;
     private LocalDateTime endTime; // null nếu chưa submit
     private String status; // "JOINED" hoặc "SUBMITTED"

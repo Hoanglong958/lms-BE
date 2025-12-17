@@ -219,6 +219,28 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
     }
 
     // =====================================================================
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        if (id == null) throw new IllegalArgumentException("id must not be null");
+        ExamAttempt attempt = attemptRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Attempt not found"));
+        attemptRepository.delete(attempt);
+    }
+
+    // =====================================================================
+    @Override
+    @Transactional
+    public ExamAttemptResponseDTO updateStatus(Long id, ExamAttempt.AttemptStatus status) {
+        if (id == null) throw new IllegalArgumentException("id must not be null");
+        if (status == null) throw new IllegalArgumentException("status must not be null");
+        ExamAttempt attempt = attemptRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Attempt not found"));
+        attempt.setStatus(status);
+        return toDTO(attemptRepository.save(attempt));
+    }
+
+    // =====================================================================
     private ExamAttemptResponseDTO toDTO(ExamAttempt entity) {
         ExamAttemptResponseDTO dto = modelMapper.map(entity, ExamAttemptResponseDTO.class);
         dto.setExamId(entity.getExam().getId());
