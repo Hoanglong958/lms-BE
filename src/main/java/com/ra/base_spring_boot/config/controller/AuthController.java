@@ -129,4 +129,37 @@ public class AuthController {
                         .build()
         );
     }
+
+    /**
+     * Gửi OTP về email để xác minh quên mật khẩu
+     */
+    @PostMapping("/forgot-password-otp")
+    @Operation(summary = "Quên mật khẩu (OTP)", description = "Gửi OTP về email để xác minh")
+    @ApiResponse(responseCode = "200", description = "Gửi OTP thành công")
+    public ResponseEntity<?> forgotPasswordOtp(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPasswordOtp(request);
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data("Đã gửi OTP về email. Vui lòng kiểm tra email và nhập OTP để tiếp tục.")
+                        .build()
+        );
+    }
+
+    /**
+     * Xác minh OTP và cấp reset-token để đặt lại mật khẩu
+     */
+    @PostMapping("/verify-otp")
+    @Operation(summary = "Xác minh OTP", description = "Khi đúng OTP sẽ trả về reset-token để đặt lại mật khẩu")
+    @ApiResponse(responseCode = "200", description = "Xác minh thành công, trả reset-token")
+    public ResponseEntity<?> verifyOtp(@Valid @RequestBody VerifyOtpRequest request) {
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data(authService.verifyOtp(request))
+                        .build()
+        );
+    }
 }
