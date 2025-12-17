@@ -3,7 +3,6 @@ package com.ra.base_spring_boot.config.controller;
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.req.*;
 import com.ra.base_spring_boot.services.IAuthService;
-import com.ra.base_spring_boot.services.IPasswordResetTokenService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,7 +22,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 public class AuthController {
 
     private final IAuthService authService;
-    private final IPasswordResetTokenService passwordResetTokenService;
 
     /**
      * @param formLogin FormLogin
@@ -93,24 +91,7 @@ public class AuthController {
         );
     }
 
-    /**
-     * @param request ForgotPasswordRequest
-     * @apiNote Handle forgot password - tạo token và gửi link reset qua email (delayed OTP reveal flow)
-     * Flow: User nhập email → Server tạo token và gửi link → User click link → Frontend validate token → Hiển thị form reset password
-     */
-    @PostMapping("/forgot-password")
-    @Operation(summary = "Quên mật khẩu", description = "Tạo token và gửi link đặt lại mật khẩu qua email. Token chỉ hiển thị khi user click vào link.")
-    @ApiResponse(responseCode = "200", description = "Gửi email thành công")
-    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        authService.forgotPassword(request);
-        return ResponseEntity.ok(
-                ResponseWrapper.builder()
-                        .status(HttpStatus.OK)
-                        .code(200)
-                        .data("Đã gửi link đặt lại mật khẩu qua email. Vui lòng kiểm tra email và click vào link để tiếp tục.")
-                        .build()
-        );
-    }
+    
 
     /**
      * @param request ResetPasswordRequest

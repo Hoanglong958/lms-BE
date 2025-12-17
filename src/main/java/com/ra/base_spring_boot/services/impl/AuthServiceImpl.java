@@ -171,33 +171,6 @@ public class AuthServiceImpl implements IAuthService {
         userRepository.save(user);
     }
 
-    @Override
-    public void forgotPassword(ForgotPasswordRequest request) {
-        // 1️⃣ Tạo token reset
-        CreatePasswordResetTokenRequest createReq = new CreatePasswordResetTokenRequest();
-        createReq.setGmail(request.getGmail());
-        var tokenResp = passwordResetTokenService.create(createReq);
-
-        // 2️⃣ Tạo link reset hoàn chỉnh
-        String resetLink = "http://localhost:5173/reset-password?token=" + tokenResp.getToken();
-
-        // 3️⃣ Gửi mail
-        gmailService.sendEmail(new EmailDTO(
-                request.getGmail(),                  // Người nhận
-                "Đặt lại mật khẩu",                  // Tiêu đề mail
-                "forgot_password",                   // Template Thymeleaf
-                Map.of(
-                        "username", request.getGmail(),
-                        "resetLink", resetLink
-                )
-        ));
-
-        // 4️⃣ Không cần in ra console nữa, backend đã gửi email
-    }
-
-
-
-
     // ======================= Đặt lại mật khẩu =========================
     @Override
     @Transactional
@@ -246,6 +219,7 @@ public class AuthServiceImpl implements IAuthService {
 
     // ======================= OTP cho quên mật khẩu =========================
     @Override
+    @Transactional
     public void forgotPasswordOtp(ForgotPasswordRequest request) {
         User user = userRepository.findByGmail(request.getGmail())
                 .orElseThrow(() -> new HttpBadRequest("Gmail không tồn tại trong hệ thống!"));
@@ -264,16 +238,21 @@ public class AuthServiceImpl implements IAuthService {
                 .build();
         passwordResetOtpRepository.save(otp);
 
-        gmailService.sendEmail(new EmailDTO(
-                user.getGmail(),
-                "Mã OTP đặt lại mật khẩu",
-                "forgot_password_otp",
-                Map.of(
-                        "username", user.getFullName() != null ? user.getFullName() : user.getGmail(),
-                        "otp", code,
-                        "expiredMinutes", 5
-                )
-        ));
+        try {
+            gmailService.sendEmail(new EmailDTO(
+                    user.getGmail(),
+                    "Mã OTP đặt lại mật khẩu",
+                    "forgot_password_otp",
+                    Map.of(
+                            "username", user.getFullName() != null ? user.getFullName() : user.getGmail(),
+                            "otp", code,
+                            "expiredMinutes", 5
+                    )
+            ));
+        } catch (Exception e) {
+            // Tránh 500 nếu cấu hình mail lỗi: chỉ log và tiếp tục, vì OTP đã tạo trong hệ thống
+            System.err.println("[WARN] Gửi email OTP thất bại, nhưng OTP đã được tạo: " + e.getMessage());
+        }
     }
 
     @Override

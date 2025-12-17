@@ -13,7 +13,6 @@ public interface IAuthService
 
     void changePassword(String username, ChangePasswordRequest request);
 
-    void forgotPassword(ForgotPasswordRequest request);
     void resetPassword(ResetPasswordRequest request);
 
     void forgotPasswordOtp(ForgotPasswordRequest request);
