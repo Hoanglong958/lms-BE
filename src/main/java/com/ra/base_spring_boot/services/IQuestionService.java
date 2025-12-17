@@ -8,8 +8,8 @@ import java.util.List;
 
 public interface IQuestionService {
     Page<QuestionResponseDTO> getQuestions(
-            int page,
-            int size,
+            Integer page,
+            Integer size,
             String keyword
     );
     QuestionResponseDTO getById(Long id);

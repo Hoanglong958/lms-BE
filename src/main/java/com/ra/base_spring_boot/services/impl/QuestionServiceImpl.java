@@ -25,24 +25,51 @@ public class QuestionServiceImpl implements IQuestionService {
 
     private final IQuestionRepository questionRepository;
 
+    // ====== CONSTANTS ======
+    private static final int DEFAULT_PAGE = 0;
+    private static final int DEFAULT_SIZE = 10;
+    private static final int MAX_SIZE = 50;
+
+    // ================== GET QUESTIONS (PAGINATION) ==================
     @Override
     public Page<QuestionResponseDTO> getQuestions(
-            int page,
-            int size,
+            Integer page,
+            Integer size,
             String keyword
     ) {
 
+        // ===== 1. XỬ LÝ PAGE =====
+        int safePage = (page == null || page < 0)
+                ? DEFAULT_PAGE
+                : page;
+
+        // ===== 2. XỬ LÝ SIZE =====
+        int safeSize;
+        if (size == null || size <= 0) {
+            safeSize = DEFAULT_SIZE;
+        } else if (size > MAX_SIZE) {
+            safeSize = MAX_SIZE;
+        } else {
+            safeSize = size;
+        }
+
         Pageable pageable = PageRequest.of(
-                page,
-                size,
+                safePage,
+                safeSize,
                 Sort.by("createdAt").descending()
         );
 
+        // ===== 3. XỬ LÝ KEYWORD =====
+        boolean hasKeyword = keyword != null && !keyword.trim().isEmpty();
+
         Page<Question> pageData;
 
-        if (keyword != null && !keyword.isBlank()) {
+        if (hasKeyword) {
             pageData = questionRepository
-                    .findByQuestionTextContainingIgnoreCase(keyword, pageable);
+                    .findByQuestionTextContainingIgnoreCase(
+                            keyword.trim(),
+                            pageable
+                    );
         } else {
             pageData = questionRepository.findAll(pageable);
         }
@@ -50,92 +77,93 @@ public class QuestionServiceImpl implements IQuestionService {
         return pageData.map(this::toResponse);
     }
 
-
-    // Lấy câu hỏi theo ID
+    // ================== GET BY ID ==================
     @Override
     public QuestionResponseDTO getById(Long id) {
-        Question question = questionRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
-                .orElseThrow(() -> new HttpNotFound("Không tìm thấy câu hỏi với id = " + id));
+        Question question = questionRepository.findById(id)
+                .orElseThrow(() ->
+                        new HttpNotFound("Không tìm thấy câu hỏi với id = " + id)
+                );
         return toResponse(question);
     }
 
-    // Tạo câu hỏi mới
+    // ================== CREATE ==================
     @Override
     public QuestionResponseDTO create(QuestionRequestDTO request) {
         Question question = mapRequestToEntity(request);
-        questionRepository.save(java.util.Objects.requireNonNull(question, "question must not be null"));
+        questionRepository.save(question);
         return toResponse(question);
     }
 
-    // Tạo nhiều câu hỏi cùng lúc
+    // ================== CREATE BULK ==================
     @Override
     public List<QuestionResponseDTO> createBulk(List<QuestionRequestDTO> requests) {
-        List<Question> entities = java.util.Objects.requireNonNull(requests, "requests must not be null")
-                .stream()
+        List<Question> entities = requests.stream()
                 .map(this::mapRequestToEntity)
                 .collect(Collectors.toList());
 
-        List<Question> saved = questionRepository.saveAll(java.util.Objects.requireNonNull(entities, "entities must not be null"));
-        return saved.stream().map(this::toResponse).collect(Collectors.toList());
+        return questionRepository.saveAll(entities)
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
-    // Cập nhật câu hỏi
+    // ================== UPDATE ==================
     @Override
     public QuestionResponseDTO update(Long id, QuestionRequestDTO request) {
-        Question question = questionRepository.findById(java.util.Objects.requireNonNull(id, "id must not be null"))
-                .orElseThrow(() -> new HttpNotFound("Không tìm thấy câu hỏi với id = " + id));
+        Question question = questionRepository.findById(id)
+                .orElseThrow(() ->
+                        new HttpNotFound("Không tìm thấy câu hỏi với id = " + id)
+                );
 
-        Question updated = mapRequestToEntity(request);
-        question.setCategory(updated.getCategory());
-        question.setQuestionText(updated.getQuestionText());
-        question.setOptions(updated.getOptions());
-        question.setCorrectAnswer(updated.getCorrectAnswer());
-        question.setExplanation(updated.getExplanation());
+        question.setCategory(request.getCategory());
+        question.setQuestionText(request.getQuestionText());
+        question.setOptions(request.getOptions());
+        question.setCorrectAnswer(request.getCorrectAnswer());
+        question.setExplanation(request.getExplanation());
         question.setUpdatedAt(LocalDateTime.now());
 
-        questionRepository.save(java.util.Objects.requireNonNull(question, "question must not be null"));
+        questionRepository.save(question);
         return toResponse(question);
     }
 
-    // Xóa câu hỏi
+    // ================== DELETE ==================
     @Override
     public void delete(Long id) {
-        if (!questionRepository.existsById(java.util.Objects.requireNonNull(id, "id must not be null"))) {
-            throw new RuntimeException("Question not found");
+        if (!questionRepository.existsById(id)) {
+            throw new HttpNotFound("Không tìm thấy câu hỏi với id = " + id);
         }
-        questionRepository.deleteById(java.util.Objects.requireNonNull(id, "id must not be null"));
+        questionRepository.deleteById(id);
     }
 
-    // ===================== Helper =====================
+    // ===================== HELPER =====================
 
-    // Chuyển DTO request sang Entity
     private Question mapRequestToEntity(QuestionRequestDTO request) {
-        List<String> optionList = request.getOptions() != null
-                ? request.getOptions()
-                : List.of();
-
         return Question.builder()
                 .category(request.getCategory())
                 .questionText(request.getQuestionText())
-                .options(optionList)
+                .options(
+                        request.getOptions() != null
+                                ? request.getOptions()
+                                : List.of()
+                )
                 .correctAnswer(request.getCorrectAnswer())
                 .explanation(request.getExplanation())
                 .createdAt(LocalDateTime.now())
                 .build();
     }
 
-    // Chuyển Entity sang DTO response
     private QuestionResponseDTO toResponse(Question question) {
         return QuestionResponseDTO.builder()
                 .id(question.getId())
                 .category(question.getCategory())
                 .questionText(question.getQuestionText())
-                .options(question.getOptions())  // List<String>
+                .options(question.getOptions())
                 .correctAnswer(question.getCorrectAnswer())
                 .explanation(question.getExplanation())
                 .createdAt(question.getCreatedAt())
                 .updatedAt(question.getUpdatedAt())
-                .score(null) // điểm chưa gán
+                .score(null)
                 .build();
     }
 }
