@@ -77,24 +77,54 @@ public class ScheduleItemController {
     // ===================================================================
     // 3) Lấy toàn bộ lịch của khóa học
     // ===================================================================
-    @GetMapping("/course/{courseId}")
+        @GetMapping("/course/{courseId}")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+        @Operation(summary = "Lấy thời khóa biểu theo khóa học", description = "Trả về tất cả các buổi học của một khóa học")
+        @ApiResponses(value = {
+                @ApiResponse(responseCode = "200", description = "Thành công",
+                        content = @Content(mediaType = "application/json",
+                                array = @ArraySchema(schema = @Schema(implementation = ScheduleItemResponseDTO.class))
+                        )),
+                @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ"),
+                @ApiResponse(responseCode = "401", description = "Chưa xác thực"),
+                @ApiResponse(responseCode = "403", description = "Không có quyền"),
+                @ApiResponse(responseCode = "500", description = "Lỗi hệ thống")
+        })
+        public ResponseEntity<List<ScheduleItemResponseDTO>> getScheduleByCourse(
+                @Parameter(description = "Mã khóa học") @PathVariable Long courseId
+        ) {
+            return ResponseEntity.ok(scheduleItemService.getScheduleByCourse(courseId));
+        }
+
+    @GetMapping("/class-course/{classCourseId}/schedule")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
-    @Operation(summary = "Lấy thời khóa biểu theo khóa học", description = "Trả về tất cả các buổi học của một khóa học")
+    @Operation(
+            summary = "Lấy thời khóa biểu theo class_course",
+            description = "Trả về thông tin khóa học và toàn bộ thời khóa biểu của một lớp theo class_course"
+    )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Thành công",
-                    content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ScheduleItemResponseDTO.class))
-                    )),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Thành công",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ClassScheduleResponseDTO.class)
+                    )
+            ),
             @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ"),
             @ApiResponse(responseCode = "401", description = "Chưa xác thực"),
             @ApiResponse(responseCode = "403", description = "Không có quyền"),
             @ApiResponse(responseCode = "500", description = "Lỗi hệ thống")
     })
-    public ResponseEntity<List<ScheduleItemResponseDTO>> getScheduleByCourse(
-            @Parameter(description = "Mã khóa học") @PathVariable Long courseId
+    public ResponseEntity<ClassScheduleResponseDTO> getScheduleByClassCourse(
+            @Parameter(description = "Mã class_course")
+            @PathVariable Long classCourseId
     ) {
-        return ResponseEntity.ok(scheduleItemService.getScheduleByCourse(courseId));
+        return ResponseEntity.ok(
+                scheduleItemService.getScheduleByClassCourse(classCourseId)
+        );
     }
+
 
     // ===================================================================
     // 4) Xóa toàn bộ lịch của khóa học

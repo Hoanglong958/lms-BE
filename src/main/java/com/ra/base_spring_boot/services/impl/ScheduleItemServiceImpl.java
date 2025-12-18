@@ -1,18 +1,10 @@
 package com.ra.base_spring_boot.services.impl;
 
-import com.ra.base_spring_boot.dto.ScheduleItem.CreateManualScheduleRequestDTO;
-import com.ra.base_spring_boot.dto.ScheduleItem.GenerateScheduleRequestDTO;
-import com.ra.base_spring_boot.dto.ScheduleItem.ScheduleItemResponseDTO;
-import com.ra.base_spring_boot.dto.ScheduleItem.UpdateScheduleItemRequestDTO;
+import com.ra.base_spring_boot.dto.ScheduleItem.*;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
+import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.model.Class;
-import com.ra.base_spring_boot.model.Course;
-import com.ra.base_spring_boot.model.Period;
-import com.ra.base_spring_boot.model.ScheduleItem;
-import com.ra.base_spring_boot.repository.IClassRepository;
-import com.ra.base_spring_boot.repository.ICourseRepository;
-import com.ra.base_spring_boot.repository.IPeriodRepository;
-import com.ra.base_spring_boot.repository.IScheduleItemRepository;
+import com.ra.base_spring_boot.repository.*;
 import com.ra.base_spring_boot.services.IScheduleItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,6 +25,7 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
     private final ICourseRepository courseRepository;
     private final IPeriodRepository periodRepository;
     private final IClassRepository classRepository;
+    private final IClassCourseRepository classCourseRepository;
 
     // =========================================================================
     // 1. AUTO GENERATE
@@ -267,6 +260,43 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                 .stream().map(this::toDto).toList();
     }
 
+    @Override
+    public ClassScheduleResponseDTO getScheduleByClassCourse(Long classCourseId) {
+
+        // 1. Lấy class_course
+        ClassCourse classCourse = classCourseRepository.findById(classCourseId)
+                .orElseThrow(() ->
+                        new HttpBadRequest("Không tìm thấy class_course id = " + classCourseId)
+                );
+
+        Class clazz = classCourse.getClazz();
+        Course course = classCourse.getCourse();
+
+        // 2. Lấy thời khóa biểu theo class + course
+        List<ScheduleItem> scheduleItems =
+                scheduleItemRepository
+                        .findByCourse_IdAndClazz_IdOrderBySessionNumber(
+                                course.getId(),
+                                clazz.getId()
+                        );
+
+        // 3. Map sang DTO
+        return ClassScheduleResponseDTO.builder()
+                .classCourseId(classCourseId)
+                .classId(clazz.getId())
+                .className(clazz.getClassName())
+                .courseId(course.getId())
+                .courseName(course.getTitle())
+                .schedules(
+                        scheduleItems.stream()
+                                .map(this::toDto)
+                                .toList()
+                )
+                .build();
+    }
+
+
+
     // =========================================================================
     // HELPER
     // =========================================================================
@@ -300,4 +330,6 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                 .status(item.getStatus())
                 .build();
     }
+
+
 }

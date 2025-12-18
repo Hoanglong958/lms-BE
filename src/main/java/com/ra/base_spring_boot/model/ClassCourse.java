@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "class_courses", uniqueConstraints = {
@@ -35,7 +37,8 @@ public class ClassCourse {
     @Column(columnDefinition = "TEXT")
     private String note;
 
-    @PrePersist
+
+        @PrePersist
     public void onCreate() {
         if (assignedAt == null) {
             assignedAt = LocalDateTime.now();

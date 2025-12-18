@@ -10,8 +10,10 @@ public interface IQuestionService {
     Page<QuestionResponseDTO> getQuestions(
             Integer page,
             Integer size,
-            String keyword
+            String keyword,
+            String category
     );
+
     QuestionResponseDTO getById(Long id);
     QuestionResponseDTO create(QuestionRequestDTO request);
     List<QuestionResponseDTO> createBulk(List<QuestionRequestDTO> requests);

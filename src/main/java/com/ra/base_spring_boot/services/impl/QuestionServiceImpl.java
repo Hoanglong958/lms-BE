@@ -35,15 +35,16 @@ public class QuestionServiceImpl implements IQuestionService {
     public Page<QuestionResponseDTO> getQuestions(
             Integer page,
             Integer size,
-            String keyword
+            String keyword,
+            String category
     ) {
 
-        // ===== 1. XỬ LÝ PAGE =====
+        // ===== PAGE =====
         int safePage = (page == null || page < 0)
                 ? DEFAULT_PAGE
                 : page;
 
-        // ===== 2. XỬ LÝ SIZE =====
+        // ===== SIZE =====
         int safeSize;
         if (size == null || size <= 0) {
             safeSize = DEFAULT_SIZE;
@@ -59,15 +60,28 @@ public class QuestionServiceImpl implements IQuestionService {
                 Sort.by("createdAt").descending()
         );
 
-        // ===== 3. XỬ LÝ KEYWORD =====
         boolean hasKeyword = keyword != null && !keyword.trim().isEmpty();
+        boolean hasCategory = category != null && !category.trim().isEmpty();
 
         Page<Question> pageData;
 
-        if (hasKeyword) {
+        if (hasKeyword && hasCategory) {
+            pageData = questionRepository
+                    .findByQuestionTextContainingIgnoreCaseAndCategoryIgnoreCase(
+                            keyword.trim(),
+                            category.trim(),
+                            pageable
+                    );
+        } else if (hasKeyword) {
             pageData = questionRepository
                     .findByQuestionTextContainingIgnoreCase(
                             keyword.trim(),
+                            pageable
+                    );
+        } else if (hasCategory) {
+            pageData = questionRepository
+                    .findByCategoryIgnoreCase(
+                            category.trim(),
                             pageable
                     );
         } else {
@@ -76,6 +90,7 @@ public class QuestionServiceImpl implements IQuestionService {
 
         return pageData.map(this::toResponse);
     }
+
 
     // ================== GET BY ID ==================
     @Override

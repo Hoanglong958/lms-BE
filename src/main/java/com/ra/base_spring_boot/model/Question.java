@@ -40,9 +40,14 @@ public class Question {
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @OneToMany(mappedBy = "question")
+    @OneToMany(
+            mappedBy = "question",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     @Builder.Default
     private List<ExamQuestion> examQuestions = new ArrayList<>();
+
 
 
     @Column(name = "updated_at")

@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.config.controller;
 
 import com.ra.base_spring_boot.dto.DashBoardStats.DashboardStatsDTO;
 import com.ra.base_spring_boot.dto.DashBoardStats.UserGrowthPointDTO;
+import com.ra.base_spring_boot.dto.Exam.RecentExamDTO;
 import com.ra.base_spring_boot.dto.resp.UserResponse;
 import com.ra.base_spring_boot.dto.Course.CourseResponseDTO;
 import com.ra.base_spring_boot.dto.LessonQuizzes.LessonQuizResponseDTO;
@@ -44,6 +45,43 @@ public class DashboardController {
         DashboardStatsDTO dto = dashboardService.getDashboard();
         return ResponseEntity.ok(dto);
     }
+    @GetMapping("/completed-exams")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(
+            summary = "Tổng số bài thi đã hoàn thành",
+            description = """
+                Trả về tổng số bài thi exam đã được học viên nộp bài thành công.
+                
+                Tiêu chí tính:
+                - Dữ liệu lấy từ ExamAttempt
+                - Chỉ tính những attempt có submitTime != null
+                - Mỗi lần nộp bài được tính là 1 bài thi hoàn thành
+                """
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Lấy số lượng bài thi đã hoàn thành thành công",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(example = "152")
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Không có quyền truy cập (chỉ ADMIN)",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Lỗi hệ thống",
+                    content = @Content
+            )
+    })
+    public ResponseEntity<Long> getCompletedExams() {
+        return ResponseEntity.ok(dashboardService.getCompletedExams());
+    }
+
 
     // ======= Lượng tăng trưởng người dùng theo tháng =======
     @GetMapping("/user-growth/month")
@@ -104,4 +142,14 @@ public class DashboardController {
     public ResponseEntity<?> getCourseProgress(@Parameter(description = "ID khóa học") @PathVariable Long courseId) {
         return ResponseEntity.ok(dashboardService.getCourseProgress(courseId));
     }
+    @GetMapping("/recent-exams")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @Operation(
+            summary = "Bài thi gần đây",
+            description = "Danh sách bài thi (Exam) được tạo trong 30 ngày gần đây"
+    )
+    public ResponseEntity<List<RecentExamDTO>> getRecentExams() {
+        return ResponseEntity.ok(dashboardService.getRecentExams());
+    }
+
 }

@@ -58,4 +58,9 @@ public class ScheduleItem {
     // trạng thái tuỳ dự án (SCHEDULED/CANCELLED/COMPLETED)
     @Column(nullable = false)
     private String status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "class_course_id")
+    private ClassCourse classCourse;
+
 }

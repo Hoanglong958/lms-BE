@@ -1,9 +1,6 @@
 package com.ra.base_spring_boot.services;
 
-import com.ra.base_spring_boot.dto.ScheduleItem.CreateManualScheduleRequestDTO;
-import com.ra.base_spring_boot.dto.ScheduleItem.ScheduleItemResponseDTO;
-import com.ra.base_spring_boot.dto.ScheduleItem.GenerateScheduleRequestDTO;
-import com.ra.base_spring_boot.dto.ScheduleItem.UpdateScheduleItemRequestDTO;
+import com.ra.base_spring_boot.dto.ScheduleItem.*;
 
 import java.util.List;
 import java.time.LocalDate;
@@ -28,5 +25,7 @@ public interface IScheduleItemService {
     // Cập nhật từng buổi học
     ScheduleItemResponseDTO updateScheduleItem(Long scheduleItemId, UpdateScheduleItemRequestDTO req);
     List<ScheduleItemResponseDTO> createManualSchedule(CreateManualScheduleRequestDTO req);
+    ClassScheduleResponseDTO getScheduleByClassCourse(Long classCourseId);
+
 
 }
