@@ -167,6 +167,14 @@ public class AuthServiceImpl implements IAuthService {
             throw new HttpBadRequest("Mật khẩu mới và xác nhận không khớp!");
         }
 
+        String passwordRegex = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\\-={}\\[\\]|:;\"'<>,.?/]).{8,}$";
+        if (request.getNewPassword() == null || request.getNewPassword().isBlank()) {
+            throw new HttpBadRequest("Mật khẩu mới không được để trống!");
+        }
+        if (!request.getNewPassword().matches(passwordRegex)) {
+            throw new HttpBadRequest("Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt!");
+        }
+
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
     }

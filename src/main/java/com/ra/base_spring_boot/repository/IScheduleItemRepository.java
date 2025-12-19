@@ -31,5 +31,7 @@ public interface IScheduleItemRepository extends JpaRepository<ScheduleItem, Lon
 
     void deleteByCourse_IdAndClazz_Id(Long id, Long id1);
 
+    // Added alias without underscores to avoid IDE resolution issues
+    void deleteByCourseIdAndClazzId(Long courseId, Long classId);
 
 }

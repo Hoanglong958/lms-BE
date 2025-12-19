@@ -1,82 +1,83 @@
-  spring:
-    application:
-      name: base_spring_boot
+spring:
+  application:
+    name: base_spring_boot
 
-    servlet:
-      multipart:
-        max-file-size: 256MB
-        max-request-size: 256MB
+  servlet:
+    multipart:
+      max-file-size: 256MB
+      max-request-size: 256MB
 
-    datasource:
-      url: jdbc:mysql://localhost:3306/lms_rikkei?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
-      username: root
-      password: 123456
+  datasource:
+    url: jdbc:mysql://localhost:3306/lms_rikkei?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    username: root
+    password: hanh3010
     
-      driver-class-name: com.mysql.cj.jdbc.Driver
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
-    jpa:
-      hibernate:
-        ddl-auto: update
-        naming:
-          physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-          implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
-      database-platform: org.hibernate.dialect.MySQLDialect
-      show-sql: true
-      open-in-view: false
+  jpa:
+    hibernate:
+      ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+    database-platform: org.hibernate.dialect.MySQLDialect
+    show-sql: true
+    open-in-view: false
 
-    flyway:
-      enabled: false
+  flyway:
+    enabled: false
 
-    data:
-      redis:
-        host: redis-15646.crce219.us-east-1-4.ec2.cloud.redislabs.com
-        port: 15646
-        password: mVv63ta1xjbb2wAafK5yo4P7vhE8sC6b
-        database: 0
+  # TẠM THỜI TẮT REDIS
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
 
-    mail:
-      host: smtp.gmail.com
-      port: 587
-      username: mankai.12.edu@gmail.com
-      password: "xmsa ests sjji ftpl"  # 16 ký tự App Password
-      protocol: smtp
-      properties:
-        mail:
-          smtp:
-            auth: true
-            starttls:
-              enable: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: mankai.12.edu@gmail.com
+    password: "xmsa ests sjji ftpl"  # 16 ký tự App Password
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
-  springdoc:
-    swagger-ui:
-      path: /docs
-      tags-sorter: alpha
-      operations-sorter: alpha
+springdoc:
+  swagger-ui:
+    path: /docs
+    tags-sorter: alpha
+    operations-sorter: alpha
 
-  jwt:
-    secret:
-      key: VGhpcy1pcy1hLXN1cGVyLXNlY3VyZS1sb25nLXNlY3JldC1rZXktMTIzNDU2Nzg5MA
-    expired:
-      access: 3600000
+jwt:
+  secret:
+    key: VGhpcy1pcy1hLXN1cGVyLXNlY3VyZS1sb25nLXNlY3JldC1rZXktMTIzNDU2Nzg5MA
+  expired:
+    access: 3600000
 
-  server:
-    port: 3900
+server:
+  port: 3900
 
-  app:
-    upload:
-      root: uploads
+app:
+  upload:
+    root: uploads
+  notifications:
+    sendOnAdminCreate: true
 
-  cloudinary:
-    cloud-name: dtbbrlnyc
-    api-key: 936751274181751
-    api-secret: ja4CTEXqeT9YD38oJHItIwiktW0
+cloudinary:
+  cloud-name: dtbbrlnyc
+  api-key: 936751274181751
+  api-secret: ja4CTEXqeT9YD38oJHItIwiktW0
 
-  external:
-    api:
-      base-url: https://example.com
-      connect-timeout: 5000
-      read-timeout: 10000
+external:
+  api:
+    base-url: https://example.com
+    connect-timeout: 5000
+    read-timeout: 10000
 
-  logging:
-    level:
-      "[org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsManagerConfigurer]": ERROR
+logging:
+  level:
+    "[org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsManagerConfigurer]": ERROR

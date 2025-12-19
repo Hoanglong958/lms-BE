@@ -42,9 +42,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             return;
         }
 
-        // ✅ Bỏ qua TẤT CẢ endpoint public (không yêu cầu JWT)
-        // Bao gồm: /api/v1/auth/** (login, register, forgot-password, reset-password)
-        if (isPublicEndpoint(path) || path.startsWith("/api/v1/auth/")) {
+        // ✅ Bỏ qua các endpoint public (không yêu cầu JWT)
+        // Liệt kê các endpoint public trong isPublicEndpoint(...) - không skip tất cả /api/v1/auth/*
+        if (isPublicEndpoint(path)) {
             log.info("[JwtTokenFilter] Skipping JWT validation for public endpoint: {}", path);
             filterChain.doFilter(request, response);
             return;

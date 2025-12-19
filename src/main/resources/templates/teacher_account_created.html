@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Thông báo tạo tài khoản giảng viên</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #4a6fdc;
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4a6fdc;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>THÔNG BÁO TẠO TÀI KHOẢN GIẢNG VIÊN</h2>
+    </div>
+    
+    <div class="content">
+        <p>Xin chào <strong th:text="${username}"></strong>,</p>
+        
+        <p>Tài khoản giảng viên của bạn đã được tạo bởi quản trị viên hệ thống.</p>
+        
+        <p><strong>Thông tin đăng nhập:</strong></p>
+        <ul>
+            <li>Email: <span th:text="${email}"></span></li>
+            <li>Mật khẩu tạm: <strong th:text="${tempPassword}"></strong></li>
+        </ul>
+        
+        <p>Vui lòng đổi mật khẩu sau khi đăng nhập lần đầu tiên để đảm bảo bảo mật.</p>
+        
+        <p>Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với bộ phận hỗ trợ của chúng tôi.</p>
+        
+        <p>Trân trọng,<br>Đội ngũ quản trị hệ thống</p>
+    </div>
+    
+    <div class="footer">
+        <p>Đây là email tự động, vui lòng không trả lời email này.</p>
+        <p>© 2025 Hệ thống Quản lý Đào tạo. Mọi quyền được bảo lưu.</p>
+    </div>
+</body>
+</html>

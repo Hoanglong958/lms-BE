@@ -60,7 +60,7 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
         if (periods.isEmpty())
             throw new HttpBadRequest("Chưa có ca học (Period)");
 
-        scheduleItemRepository.deleteByCourse_IdAndClazz_Id(course.getId(), clazz.getId());
+        scheduleItemRepository.deleteByCourseIdAndClazzId(Objects.requireNonNull(course.getId()), Objects.requireNonNull(clazz.getId()));
 
         List<DayOfWeek> weekdays = List.of(
                 DayOfWeek.MONDAY,
@@ -239,7 +239,7 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
         Map<Long, Period> periodMap = periodList.stream()
                 .collect(Collectors.toMap(Period::getId, p -> p));
 
-        scheduleItemRepository.deleteByCourse_IdAndClazz_Id(course.getId(), clazz.getId());
+        scheduleItemRepository.deleteByCourseIdAndClazzId(Objects.requireNonNull(course.getId()), Objects.requireNonNull(clazz.getId()));
 
         List<ScheduleItem> result = new ArrayList<>();
         int sessionNumber = 1;

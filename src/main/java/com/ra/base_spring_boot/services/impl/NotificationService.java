@@ -1,12 +1,15 @@
 package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.dto.Gmail.EmailDTO;
+import com.ra.base_spring_boot.services.EmailProducerService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
 @Service
+@Profile("dev")
 @RequiredArgsConstructor
 public class NotificationService {
 

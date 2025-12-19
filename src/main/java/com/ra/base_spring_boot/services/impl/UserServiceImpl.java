@@ -9,13 +9,18 @@ import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.model.constants.RoleName;
 import com.ra.base_spring_boot.repository.IUserRepository;
 import com.ra.base_spring_boot.services.IUserService;
+import com.ra.base_spring_boot.services.NotificationService;
+import com.ra.base_spring_boot.dto.Gmail.EmailDTO;
+import com.ra.base_spring_boot.services.impl.GmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +28,8 @@ public class UserServiceImpl implements IUserService {
 
     private final IUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final NotificationService notificationService;
+    private final GmailService gmailService;
 
     @Override
     public Page<UserResponse> search(String keyword, RoleName role, Boolean isActive, Pageable pageable) {
@@ -95,8 +102,38 @@ public class UserServiceImpl implements IUserService {
                 .build();
 
         try {
-            userRepository.save(java.util.Objects.requireNonNull(user, "user must not be null"));
-
+            user = userRepository.save(java.util.Objects.requireNonNull(user, "user must not be null"));
+            
+            // Gửi email thông báo tạo tài khoản **như khi user tự đăng ký** (dùng GmailService trực tiếp)
+            try {
+                if (role == RoleName.ROLE_TEACHER) {
+                    // Gửi email đặc biệt cho tài khoản giáo viên kèm mật khẩu tạm
+                    EmailDTO dto = new EmailDTO(
+                            user.getGmail(),
+                            "Thông báo tạo tài khoản giảng viên",
+                            "teacher_account_created",
+                            Map.of(
+                                    "username", user.getFullName(),
+                                    "tempPassword", req.getPassword(),
+                                    "email", user.getGmail()
+                            )
+                    );
+                    gmailService.sendEmail(dto);
+                } else {
+                    // Gửi email thông thường cho các loại tài khoản khác
+                    EmailDTO dto = new EmailDTO(
+                            user.getGmail(),
+                            "Chào mừng bạn đến với hệ thống",
+                            "user_created",
+                            Map.of("username", user.getFullName())
+                    );
+                    gmailService.sendEmail(dto);
+                }
+            } catch (Exception e) {
+                // Log lỗi nhưng không ảnh hưởng đến quá trình tạo user
+                System.err.println("Không thể gửi email thông báo tạo tài khoản: " + e.getMessage());
+                e.printStackTrace();
+            }
 
         } catch (org.springframework.dao.DataIntegrityViolationException ex) {
             throw new HttpBadRequest("Dữ liệu không hợp lệ hoặc gmail đã tồn tại!");
