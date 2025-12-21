@@ -229,7 +229,7 @@ public class ClassServiceImpl implements IClassService {
 
     @Override
     public void removeCourse(Long classId, Long courseId) {
-        ClassCourse classCourse = classCourseRepository.findByClazzIdAndCourseId(Objects.requireNonNull(classId, "classId must not be null"), Objects.requireNonNull(courseId, "courseId must not be null"))
+        ClassCourse classCourse = classCourseRepository.findByClazz_IdAndCourse_Id(Objects.requireNonNull(classId, "classId must not be null"), Objects.requireNonNull(courseId, "courseId must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học trong lớp"));
         classCourseRepository.delete(Objects.requireNonNull(classCourse, "classCourse must not be null"));
     }

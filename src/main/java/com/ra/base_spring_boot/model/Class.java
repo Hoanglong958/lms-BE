@@ -27,10 +27,6 @@ public class Class {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @ManyToOne
-    @JoinColumn(name = "course_id")
-    private Course course;
-
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 
@@ -46,10 +42,6 @@ public class Class {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    // ======= Danh sách ScheduleItem =======
-    @OneToMany(mappedBy = "clazz", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ScheduleItem> scheduleItems;
 
     // ================= Lifecycle callbacks =================
     @PrePersist

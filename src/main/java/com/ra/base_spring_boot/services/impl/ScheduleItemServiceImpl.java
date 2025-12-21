@@ -15,7 +15,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,37 +22,35 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
 
     private final IScheduleItemRepository scheduleItemRepository;
     private final ICourseRepository courseRepository;
-    private final IPeriodRepository periodRepository;
     private final IClassRepository classRepository;
+    private final IPeriodRepository periodRepository;
     private final IClassCourseRepository classCourseRepository;
 
-    // =========================================================================
+    // =========================================================
     // 1. AUTO GENERATE
-    // =========================================================================
+    // =========================================================
     @Override
     @Transactional
     public List<ScheduleItemResponseDTO> generateScheduleForCourse(GenerateScheduleRequestDTO req) {
 
         Course course = courseRepository.findById(req.getCourseId())
-                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy course id = " + req.getCourseId()));
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy course"));
 
         Class clazz = classRepository.findById(req.getClassId())
-                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy class id = " + req.getClassId()));
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy class"));
 
         if (clazz.getStartDate() == null)
-            throw new HttpBadRequest("Lớp học chưa có startDate");
+            throw new HttpBadRequest("Class chưa có startDate");
 
-        if (course.getTotalSessions() <= 0)
-            throw new HttpBadRequest("totalSessions không hợp lệ");
-
-        if (req.getSessionsPerWeek() <= 0 || req.getSessionsPerWeek() > 5)
-            throw new HttpBadRequest("sessionsPerWeek phải từ 1–5");
+        ClassCourse classCourse = classCourseRepository
+                .findByClazz_IdAndCourse_Id(clazz.getId(), course.getId())
+                .orElseThrow(() -> new HttpBadRequest("ClassCourse chưa tồn tại"));
 
         List<Period> periods = periodRepository.findAll();
         if (periods.isEmpty())
-            throw new HttpBadRequest("Chưa có ca học (Period)");
+            throw new HttpBadRequest("Chưa có period");
 
-        scheduleItemRepository.deleteByCourse_IdAndClazz_Id(course.getId(), clazz.getId());
+        scheduleItemRepository.deleteByClassCourse_Id(classCourse.getId());
 
         List<DayOfWeek> weekdays = List.of(
                 DayOfWeek.MONDAY,
@@ -78,7 +75,6 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
             List<DayOfWeek> days = new ArrayList<>(weekdays);
             Collections.shuffle(days);
             days = days.subList(0, req.getSessionsPerWeek());
-            days.sort(Comparator.comparingInt(DayOfWeek::getValue));
 
             for (DayOfWeek dow : days) {
                 if (sessionNumber > course.getTotalSessions()) break;
@@ -86,7 +82,7 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                 Period p = periods.get(rnd.nextInt(periods.size()));
                 LocalDate date = weekStart.with(TemporalAdjusters.nextOrSame(dow));
 
-                result.add(buildItem(course, clazz, p, date, sessionNumber++));
+                result.add(buildItem(classCourse, p, date, sessionNumber++));
             }
             weekIndex++;
         }
@@ -95,111 +91,9 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                 .stream().map(this::toDto).toList();
     }
 
-    // =========================================================================
-    // 2. GET
-    // =========================================================================
-    @Override
-    public List<ScheduleItemResponseDTO> getScheduleByCourse(Long courseId) {
-        return scheduleItemRepository.findByCourseIdOrderBySessionNumber(courseId)
-                .stream().map(this::toDto).toList();
-    }
-
-    @Override
-    public List<ScheduleItemResponseDTO> getScheduleByCourseAndClass(Long courseId, Long classId) {
-        return scheduleItemRepository
-                .findByCourse_IdAndClazz_IdOrderBySessionNumber(courseId, classId)
-                .stream().map(this::toDto).toList();
-    }
-
-    @Override
-    public List<ScheduleItemResponseDTO> getScheduleByCourseAndClassFiltered(
-            Long courseId,
-            Long classId,
-            String status,
-            LocalDate from,
-            LocalDate to,
-            Long periodId
-    ) {
-
-        // validate cơ bản
-        if (courseId == null || classId == null) {
-            throw new HttpBadRequest("courseId và classId không được để trống");
-        }
-
-        // validate date range
-        if (from != null && to != null && from.isAfter(to)) {
-            throw new HttpBadRequest("fromDate không được lớn hơn toDate");
-        }
-
-        return scheduleItemRepository
-                .findByCourseClassWithFilters(
-                        courseId,
-                        classId,
-                        status,
-                        from,
-                        to,
-                        periodId
-                )
-                .stream()
-                .map(this::toDto)
-                .toList();
-    }
-
-
-    // =========================================================================
-    // 3. CLEAR
-    // =========================================================================
-    @Override
-    @Transactional
-    public void clearScheduleForCourse(Long courseId) {
-        scheduleItemRepository.deleteByCourseId(courseId);
-    }
-
-    // =========================================================================
-    // 4. UPDATE
-    // =========================================================================
-    @Override
-    @Transactional
-    public ScheduleItemResponseDTO updateScheduleItem(Long id, UpdateScheduleItemRequestDTO req) {
-
-        ScheduleItem item = scheduleItemRepository.findById(id)
-                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy scheduleItem id = " + id));
-
-        if (req.getClassId() != null) {
-            Class clazz = classRepository.findById(req.getClassId())
-                    .orElseThrow(() -> new HttpBadRequest("Không tìm thấy class id"));
-            item.setClazz(clazz);
-        }
-
-        if (req.getPeriodId() != null) {
-            Period p = periodRepository.findById(req.getPeriodId())
-                    .orElseThrow(() -> new HttpBadRequest("Không tìm thấy period id"));
-            item.setPeriod(p);
-
-            if (item.getDate() != null) {
-                item.setStartAt(LocalDateTime.of(item.getDate(), p.getStartTime()));
-                item.setEndAt(LocalDateTime.of(item.getDate(), p.getEndTime()));
-            }
-        }
-
-        if (req.getDate() != null) {
-            item.setDate(req.getDate());
-            if (item.getPeriod() != null) {
-                item.setStartAt(LocalDateTime.of(req.getDate(), item.getPeriod().getStartTime()));
-                item.setEndAt(LocalDateTime.of(req.getDate(), item.getPeriod().getEndTime()));
-            }
-        }
-
-        if (req.getStatus() != null)
-            item.setStatus(req.getStatus());
-
-        item.setUpdatedAt(LocalDateTime.now());
-        return toDto(scheduleItemRepository.save(item));
-    }
-
-    // =========================================================================
-    // 5. MANUAL CREATE (FIX ĐÚNG NGHIỆP VỤ)
-    // =========================================================================
+    // =========================================================
+    // 2. MANUAL CREATE
+    // =========================================================
     @Override
     @Transactional
     public List<ScheduleItemResponseDTO> createManualSchedule(CreateManualScheduleRequestDTO req) {
@@ -210,29 +104,11 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
         Class clazz = classRepository.findById(req.getClassId())
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy class"));
 
-        if (clazz.getStartDate() == null)
-            throw new HttpBadRequest("Class chưa có startDate");
+        ClassCourse classCourse = classCourseRepository
+                .findByClazz_IdAndCourse_Id(clazz.getId(), course.getId())
+                .orElseThrow(() -> new HttpBadRequest("ClassCourse chưa tồn tại"));
 
-        if (req.getDaysOfWeek().size() != req.getPeriodIds().size())
-            throw new HttpBadRequest("daysOfWeek và periodIds phải cùng số lượng");
-
-        // validate day of week
-        for (Integer d : req.getDaysOfWeek()) {
-            if (d < 1 || d > 7)
-                throw new HttpBadRequest("daysOfWeek phải từ 1 đến 7");
-        }
-
-        // validate period tồn tại (CHO PHÉP TRÙNG)
-        Set<Long> uniquePeriodIds = new HashSet<>(req.getPeriodIds());
-        List<Period> periodList = periodRepository.findAllById(uniquePeriodIds);
-
-        if (periodList.size() != uniquePeriodIds.size())
-            throw new HttpBadRequest("Có periodId không tồn tại");
-
-        Map<Long, Period> periodMap = periodList.stream()
-                .collect(Collectors.toMap(Period::getId, p -> p));
-
-        scheduleItemRepository.deleteByCourse_IdAndClazz_Id(course.getId(), clazz.getId());
+        scheduleItemRepository.deleteByClassCourse_Id(classCourse.getId());
 
         List<ScheduleItem> result = new ArrayList<>();
         int sessionNumber = 1;
@@ -248,10 +124,11 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                 if (sessionNumber > course.getTotalSessions()) break;
 
                 DayOfWeek dow = DayOfWeek.of(req.getDaysOfWeek().get(i));
-                Period p = periodMap.get(req.getPeriodIds().get(i));
-                LocalDate date = weekStart.with(TemporalAdjusters.nextOrSame(dow));
+                Period p = periodRepository.findById(req.getPeriodIds().get(i))
+                        .orElseThrow(() -> new HttpBadRequest("Period không tồn tại"));
 
-                result.add(buildItem(course, clazz, p, date, sessionNumber++));
+                LocalDate date = weekStart.with(TemporalAdjusters.nextOrSame(dow));
+                result.add(buildItem(classCourse, p, date, sessionNumber++));
             }
             week++;
         }
@@ -260,52 +137,91 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                 .stream().map(this::toDto).toList();
     }
 
+    // =========================================================
+    // 3. GET BY CLASS COURSE
+    // =========================================================
     @Override
+    @Transactional(readOnly = true)
     public ClassScheduleResponseDTO getScheduleByClassCourse(Long classCourseId) {
 
-        // 1. Lấy class_course
-        ClassCourse classCourse = classCourseRepository.findById(classCourseId)
-                .orElseThrow(() ->
-                        new HttpBadRequest("Không tìm thấy class_course id = " + classCourseId)
-                );
+        ClassCourse cc = classCourseRepository.findById(classCourseId)
+                .orElseThrow(() -> new HttpBadRequest("ClassCourse không tồn tại"));
 
-        Class clazz = classCourse.getClazz();
-        Course course = classCourse.getCourse();
+        List<ScheduleItemResponseDTO> schedules =
+                scheduleItemRepository.findScheduleDetailByClassCourse(classCourseId)
+                        .stream().map(this::toDto).toList();
 
-        // 2. Lấy thời khóa biểu theo class + course
-        List<ScheduleItem> scheduleItems =
-                scheduleItemRepository
-                        .findByCourse_IdAndClazz_IdOrderBySessionNumber(
-                                course.getId(),
-                                clazz.getId()
-                        );
-
-        // 3. Map sang DTO
         return ClassScheduleResponseDTO.builder()
-                .classCourseId(classCourseId)
-                .classId(clazz.getId())
-                .className(clazz.getClassName())
-                .courseId(course.getId())
-                .courseName(course.getTitle())
-                .schedules(
-                        scheduleItems.stream()
-                                .map(this::toDto)
-                                .toList()
-                )
+                .classCourseId(cc.getId())
+                .courseId(cc.getCourse().getId())
+                .schedules(schedules)
                 .build();
     }
 
+    // =========================================================
+    // 4. CLEAR
+    // =========================================================
+    @Override
+    @Transactional
+    public void clearScheduleForCourse(Long classCourseId) {
+        scheduleItemRepository.deleteByClassCourse_Id(classCourseId);
+    }
+
+    // =========================================================
+    // 5. UPDATE
+    // =========================================================
+    @Override
+    @Transactional
+    public ScheduleItemResponseDTO updateScheduleItem(Long id, UpdateScheduleItemRequestDTO req) {
+
+        ScheduleItem item = scheduleItemRepository.findById(id)
+                .orElseThrow(() -> new HttpBadRequest("ScheduleItem không tồn tại"));
+
+        if (req.getPeriodId() != null) {
+            Period p = periodRepository.findById(req.getPeriodId())
+                    .orElseThrow(() -> new HttpBadRequest("Period không tồn tại"));
+            item.setPeriod(p);
+        }
+
+        if (req.getDate() != null) {
+            item.setDate(req.getDate());
+        }
+
+        if (req.getStatus() != null) {
+            item.setStatus(req.getStatus());
+        }
+
+        item.setUpdatedAt(LocalDateTime.now());
+        return toDto(scheduleItemRepository.save(item));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ScheduleItemResponseDTO> getScheduleByCourse(Long courseId) {
+
+        // kiểm tra course tồn tại
+        courseRepository.findById(courseId)
+                .orElseThrow(() -> new HttpBadRequest("Course không tồn tại"));
+
+        return scheduleItemRepository
+                .findByClassCourse_Course_IdOrderByDateAscSessionNumberAsc(courseId)
+                .stream()
+                .map(this::toDto)
+                .toList();
+    }
 
 
-    // =========================================================================
+    // =========================================================
     // HELPER
-    // =========================================================================
-    private ScheduleItem buildItem(Course course, Class clazz, Period p,
-                                   LocalDate date, int sessionNumber) {
-
+    // =========================================================
+    private ScheduleItem buildItem(
+            ClassCourse classCourse,
+            Period p,
+            LocalDate date,
+            int sessionNumber
+    ) {
         return ScheduleItem.builder()
-                .course(course)
-                .clazz(clazz)
+                .classCourse(classCourse)
                 .period(p)
                 .sessionNumber(sessionNumber)
                 .date(date)
@@ -320,8 +236,8 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
     private ScheduleItemResponseDTO toDto(ScheduleItem item) {
         return ScheduleItemResponseDTO.builder()
                 .id(item.getId())
-                .courseId(item.getCourse().getId())
-                .classId(item.getClazz().getId())
+                .courseId(item.getClassCourse().getCourse().getId())
+                .classId(item.getClassCourse().getClazz().getId())
                 .periodId(item.getPeriod().getId())
                 .sessionNumber(item.getSessionNumber())
                 .date(item.getDate())
@@ -330,6 +246,4 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                 .status(item.getStatus())
                 .build();
     }
-
-
 }

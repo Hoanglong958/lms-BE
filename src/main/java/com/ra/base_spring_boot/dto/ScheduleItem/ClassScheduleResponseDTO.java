@@ -16,6 +16,5 @@ public class ClassScheduleResponseDTO {
     private Long classId;
     private Long courseId;
     private String className;
-    private String courseName;
     private List<ScheduleItemResponseDTO> schedules;
 }

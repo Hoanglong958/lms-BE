@@ -11,7 +11,7 @@ public interface IClassCourseRepository extends JpaRepository<ClassCourse, Long>
 
     boolean existsByClazzIdAndCourseId(Long classId, Long courseId);
 
-    Optional<ClassCourse> findByClazzIdAndCourseId(Long classId, Long courseId);
+    Optional<ClassCourse> findByClazz_IdAndCourse_Id(Long classId, Long courseId);
 
     List<ClassCourse> findByClazzId(Long classId);
 
