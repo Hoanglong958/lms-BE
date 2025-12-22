@@ -23,38 +23,45 @@ public class QuestionController {
 
     private final IQuestionService questionService;
 
+    // ================== GET QUESTIONS (PAGING + SEARCH) ==================
     @GetMapping("/page")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     @Operation(
             summary = "Lấy danh sách câu hỏi (phân trang + tìm kiếm)",
-            description = "Hỗ trợ phân trang và tìm theo nội dung câu hỏi"
+            description = "Hỗ trợ phân trang, tìm theo nội dung câu hỏi và category"
     )
     public ResponseEntity<?> getQuestionsPaging(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String keyword
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String category
     ) {
         return ResponseEntity.ok(
-                questionService.getQuestions(page, size, keyword)
+                questionService.getQuestions(page, size, keyword, category)
         );
     }
 
-
-    // ======= Lấy chi tiết 1 câu hỏi theo ID =======
+    // ================== GET BY ID ==================
     @GetMapping("/detail")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
-    @Operation(summary = "Lấy chi tiết câu hỏi",
-            description = "Cho phép ADMIN và USER xem chi tiết một câu hỏi")
+    @Operation(
+            summary = "Lấy chi tiết câu hỏi",
+            description = "Cho phép ADMIN và USER xem chi tiết một câu hỏi"
+    )
     @ApiResponse(responseCode = "200", description = "Lấy chi tiết thành công")
-    public ResponseEntity<QuestionResponseDTO> getQuestionById(@RequestParam Long id) {
+    public ResponseEntity<QuestionResponseDTO> getQuestionById(
+            @RequestParam Long id
+    ) {
         return ResponseEntity.ok(questionService.getById(id));
     }
 
-    // ======= Tạo mới câu hỏi (ADMIN) =======
+    // ================== CREATE ==================
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Operation(summary = "Tạo câu hỏi mới",
-            description = "Chỉ ADMIN được phép tạo mới câu hỏi")
+    @Operation(
+            summary = "Tạo câu hỏi mới",
+            description = "Chỉ ADMIN được phép tạo mới câu hỏi"
+    )
     @ApiResponse(responseCode = "201", description = "Tạo câu hỏi thành công")
     public ResponseEntity<QuestionResponseDTO> createQuestion(
             @Valid @RequestBody QuestionRequestDTO requestDTO
@@ -63,11 +70,13 @@ public class QuestionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // ======= Tạo nhiều câu hỏi (ADMIN) =======
+    // ================== CREATE BULK ==================
     @PostMapping("/bulk")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Operation(summary = "Tạo nhiều câu hỏi",
-            description = "Chỉ ADMIN được phép tạo nhiều câu hỏi cùng lúc")
+    @Operation(
+            summary = "Tạo nhiều câu hỏi",
+            description = "Chỉ ADMIN được phép tạo nhiều câu hỏi cùng lúc"
+    )
     @ApiResponse(responseCode = "201", description = "Tạo nhiều câu hỏi thành công")
     public ResponseEntity<List<QuestionResponseDTO>> createQuestionsBulk(
             @Valid @RequestBody List<QuestionRequestDTO> requests
@@ -76,11 +85,13 @@ public class QuestionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(responses);
     }
 
-    // ======= Cập nhật câu hỏi (ADMIN) =======
+    // ================== UPDATE ==================
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Operation(summary = "Cập nhật câu hỏi",
-            description = "Chỉ ADMIN được phép chỉnh sửa câu hỏi")
+    @Operation(
+            summary = "Cập nhật câu hỏi",
+            description = "Chỉ ADMIN được phép chỉnh sửa câu hỏi"
+    )
     @ApiResponse(responseCode = "200", description = "Cập nhật thành công")
     public ResponseEntity<QuestionResponseDTO> updateQuestion(
             @PathVariable Long id,
@@ -89,13 +100,17 @@ public class QuestionController {
         return ResponseEntity.ok(questionService.update(id, requestDTO));
     }
 
-    // ======= Xóa câu hỏi (ADMIN) =======
+    // ================== DELETE ==================
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Operation(summary = "Xóa câu hỏi",
-            description = "Chỉ ADMIN được phép xóa câu hỏi")
+    @Operation(
+            summary = "Xóa câu hỏi",
+            description = "Chỉ ADMIN được phép xóa câu hỏi"
+    )
     @ApiResponse(responseCode = "204", description = "Xóa thành công")
-    public ResponseEntity<Void> deleteQuestion(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteQuestion(
+            @PathVariable Long id
+    ) {
         questionService.delete(id);
         return ResponseEntity.noContent().build();
     }

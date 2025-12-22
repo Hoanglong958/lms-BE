@@ -8,10 +8,12 @@ import java.util.List;
 
 public interface IQuestionService {
     Page<QuestionResponseDTO> getQuestions(
-            int page,
-            int size,
-            String keyword
+            Integer page,
+            Integer size,
+            String keyword,
+            String category
     );
+
     QuestionResponseDTO getById(Long id);
     QuestionResponseDTO create(QuestionRequestDTO request);
     List<QuestionResponseDTO> createBulk(List<QuestionRequestDTO> requests);

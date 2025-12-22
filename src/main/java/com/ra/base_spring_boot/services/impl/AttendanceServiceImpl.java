@@ -52,7 +52,6 @@ public class AttendanceServiceImpl implements IAttendanceService {
 
         AttendanceSession session = AttendanceSession.builder()
                 .classroom(classroom)
-                .course(classroom.getCourse())
                 .sessionDate(date)
                 .startTime(start)
                 .endTime(end)

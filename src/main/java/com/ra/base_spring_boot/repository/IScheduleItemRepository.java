@@ -6,32 +6,32 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
-import java.time.LocalDate;
 
 public interface IScheduleItemRepository extends JpaRepository<ScheduleItem, Long> {
-    List<ScheduleItem> findByCourseIdOrderBySessionNumber(Long courseId);
-    List<ScheduleItem> findByCourse_IdAndClazz_IdOrderBySessionNumber(Long courseId, Long classId);
-    boolean existsByCourse_IdAndClazz_Id(Long courseId, Long classId);
-    void deleteByCourseId(Long courseId);
 
-    @Query("SELECT s FROM ScheduleItem s WHERE s.course.id = :courseId AND s.clazz.id = :classId " +
-            "AND (:status IS NULL OR LOWER(s.status) = LOWER(:status)) " +
-            "AND (:from IS NULL OR s.date >= :from) " +
-            "AND (:to IS NULL OR s.date <= :to) " +
-            "AND (:periodId IS NULL OR s.period.id = :periodId) " +
-            "ORDER BY s.sessionNumber")
-    List<ScheduleItem> findByCourseClassWithFilters(
-            @Param("courseId") Long courseId,
-            @Param("classId") Long classId,
-            @Param("status") String status,
-            @Param("from") LocalDate from,
-            @Param("to") LocalDate to,
-            @Param("periodId") Long periodId
+    // Lấy lịch theo class_course
+    List<ScheduleItem> findByClassCourse_IdOrderBySessionNumber(Long classCourseId);
+
+    // Xóa lịch theo class_course
+    void deleteByClassCourse_Id(Long classCourseId);
+
+    // Kiểm tra tồn tại lịch
+    boolean existsByClassCourse_Id(Long classCourseId);
+
+    List<ScheduleItem> findByClassCourse_Course_IdOrderByDateAscSessionNumberAsc(Long courseId);
+
+    // Fetch đủ dữ liệu cho FE
+    @Query("""
+        SELECT si
+        FROM ScheduleItem si
+        JOIN FETCH si.period
+        JOIN FETCH si.classCourse cc
+        JOIN FETCH cc.course
+        JOIN FETCH cc.clazz
+        WHERE cc.id = :classCourseId
+        ORDER BY si.sessionNumber
+    """)
+    List<ScheduleItem> findScheduleDetailByClassCourse(
+            @Param("classCourseId") Long classCourseId
     );
-
-    void deleteByCourse_IdAndClazz_Id(Long id, Long id1);
-
-    // Added alias without underscores to avoid IDE resolution issues
-    void deleteByCourseIdAndClazzId(Long courseId, Long classId);
-
 }

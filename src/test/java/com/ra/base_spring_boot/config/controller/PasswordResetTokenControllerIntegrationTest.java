@@ -32,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         }
 )
 @AutoConfigureMockMvc(addFilters = false)
+@SuppressWarnings("removal")
 class PasswordResetTokenControllerIntegrationTest {
 
     @Autowired

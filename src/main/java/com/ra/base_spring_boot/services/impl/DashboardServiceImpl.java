@@ -4,6 +4,7 @@ import com.ra.base_spring_boot.dto.DashBoardStats.DashboardStatsDTO;
 import com.ra.base_spring_boot.dto.DashBoardStats.CourseProgressDTO;
 import com.ra.base_spring_boot.dto.DashBoardStats.QuizReportDTO;
 import com.ra.base_spring_boot.dto.DashBoardStats.UserGrowthPointDTO;
+import com.ra.base_spring_boot.dto.Exam.RecentExamDTO;
 import com.ra.base_spring_boot.dto.resp.UserResponse;
 import com.ra.base_spring_boot.dto.Course.CourseResponseDTO;
 import com.ra.base_spring_boot.dto.LessonQuizzes.LessonQuizResponseDTO;
@@ -22,15 +23,17 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class DashboardServiceImpl implements IDashboardService {
+public class    DashboardServiceImpl implements IDashboardService {
 
     private final IUserRepository userRepo;
     private final ICourseRepository courseRepo;
     private final ILessonQuizRepository quizRepo;
     private final IQuizResultRepository quizResultRepo;
     private final IUserCourseRepository userCourseRepo;
-    private final IAssignmentRepository assignmentRepo; // optional (may be null if not injected)
-    private final IClassRepository classRepo; // optional (may be null if not injected)
+    private final IAssignmentRepository assignmentRepo;
+    private final IClassRepository classRepo;
+    private final IExamAttemptRepository examAttemptRepository;
+    private final IExamRepository examRepository;
 
     private double calcGrowth(long current, long previous) {
         if (previous == 0) return current > 0 ? 100.0 : 0.0;
@@ -77,9 +80,16 @@ public class DashboardServiceImpl implements IDashboardService {
         long prevMonthExamAttempts = quizResultRepo.countAttemptsSince(sinceMonth);
         double examAttemptGrowth = calcGrowth(totalExamAttempts, prevMonthExamAttempts);
 
-        Double avgScore = Optional.ofNullable(quizResultRepo.avgScoreAll()).orElse(0.0);
-        Double prevAvgScore = Optional.ofNullable(quizResultRepo.avgScoreSince(sinceMonth)).orElse(0.0);
+        Double avgScore = Optional.ofNullable(
+                examAttemptRepository.avgExamScoreOnTen()
+        ).orElse(0.0);
+
+        Double prevAvgScore = Optional.ofNullable(
+                examAttemptRepository.avgExamScoreOnTenSince(sinceMonth)
+        ).orElse(0.0);
+
         double avgScoreGrowth = calcGrowthDouble(avgScore, prevAvgScore);
+
 
         // --- Course completion (UserCourse / UserEnrollment) ---
         long totalEnrollments = userCourseRepo.countTotal();
@@ -116,7 +126,6 @@ public class DashboardServiceImpl implements IDashboardService {
                 .toList();
 
 
-
         // --- Recent quizzes in last 30 days ---
         List<LessonQuizResponseDTO> recentQuizzes = quizRepo.findRecentSince(since30).stream().map(q ->
                 LessonQuizResponseDTO.builder()
@@ -134,8 +143,20 @@ public class DashboardServiceImpl implements IDashboardService {
                 .totalUsers(new DashboardStatsDTO.GrowthItem(totalUsers, userGrowth))
                 .totalCourses(new DashboardStatsDTO.GrowthItem(totalCourses, courseGrowth))
                 .totalExams(new DashboardStatsDTO.GrowthItem(totalExamAttempts, examAttemptGrowth))
-                .averageExamScore(new DashboardStatsDTO.GrowthItem(avgScore.longValue(), avgScoreGrowth))
-                .courseCompletionRate(new DashboardStatsDTO.GrowthItem(Math.round(completionRate), completionGrowth))
+                .averageExamScore(
+                new DashboardStatsDTO.GrowthItem(
+                        (long) (Math.round(avgScore * 10) / 10.0), // ví dụ 7.8
+                        avgScoreGrowth
+                )
+        )
+
+                .courseCompletionRate(
+                        new DashboardStatsDTO.GrowthItem(
+                                (long) (Math.round(completionRate * 10) / 10.0), // ví dụ 63.4%
+                                completionGrowth
+                        )
+                )
+
                 .totalClasses(new DashboardStatsDTO.GrowthItem(totalClasses, classGrowth))
                 .totalQuizzes(new DashboardStatsDTO.GrowthItem(totalQuizzes, quizGrowth))
                 .totalAssignments(new DashboardStatsDTO.GrowthItem(totalAssignments, assignmentGrowth))
@@ -151,34 +172,58 @@ public class DashboardServiceImpl implements IDashboardService {
     public List<UserGrowthPointDTO> getUserGrowthByMonth(int months) {
         LocalDate now = LocalDate.now();
         List<UserGrowthPointDTO> points = new ArrayList<>();
+
+        long cumulative = 0; // ⭐ TÍCH LŨY
+
         for (int i = months - 1; i >= 0; i--) {
             LocalDate start = now.minusMonths(i).withDayOfMonth(1);
             LocalDateTime startDt = start.atStartOfDay();
-            LocalDateTime endDt = start.withDayOfMonth(start.lengthOfMonth()).atTime(23, 59, 59);
-            long count = userRepo.countByRoleBetween(RoleName.ROLE_USER, startDt, endDt);
+            LocalDateTime endDt = start
+                    .withDayOfMonth(start.lengthOfMonth())
+                    .atTime(23, 59, 59);
+
+            // user mới trong tháng
+            long newUsers = userRepo.countByRoleBetween(
+                    RoleName.ROLE_USER, startDt, endDt
+            );
+
+            cumulative += newUsers;
+
             points.add(UserGrowthPointDTO.builder()
-                    .period(start.toString().substring(0, 7))
-                    .count(count)
+                    .period(start.toString().substring(0, 7)) // yyyy-MM
+                    .count(cumulative) // ⭐ DÙNG cumulative
                     .build());
         }
+
         return points;
     }
+
 
 
     @Override
     public List<UserGrowthPointDTO> getUserGrowthByWeek(int weeks) {
         LocalDate today = LocalDate.now();
         List<UserGrowthPointDTO> points = new ArrayList<>();
+
+        long cumulative = 0; // ⭐ TÍCH LŨY
+
         for (int i = weeks - 1; i >= 0; i--) {
             LocalDate start = today.minusWeeks(i).with(java.time.DayOfWeek.MONDAY);
             LocalDateTime startDt = start.atStartOfDay();
-            LocalDateTime endDt = start.plusDays(6).atTime(23, 59, 59); // Sunday
-            long count = userRepo.countByRoleBetween(RoleName.ROLE_USER, startDt, endDt);
+            LocalDateTime endDt = start.plusDays(6).atTime(23, 59, 59);
+
+            long newUsers = userRepo.countByRoleBetween(
+                    RoleName.ROLE_USER, startDt, endDt
+            );
+
+            cumulative += newUsers;
+
             points.add(UserGrowthPointDTO.builder()
-                    .period(start.toString() + " ~ " + start.plusDays(6).toString())
-                    .count(count)
+                    .period(start + " ~ " + start.plusDays(6))
+                    .count(cumulative) // ⭐ cumulative
                     .build());
         }
+
         return points;
     }
 
@@ -254,5 +299,45 @@ public class DashboardServiceImpl implements IDashboardService {
                     .build();
         }).collect(Collectors.toList());
     }
+
+    @Override
+    public long getCompletedExams() {
+        return examAttemptRepository.countCompletedExams();
+
+    }
+
+    @Override
+    public List<RecentExamDTO> getRecentExams() {
+
+        LocalDateTime since = LocalDateTime.now().minusDays(30);
+
+        List<Exam> exams = examRepository.findRecentExams(since);
+
+        return exams.stream().map(exam -> {
+
+            long attempts = Optional
+                    .ofNullable(examAttemptRepository.countAttemptByExam(exam.getId()))
+                    .orElse(0L);
+
+            long passed = Optional
+                    .ofNullable(examAttemptRepository.countPassByExam(exam.getId()))
+                    .orElse(0L);
+
+            double passRate = attempts == 0
+                    ? 0.0
+                    : (double) passed / attempts * 100.0;
+
+            return RecentExamDTO.builder()
+                    .id(exam.getId())
+                    .title(exam.getTitle())
+                    .maxScore(exam.getMaxScore())
+                    .passingScore(exam.getPassingScore())
+                    .attempts(attempts)
+                    .passRate(passRate)
+                    .createdAt(exam.getCreatedAt())
+                    .build();
+        }).toList();
+    }
+
 
 }

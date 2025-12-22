@@ -5,6 +5,7 @@ import com.ra.base_spring_boot.dto.DashBoardStats.CourseProgressDTO;
 import com.ra.base_spring_boot.dto.DashBoardStats.DashboardStatsDTO;
 import com.ra.base_spring_boot.dto.DashBoardStats.QuizReportDTO;
 import com.ra.base_spring_boot.dto.DashBoardStats.UserGrowthPointDTO;
+import com.ra.base_spring_boot.dto.Exam.RecentExamDTO;
 import com.ra.base_spring_boot.dto.LessonQuizzes.LessonQuizResponseDTO;
 import com.ra.base_spring_boot.dto.resp.UserResponse;
 
@@ -18,5 +19,7 @@ public interface IDashboardService {
     List<UserResponse> getNewUsersLast30Days();
     List<CourseResponseDTO> getNewCoursesLast30Days();
     List<LessonQuizResponseDTO> getRecentQuizzesLast30Days();
-    List<QuizReportDTO> getQuizReports(); // general quiz reports
+    List<QuizReportDTO> getQuizReports();
+    long getCompletedExams();
+    List<RecentExamDTO> getRecentExams();
 }

@@ -13,5 +13,17 @@ public interface IQuestionRepository extends JpaRepository<Question, Long> {
             String keyword,
             Pageable pageable
     );
+
+    Page<Question> findByCategoryIgnoreCase(
+            String category,
+            Pageable pageable
+    );
+
+    Page<Question> findByQuestionTextContainingIgnoreCaseAndCategoryIgnoreCase(
+            String keyword,
+            String category,
+            Pageable pageable
+    );
 }
+
 

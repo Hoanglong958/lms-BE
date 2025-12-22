@@ -19,15 +19,7 @@ public class ScheduleItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Khóa học
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id", nullable = false)
-    private Course course;
 
-    // Lớp học
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "class_id", nullable = false)
-    private Class clazz;
 
     // Ca học (period)
     @ManyToOne(fetch = FetchType.LAZY)
@@ -58,4 +50,9 @@ public class ScheduleItem {
     // trạng thái tuỳ dự án (SCHEDULED/CANCELLED/COMPLETED)
     @Column(nullable = false)
     private String status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "class_course_id")
+    private ClassCourse classCourse;
+
 }

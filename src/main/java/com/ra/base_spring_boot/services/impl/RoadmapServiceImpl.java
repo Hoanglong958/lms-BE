@@ -33,7 +33,7 @@ public class RoadmapServiceImpl implements IRoadmapService {
         Long courseId = Objects.requireNonNull(req.getCourseId(), "courseId must not be null");
 
         // Load schedule for the target class + optional filter by periods
-        List<ScheduleItem> schedule = scheduleItemRepository.findByCourse_IdAndClazz_IdOrderBySessionNumber(courseId, classId);
+        List<ScheduleItem> schedule = scheduleItemRepository.findByClassCourse_Course_IdOrderByDateAscSessionNumberAsc(courseId);
         if (req.getPeriodIds() != null && !req.getPeriodIds().isEmpty()) {
             Set<Long> wanted = new HashSet<>(req.getPeriodIds());
             schedule = schedule.stream()
