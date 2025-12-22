@@ -15,6 +15,7 @@ public class LessonDocumentResponseDTO {
     private String content;
     private String imageUrl;
     private String videoUrl;
+    private String pdfUrl;
     private Integer sortOrder;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

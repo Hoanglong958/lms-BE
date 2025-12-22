@@ -60,6 +60,7 @@ public class LessonDocumentServiceImpl implements ILessonDocumentService {
                 .content(dto.getContent())
                 .imageUrl(dto.getImageUrl())
                 .videoUrl(dto.getVideoUrl())
+                .pdfUrl(dto.getPdfUrl())
                 .sortOrder(sortOrder)
                 .build();
 
@@ -86,6 +87,7 @@ public class LessonDocumentServiceImpl implements ILessonDocumentService {
         if (dto.getContent() != null) entity.setContent(dto.getContent());
         if (dto.getImageUrl() != null) entity.setImageUrl(dto.getImageUrl());
         if (dto.getVideoUrl() != null) entity.setVideoUrl(dto.getVideoUrl());
+        if (dto.getPdfUrl() != null) entity.setPdfUrl(dto.getPdfUrl());
         if (dto.getSortOrder() != null) entity.setSortOrder(dto.getSortOrder());
 
         LessonDocument updated = documentRepository.save(java.util.Objects.requireNonNull(entity, "document must not be null"));

@@ -73,4 +73,34 @@ public class UploadServiceImpl implements IUploadService {
             throw new RuntimeException("Failed to upload video to Cloudinary", e);
         }
     }
+
+    @Override
+    public UploadResponseDTO uploadPdf(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File is empty");
+        }
+        // Basic validation: allow application/pdf, or fallback to accept any (but prefer pdf)
+        String contentType = file.getContentType();
+        if (contentType != null && !contentType.equalsIgnoreCase("application/pdf")) {
+            throw new IllegalArgumentException("Only PDF files are allowed");
+        }
+        try {
+            String publicId = "uploads/pdfs/" + UUID.randomUUID();
+            Map<String, Object> options = ObjectUtils.asMap(
+                    "public_id", publicId,
+                    "resource_type", "raw",
+                    "overwrite", false
+            );
+
+            Map<String, Object> result = (Map<String, Object>) cloudinary.uploader().upload(file.getBytes(), options);
+
+            String url = (String) result.get("secure_url");
+            if (url == null || url.isBlank()) {
+                url = (String) result.get("url");
+            }
+            return UploadResponseDTO.builder().url(url).build();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload PDF to Cloudinary", e);
+        }
+    }
 }

@@ -34,4 +34,10 @@ public class UploadController {
     public ResponseEntity<UploadResponseDTO> uploadVideo(@RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(uploadService.uploadVideo(file));
     }
+
+    @PostMapping(value = "/pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload PDF", description = "Nhận file PDF, validate và lưu lên Cloudinary, trả về URL public")
+    public ResponseEntity<UploadResponseDTO> uploadPdf(@RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(uploadService.uploadPdf(file));
+    }
 }

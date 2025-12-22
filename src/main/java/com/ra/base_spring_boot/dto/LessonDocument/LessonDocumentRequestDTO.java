@@ -12,5 +12,6 @@ public class LessonDocumentRequestDTO {
     private String content; // LONGTEXT, nullable
     private String imageUrl; // nullable
     private String videoUrl; // nullable
+    private String pdfUrl; // nullable, public URL to uploaded PDF
     private Integer sortOrder; // optional, nếu null sẽ tự set max+1
 }

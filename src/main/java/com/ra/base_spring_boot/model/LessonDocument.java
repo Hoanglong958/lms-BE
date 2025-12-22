@@ -39,6 +39,10 @@ public class LessonDocument {
     @Column(name = "video_url", length = 500)
     private String videoUrl;
 
+    // Public URL to a PDF file attached to this lesson document
+    @Column(name = "pdf_url", length = 500)
+    private String pdfUrl;
+
     @Column(name = "sort_order", nullable = false)
     private Integer sortOrder;
 
