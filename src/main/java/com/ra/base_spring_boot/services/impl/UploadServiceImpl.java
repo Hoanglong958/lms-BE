@@ -85,7 +85,7 @@ public class UploadServiceImpl implements IUploadService {
             throw new IllegalArgumentException("Only PDF files are allowed");
         }
         try {
-            String publicId = "uploads/pdfs/" + UUID.randomUUID();
+            String publicId = "uploads/pdfs/" + UUID.randomUUID() + ".pdf";
             Map<String, Object> options = ObjectUtils.asMap(
                     "public_id", publicId,
                     "resource_type", "raw",
