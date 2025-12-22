@@ -103,8 +103,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 || path.equals("/api/v1/password-reset-tokens/validate")
                 || path.equals("/api/v1/password-reset-tokens/latest") // DEV endpoint: Lấy token mới nhất để test
                 // Public user endpoints
-                || path.equals("/api/v1/users/check")
-                || path.equals("/v3/api-docs")
+                || path.equals("/api/v1/users/check")                // Public uploads
+                || path.equals("/api/v1/uploads")
+                || path.startsWith("/api/v1/uploads/")                || path.equals("/v3/api-docs")
                 || path.startsWith("/v3/api-docs/")
                 || path.startsWith("/swagger-ui")
                 || path.equals("/swagger-ui.html")

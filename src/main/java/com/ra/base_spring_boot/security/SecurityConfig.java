@@ -66,6 +66,7 @@ public class SecurityConfig {
                                 "/api/v1/users/check",
                                 // Public static uploads (served by WebMvc)
                                 "/uploads/**",
+                                "/api/v1/uploads/**",
                                 // Public password reset token endpoints (delayed OTP reveal flow)
                                 "/api/v1/password-reset-tokens/validate",
                                 "/api/v1/password-reset-tokens/latest", // DEV endpoint: Lấy token mới nhất để test
