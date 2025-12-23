@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.config.controller;
 
-import com.ra.base_spring_boot.dto.Question.QuestionRequestDTO;
-import com.ra.base_spring_boot.dto.Question.QuestionResponseDTO;
+import com.ra.base_spring_boot.dto.questions.QuestionRequestDTO;
+import com.ra.base_spring_boot.dto.questions.QuestionResponseDTO;
 import com.ra.base_spring_boot.services.IQuestionService;
 import com.ra.base_spring_boot.services.IUploadService;
 import com.ra.base_spring_boot.utils.ExcelHelper;
@@ -45,6 +45,15 @@ public class QuestionController {
                                 questionService.getQuestions(page, size, keyword, category));
         }
 
+        @GetMapping("/categories")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+        @Operation(summary = "Lấy danh sách danh mục câu hỏi (có phân trang)", description = "Trả về danh sách các category duy nhất hiện có")
+        public ResponseEntity<?> getCategories(
+                        @RequestParam(defaultValue = "0") Integer page,
+                        @RequestParam(defaultValue = "10") Integer size) {
+                return ResponseEntity.ok(questionService.getCategories(page, size));
+        }
+
         // ================== GET BY ID ==================
         @GetMapping("/detail")
         @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
@@ -64,17 +73,6 @@ public class QuestionController {
                         @Valid @RequestBody QuestionRequestDTO requestDTO) {
                 QuestionResponseDTO response = questionService.create(requestDTO);
                 return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        }
-
-        // ================== CREATE BULK ==================
-        @PostMapping("/bulk")
-        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-        @Operation(summary = "Tạo nhiều câu hỏi", description = "Chỉ ADMIN được phép tạo nhiều câu hỏi cùng lúc")
-        @ApiResponse(responseCode = "201", description = "Tạo nhiều câu hỏi thành công")
-        public ResponseEntity<List<QuestionResponseDTO>> createQuestionsBulk(
-                        @Valid @RequestBody List<QuestionRequestDTO> requests) {
-                List<QuestionResponseDTO> responses = questionService.createBulk(requests);
-                return ResponseEntity.status(HttpStatus.CREATED).body(responses);
         }
 
         // ================== UPDATE ==================
@@ -126,11 +124,7 @@ public class QuestionController {
                 return importQuestionsFromUrl(fileUrl);
         }
 
-        @PostMapping("/import-url")
-        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-        @Operation(summary = "Nhập câu hỏi từ URL file Excel", description = "Nhận link Excel (ví dụ từ Cloudinary) và tạo câu hỏi trong DB")
-        @ApiResponse(responseCode = "201", description = "Nhập câu hỏi thành công")
-        public ResponseEntity<?> importQuestionsFromUrl(@RequestParam("url") String fileUrl) {
+        private ResponseEntity<?> importQuestionsFromUrl(String fileUrl) {
                 try {
                         URL url = new URL(fileUrl);
                         try (InputStream is = url.openStream()) {

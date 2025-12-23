@@ -1,6 +1,6 @@
 package com.ra.base_spring_boot.utils;
 
-import com.ra.base_spring_boot.dto.Question.QuestionRequestDTO;
+import com.ra.base_spring_boot.dto.questions.QuestionRequestDTO;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.web.multipart.MultipartFile;

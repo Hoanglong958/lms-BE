@@ -1,4 +1,4 @@
-package com.ra.base_spring_boot.dto.Question;
+package com.ra.base_spring_boot.dto.questions;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
