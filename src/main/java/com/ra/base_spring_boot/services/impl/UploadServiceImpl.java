@@ -30,9 +30,7 @@ public class UploadServiceImpl implements IUploadService {
                     ObjectUtils.asMap(
                             "public_id", publicId,
                             "resource_type", "image",
-                            "overwrite", false
-                    )
-            );
+                            "overwrite", false));
             String url = (String) result.get("secure_url");
             if (url == null || url.isBlank()) {
                 url = (String) result.get("url");
@@ -53,8 +51,7 @@ public class UploadServiceImpl implements IUploadService {
             Map<String, Object> options = ObjectUtils.asMap(
                     "public_id", publicId,
                     "resource_type", "video",
-                    "overwrite", false
-            );
+                    "overwrite", false);
 
             Map<String, Object> result;
             long size = file.getSize();
@@ -79,7 +76,8 @@ public class UploadServiceImpl implements IUploadService {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("File is empty");
         }
-        // Basic validation: allow application/pdf, or fallback to accept any (but prefer pdf)
+        // Basic validation: allow application/pdf, or fallback to accept any (but
+        // prefer pdf)
         String contentType = file.getContentType();
         if (contentType != null && !contentType.equalsIgnoreCase("application/pdf")) {
             throw new IllegalArgumentException("Only PDF files are allowed");
@@ -89,8 +87,7 @@ public class UploadServiceImpl implements IUploadService {
             Map<String, Object> options = ObjectUtils.asMap(
                     "public_id", publicId,
                     "resource_type", "raw",
-                    "overwrite", false
-            );
+                    "overwrite", false);
 
             Map<String, Object> result = (Map<String, Object>) cloudinary.uploader().upload(file.getBytes(), options);
 
@@ -101,6 +98,30 @@ public class UploadServiceImpl implements IUploadService {
             return UploadResponseDTO.builder().url(url).build();
         } catch (IOException e) {
             throw new RuntimeException("Failed to upload PDF to Cloudinary", e);
+        }
+    }
+
+    @Override
+    public UploadResponseDTO uploadExcel(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File is empty");
+        }
+        try {
+            String publicId = "uploads/excels/" + UUID.randomUUID() + ".xlsx";
+            Map<String, Object> options = ObjectUtils.asMap(
+                    "public_id", publicId,
+                    "resource_type", "raw",
+                    "overwrite", false);
+
+            Map<String, Object> result = (Map<String, Object>) cloudinary.uploader().upload(file.getBytes(), options);
+
+            String url = (String) result.get("secure_url");
+            if (url == null || url.isBlank()) {
+                url = (String) result.get("url");
+            }
+            return UploadResponseDTO.builder().url(url).build();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload Excel to Cloudinary", e);
         }
     }
 }
