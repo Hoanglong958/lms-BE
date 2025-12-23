@@ -34,10 +34,7 @@ public class PostController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Tạo bài viết", description = "Chỉ ADMIN được tạo bài viết")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Tạo thành công",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = PostResponseDTO.class),
-                            examples = @ExampleObject(name = "CreatedPost", value = "{\n  \"id\": 1,\n  \"title\": \"Spring Boot Tips\",\n  \"slug\": \"spring-boot-tips\",\n  \"content\": \"Nội dung bài viết...\",\n  \"status\": \"PUBLISHED\",\n  \"createdAt\": \"2025-11-27T14:00:00\",\n  \"author\": {\n    \"id\": 1,\n    \"fullName\": \"Nguyen Van A\"\n  },\n  \"tags\": [\"Spring\", \"Java\"]\n}"))),
+            @ApiResponse(responseCode = "201", description = "Tạo thành công", content = @Content(mediaType = "application/json", schema = @Schema(implementation = PostResponseDTO.class), examples = @ExampleObject(name = "CreatedPost", value = "{\n  \"id\": 1,\n  \"title\": \"Spring Boot Tips\",\n  \"slug\": \"spring-boot-tips\",\n  \"imageUrl\": \"https://example.com/image.jpg\",\n  \"content\": \"Nội dung bài viết...\",\n  \"status\": \"PUBLISHED\",\n  \"createdAt\": \"2025-11-27T14:00:00\",\n  \"author\": {\n    \"id\": 1,\n    \"fullName\": \"Nguyen Van A\"\n  },\n  \"tags\": [\"Spring\", \"Java\"]\n}"))),
             @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
             @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content)
     })
@@ -52,8 +49,7 @@ public class PostController {
     @Operation(summary = "Cập nhật bài viết", description = "Chỉ ADMIN được cập nhật bài viết")
     public ResponseEntity<PostResponseDTO> updatePost(
             @Parameter(description = "ID bài viết") @PathVariable Long id,
-            @RequestBody PostRequestDTO dto
-    ) {
+            @RequestBody PostRequestDTO dto) {
         PostResponseDTO response = postService.updatePost(id, dto);
         return ResponseEntity.ok(response);
     }
@@ -83,8 +79,7 @@ public class PostController {
     public ResponseEntity<Page<PostResponseDTO>> getPublishedPosts(
             @Parameter(description = "Trang bắt đầu từ 0") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Kích thước trang") @RequestParam(defaultValue = "10") int size,
-            @Parameter(description = "Sắp xếp, ví dụ: createdAt,desc hoặc title,asc") @RequestParam(defaultValue = "createdAt,desc") String sort
-    ) {
+            @Parameter(description = "Sắp xếp, ví dụ: createdAt,desc hoặc title,asc") @RequestParam(defaultValue = "createdAt,desc") String sort) {
         Sort sortObj;
         String[] sortParts = sort.split(",");
         if (sortParts.length == 2) {

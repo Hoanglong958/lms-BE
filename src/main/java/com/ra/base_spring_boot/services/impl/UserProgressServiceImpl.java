@@ -65,6 +65,7 @@ public class UserProgressServiceImpl implements IUserProgressService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<UserCourseProgressResponseDTO> getCourseProgressByUser(Long userId) {
         return userCourseProgressRepository.findByUserId(userId)
                 .stream()
@@ -105,7 +106,6 @@ public class UserProgressServiceImpl implements IUserProgressService {
             progress.setCompletedAt(LocalDateTime.now());
         }
 
-
         userSessionProgressRepository.save(progress);
         List<ClassStudent> enrollments = classStudentRepository.findByStudent_Id(user.getId());
         for (ClassStudent cs : enrollments) {
@@ -114,7 +114,8 @@ public class UserProgressServiceImpl implements IUserProgressService {
             RoadmapAssignment ra = roadmapAssignmentRepository
                     .findByClazz_IdAndCourse_Id(classId, courseId)
                     .orElse(null);
-            if (ra == null) continue;
+            if (ra == null)
+                continue;
 
             UserRoadmapProgress rp = userRoadmapProgressRepository
                     .findByUserIdAndAssignmentId(user.getId(), ra.getId())
@@ -141,7 +142,8 @@ public class UserProgressServiceImpl implements IUserProgressService {
             rp.setCompletedItems(completed);
             if (total > 0 && completed >= total) {
                 rp.setStatus(LessonProgressStatus.COMPLETED);
-                if (rp.getCompletedAt() == null) rp.setCompletedAt(LocalDateTime.now());
+                if (rp.getCompletedAt() == null)
+                    rp.setCompletedAt(LocalDateTime.now());
             } else if (completed > 0 && rp.getStatus() == LessonProgressStatus.NOT_STARTED) {
                 rp.setStatus(LessonProgressStatus.IN_PROGRESS);
             }
@@ -153,6 +155,7 @@ public class UserProgressServiceImpl implements IUserProgressService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<UserSessionProgressResponseDTO> getSessionProgressByUserAndCourse(Long userId, Long courseId) {
         return userSessionProgressRepository.findByUserIdAndCourseId(userId, courseId)
                 .stream()
@@ -202,7 +205,6 @@ public class UserProgressServiceImpl implements IUserProgressService {
             progress.setCompletedAt(LocalDateTime.now());
         }
 
-
         userLessonProgressRepository.save(progress);
         // Đồng bộ trạng thái lộ trình ở mức tổng thể nếu có thể suy ra
         trySyncRoadmapProgress(user, course, lesson, progress.getStatus());
@@ -210,6 +212,7 @@ public class UserProgressServiceImpl implements IUserProgressService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<UserLessonProgressResponseDTO> getLessonProgressByUserAndCourse(Long userId, Long courseId) {
         return userLessonProgressRepository.findByUserIdAndCourseId(userId, courseId)
                 .stream()
@@ -283,10 +286,12 @@ public class UserProgressServiceImpl implements IUserProgressService {
         rp.setCompletedItems(completed);
         if (total > 0 && completed >= total) {
             rp.setStatus(LessonProgressStatus.COMPLETED);
-            if (rp.getCompletedAt() == null) rp.setCompletedAt(LocalDateTime.now());
+            if (rp.getCompletedAt() == null)
+                rp.setCompletedAt(LocalDateTime.now());
         } else if (completed > 0 && rp.getStatus() == LessonProgressStatus.NOT_STARTED) {
             rp.setStatus(LessonProgressStatus.IN_PROGRESS);
-            if (rp.getStartedAt() == null) rp.setStartedAt(LocalDateTime.now());
+            if (rp.getStartedAt() == null)
+                rp.setStartedAt(LocalDateTime.now());
         }
 
         userRoadmapProgressRepository.save(rp);
@@ -294,12 +299,14 @@ public class UserProgressServiceImpl implements IUserProgressService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<UserRoadmapProgressResponseDTO> getRoadmapProgressByUser(Long userId) {
         return userRoadmapProgressRepository.findByUserId(Objects.requireNonNull(userId, "userId must not be null"))
                 .stream().map(this::toRoadmapDto).toList();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserRoadmapProgressResponseDTO getRoadmapProgressByUserAndRoadmap(Long userId, Long roadmapId) {
         Objects.requireNonNull(userId, "userId must not be null");
         Objects.requireNonNull(roadmapId, "roadmapId must not be null");
@@ -321,7 +328,8 @@ public class UserProgressServiceImpl implements IUserProgressService {
         rp.setCompletedItems(completed);
         if (total > 0 && completed >= total) {
             rp.setStatus(LessonProgressStatus.COMPLETED);
-            if (rp.getCompletedAt() == null) rp.setCompletedAt(LocalDateTime.now());
+            if (rp.getCompletedAt() == null)
+                rp.setCompletedAt(LocalDateTime.now());
         } else if (completed > 0 && rp.getStatus() == LessonProgressStatus.NOT_STARTED) {
             rp.setStatus(LessonProgressStatus.IN_PROGRESS);
         }
@@ -330,7 +338,8 @@ public class UserProgressServiceImpl implements IUserProgressService {
     }
 
     private void trySyncRoadmapProgress(User user, Course course, Lesson lesson, LessonProgressStatus status) {
-        // Tìm roadmap assignment phù hợp: theo các lớp mà user thuộc và có assignment cho course này
+        // Tìm roadmap assignment phù hợp: theo các lớp mà user thuộc và có assignment
+        // cho course này
         List<ClassStudent> enrollments = classStudentRepository.findByStudent_Id(user.getId());
         for (ClassStudent cs : enrollments) {
             Long classId = cs.getClassroom().getId();
@@ -338,7 +347,8 @@ public class UserProgressServiceImpl implements IUserProgressService {
             RoadmapAssignment ra = roadmapAssignmentRepository
                     .findByClazz_IdAndCourse_Id(classId, courseId)
                     .orElse(null);
-            if (ra == null) continue;
+            if (ra == null)
+                continue;
 
             // Lấy/khởi tạo bản ghi roadmap progress
             UserRoadmapProgress rp = userRoadmapProgressRepository
@@ -367,7 +377,8 @@ public class UserProgressServiceImpl implements IUserProgressService {
             rp.setCompletedItems(completed);
             if (total > 0 && completed >= total) {
                 rp.setStatus(LessonProgressStatus.COMPLETED);
-                if (rp.getCompletedAt() == null) rp.setCompletedAt(LocalDateTime.now());
+                if (rp.getCompletedAt() == null)
+                    rp.setCompletedAt(LocalDateTime.now());
             } else if (completed > 0 && rp.getStatus() == LessonProgressStatus.NOT_STARTED) {
                 rp.setStatus(LessonProgressStatus.IN_PROGRESS);
             }
@@ -379,7 +390,8 @@ public class UserProgressServiceImpl implements IUserProgressService {
     }
 
     private int computeCompletedRoadmapItems(User user, RoadmapAssignment ra) {
-        if (ra.getItems() == null) return 0;
+        if (ra.getItems() == null)
+            return 0;
         int done = 0;
         for (RoadmapItem item : ra.getItems()) {
             if (item.getLesson() != null) {
@@ -388,7 +400,8 @@ public class UserProgressServiceImpl implements IUserProgressService {
                     done++;
                 }
             } else if (item.getSession() != null) {
-                var sp = userSessionProgressRepository.findByUserIdAndSessionId(user.getId(), item.getSession().getId());
+                var sp = userSessionProgressRepository.findByUserIdAndSessionId(user.getId(),
+                        item.getSession().getId());
                 if (sp.isPresent() && sp.get().getStatus() == LessonProgressStatus.COMPLETED) {
                     done++;
                 }
@@ -398,9 +411,12 @@ public class UserProgressServiceImpl implements IUserProgressService {
     }
 
     private BigDecimal normalizePercent(BigDecimal value) {
-        if (value == null) return BigDecimal.ZERO;
-        if (value.compareTo(BigDecimal.ZERO) < 0) return BigDecimal.ZERO;
-        if (value.compareTo(BigDecimal.valueOf(100)) > 0) return BigDecimal.valueOf(100);
+        if (value == null)
+            return BigDecimal.ZERO;
+        if (value.compareTo(BigDecimal.ZERO) < 0)
+            return BigDecimal.ZERO;
+        if (value.compareTo(BigDecimal.valueOf(100)) > 0)
+            return BigDecimal.valueOf(100);
         return value;
     }
 
@@ -494,5 +510,3 @@ public class UserProgressServiceImpl implements IUserProgressService {
                 .build();
     }
 }
-
-

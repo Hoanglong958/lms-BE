@@ -16,18 +16,17 @@ public class PostResponseDTO {
     private Long id;
     private String title;
     private String slug;
+    private String imageUrl;
     private String content;
     private AuthorResponse author;
     private String status;
     private LocalDateTime createdAt;
     private List<String> tags;
 
-
     @Builder
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-
 
     public static class AuthorResponse {
         private Long id;
@@ -35,4 +34,3 @@ public class PostResponseDTO {
 
     }
 }
-

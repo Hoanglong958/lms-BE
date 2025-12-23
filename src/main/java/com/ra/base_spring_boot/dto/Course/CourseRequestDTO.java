@@ -16,5 +16,9 @@ public class CourseRequestDTO {
     @Schema(example = "BEGINNER") // BEGINNER, INTERMEDIATE, ADVANCED
     private String level; // BEGINNER, INTERMEDIATE, ADVANCED
 
-    private int totalSessions;  // tổng số buổi học
+    @Schema(example = "10")
+    private int totalSessions; // tổng số buổi học
+
+    @Schema(example = "https://example.com/course-image.jpg")
+    private String imageUrl;
 }

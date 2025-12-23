@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+
 @Data
 @Entity
 @NoArgsConstructor
@@ -28,6 +29,9 @@ public class Post {
     @Column(unique = true, nullable = false, length = 255)
     private String slug;
 
+    @Column(length = 255)
+    private String imageUrl;
+
     @Lob
     @Column(nullable = false)
     private String content;
@@ -45,11 +49,7 @@ public class Post {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @ManyToMany
-    @JoinTable(
-            name = "post_tags",
-            joinColumns = @JoinColumn(name = "post_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id")
-    )
+    @JoinTable(name = "post_tags", joinColumns = @JoinColumn(name = "post_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
     @Builder.Default
     private Set<Tag> tags = new HashSet<>();
 

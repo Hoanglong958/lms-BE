@@ -17,6 +17,7 @@ public class UserResponse {
     private String fullName;
     private String gmail;
     private RoleName role;
+    private String imageUrl;
     private Boolean isActive;
     private LocalDateTime createdAt;
 }

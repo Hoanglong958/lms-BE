@@ -31,6 +31,7 @@ public class CourseServiceImpl implements ICourseService {
                 .title(dto.getTitle())
                 .description(dto.getDescription())
                 .level(level)
+                .imageUrl(dto.getImageUrl())
                 .totalSessions(dto.getTotalSessions())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -49,6 +50,7 @@ public class CourseServiceImpl implements ICourseService {
         course.setTitle(dto.getTitle());
         course.setDescription(dto.getDescription());
         course.setLevel(parseLevel(dto.getLevel()));
+        course.setImageUrl(dto.getImageUrl());
         course.setTotalSessions(dto.getTotalSessions());
         course.setUpdatedAt(LocalDateTime.now());
 
@@ -103,6 +105,7 @@ public class CourseServiceImpl implements ICourseService {
                 .title(course.getTitle())
                 .description(course.getDescription())
                 .level(course.getLevel().name())
+                .imageUrl(course.getImageUrl())
                 .totalSessions(course.getTotalSessions())
                 .createdAt(course.getCreatedAt())
                 .updatedAt(course.getUpdatedAt())

@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UserUpdateRequest {
     private String fullName;
+    private String imageUrl;
     private String role;
     private Boolean isActive;
 }

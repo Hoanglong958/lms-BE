@@ -28,5 +28,9 @@ public class CourseResponseDTO {
     @Schema(example = "2025-11-14T10:30:00")
     private LocalDateTime updatedAt;
 
+    @Schema(example = "20")
     private int totalSessions;
+
+    @Schema(example = "https://example.com/course-image.jpg")
+    private String imageUrl;
 }

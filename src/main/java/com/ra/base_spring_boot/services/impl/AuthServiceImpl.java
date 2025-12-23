@@ -42,7 +42,6 @@ public class AuthServiceImpl implements IAuthService {
     private final IPasswordResetOtpRepository passwordResetOtpRepository;
     private final GmailService gmailService;
 
-
     // ======================= Đăng ký =========================
     @Override
     public void register(FormRegister formRegister) {
@@ -65,21 +64,22 @@ public class AuthServiceImpl implements IAuthService {
             throw new HttpBadRequest("Gmail đã tồn tại!");
         }
 
-      // ===== Validate Password =====
-      if (formRegister.getPassword() == null || formRegister.getPassword().isBlank()) {
-        throw new HttpBadRequest("Mật khẩu không được để trống!");
-    }
+        // ===== Validate Password =====
+        if (formRegister.getPassword() == null || formRegister.getPassword().isBlank()) {
+            throw new HttpBadRequest("Mật khẩu không được để trống!");
+        }
 
-    // Mật khẩu mạnh: ít nhất 8 ký tự, chữ hoa, chữ thường, số, ký tự đặc biệt
-    String passwordRegex = "^(?=.*[0-9])" +                            // có số
-                           "(?=.*[a-z])" +                            // có chữ thường
-                           "(?=.*[A-Z])" +                            // có chữ hoa
-                           "(?=.*[!@#$%^&*()_+\\-={}\\[\\]|:;\"'<>,.?/])" +  // có ký tự đặc biệt
-                           ".{8,}$";                                 // độ dài tối thiểu 8 ký tự
+        // Mật khẩu mạnh: ít nhất 8 ký tự, chữ hoa, chữ thường, số, ký tự đặc biệt
+        String passwordRegex = "^(?=.*[0-9])" + // có số
+                "(?=.*[a-z])" + // có chữ thường
+                "(?=.*[A-Z])" + // có chữ hoa
+                "(?=.*[!@#$%^&*()_+\\-={}\\[\\]|:;\"'<>,.?/])" + // có ký tự đặc biệt
+                ".{8,}$"; // độ dài tối thiểu 8 ký tự
 
-    if (!formRegister.getPassword().matches(passwordRegex)) {
-        throw new HttpBadRequest("Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt!");
-    }
+        if (!formRegister.getPassword().matches(passwordRegex)) {
+            throw new HttpBadRequest(
+                    "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt!");
+        }
 
         // ===== Validate Role =====
         RoleName role = RoleName.ROLE_USER; // mặc định USERa
@@ -101,7 +101,8 @@ public class AuthServiceImpl implements IAuthService {
                 .gmail(formRegister.getGmail())
                 .password(passwordEncoder.encode(formRegister.getPassword())) // encode 1 lần
                 .phone(formRegister.getPhone())
-                .role(role)          // set theo role đã validate ở trên
+                .imageUrl(formRegister.getImageUrl())
+                .role(role) // set theo role đã validate ở trên
                 .isActive(true)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -115,13 +116,11 @@ public class AuthServiceImpl implements IAuthService {
                     user.getGmail(),
                     "Chào mừng tài khoản mới",
                     "user_created",
-                    Map.of("username", user.getFullName())
-            ));
+                    Map.of("username", user.getFullName())));
         } catch (org.springframework.dao.DataIntegrityViolationException ex) {
             // Gmail đã tồn tại hoặc ràng buộc DB khác
             throw new HttpBadRequest("Dữ liệu không hợp lệ hoặc gmail đã tồn tại!");
         }
-
 
     }
 
@@ -133,9 +132,7 @@ public class AuthServiceImpl implements IAuthService {
             authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             formLogin.getGmail(),
-                            formLogin.getPassword()
-                    )
-            );
+                            formLogin.getPassword()));
         } catch (AuthenticationException e) {
             throw new HttpBadRequest("Tên đăng nhập hoặc mật khẩu không đúng!");
         }
@@ -172,7 +169,8 @@ public class AuthServiceImpl implements IAuthService {
             throw new HttpBadRequest("Mật khẩu mới không được để trống!");
         }
         if (!request.getNewPassword().matches(passwordRegex)) {
-            throw new HttpBadRequest("Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt!");
+            throw new HttpBadRequest(
+                    "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt!");
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
@@ -200,14 +198,15 @@ public class AuthServiceImpl implements IAuthService {
         }
 
         // Mật khẩu mạnh: ít nhất 8 ký tự, chữ hoa, chữ thường, số, ký tự đặc biệt
-        String passwordRegex = "^(?=.*[0-9])" +                            // có số
-                               "(?=.*[a-z])" +                            // có chữ thường
-                               "(?=.*[A-Z])" +                            // có chữ hoa
-                               "(?=.*[!@#$%^&*()_+\\-={}\\[\\]|:;\"'<>,.?/])" +  // có ký tự đặc biệt
-                               ".{8,}$";                                 // độ dài tối thiểu 8 ký tự
+        String passwordRegex = "^(?=.*[0-9])" + // có số
+                "(?=.*[a-z])" + // có chữ thường
+                "(?=.*[A-Z])" + // có chữ hoa
+                "(?=.*[!@#$%^&*()_+\\-={}\\[\\]|:;\"'<>,.?/])" + // có ký tự đặc biệt
+                ".{8,}$"; // độ dài tối thiểu 8 ký tự
 
         if (!request.getNewPassword().matches(passwordRegex)) {
-            throw new HttpBadRequest("Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt!");
+            throw new HttpBadRequest(
+                    "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt!");
         }
 
         // Reload User từ repository để tránh LazyInitializationException
@@ -217,7 +216,7 @@ public class AuthServiceImpl implements IAuthService {
         }
         User userToUpdate = userRepository.findById(user.getId())
                 .orElseThrow(() -> new HttpBadRequest("Người dùng không tồn tại!"));
-        
+
         userToUpdate.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(userToUpdate);
 
@@ -254,11 +253,10 @@ public class AuthServiceImpl implements IAuthService {
                     Map.of(
                             "username", user.getFullName() != null ? user.getFullName() : user.getGmail(),
                             "otp", code,
-                            "expiredMinutes", 5
-                    )
-            ));
+                            "expiredMinutes", 5)));
         } catch (Exception e) {
-            // Tránh 500 nếu cấu hình mail lỗi: chỉ log và tiếp tục, vì OTP đã tạo trong hệ thống
+            // Tránh 500 nếu cấu hình mail lỗi: chỉ log và tiếp tục, vì OTP đã tạo trong hệ
+            // thống
             System.err.println("[WARN] Gửi email OTP thất bại, nhưng OTP đã được tạo: " + e.getMessage());
         }
     }

@@ -72,7 +72,8 @@ public class UserServiceImpl implements IUserService {
                 "(?=.*[!@#$%^&*()_+\\-={}\\[\\]|:;\"'<>.,?//])" +
                 ".{8,}$";
         if (!req.getPassword().matches(passwordRegex)) {
-            throw new HttpBadRequest("Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt!");
+            throw new HttpBadRequest(
+                    "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt!");
         }
 
         // ===== Validate Role =====
@@ -96,6 +97,7 @@ public class UserServiceImpl implements IUserService {
                 .gmail(req.getGmail())
                 .password(passwordEncoder.encode(req.getPassword()))
                 .phone(req.getPhone())
+                .imageUrl(req.getImageUrl())
                 .role(role)
                 .isActive(active)
                 .createdAt(LocalDateTime.now())
@@ -103,8 +105,9 @@ public class UserServiceImpl implements IUserService {
 
         try {
             user = userRepository.save(java.util.Objects.requireNonNull(user, "user must not be null"));
-            
-            // Gửi email thông báo tạo tài khoản **như khi user tự đăng ký** (dùng GmailService trực tiếp)
+
+            // Gửi email thông báo tạo tài khoản **như khi user tự đăng ký** (dùng
+            // GmailService trực tiếp)
             try {
                 if (role == RoleName.ROLE_TEACHER) {
                     // Gửi email đặc biệt cho tài khoản giáo viên kèm mật khẩu tạm
@@ -115,9 +118,7 @@ public class UserServiceImpl implements IUserService {
                             Map.of(
                                     "username", user.getFullName(),
                                     "tempPassword", req.getPassword(),
-                                    "email", user.getGmail()
-                            )
-                    );
+                                    "email", user.getGmail()));
                     gmailService.sendEmail(dto);
                 } else {
                     // Gửi email thông thường cho các loại tài khoản khác
@@ -125,8 +126,7 @@ public class UserServiceImpl implements IUserService {
                             user.getGmail(),
                             "Chào mừng bạn đến với hệ thống",
                             "user_created",
-                            Map.of("username", user.getFullName())
-                    );
+                            Map.of("username", user.getFullName()));
                     gmailService.sendEmail(dto);
                 }
             } catch (Exception e) {
@@ -148,6 +148,9 @@ public class UserServiceImpl implements IUserService {
                 .orElseThrow(() -> new HttpNotFound("User không tồn tại"));
         if (req.getFullName() != null) {
             user.setFullName(req.getFullName());
+        }
+        if (req.getImageUrl() != null) {
+            user.setImageUrl(req.getImageUrl());
         }
         if (req.getRole() != null) {
             user.setRole(parseRoleOrDefault(req.getRole(), user.getRole()));
@@ -190,22 +193,28 @@ public class UserServiceImpl implements IUserService {
                 .fullName(u.getFullName())
                 .gmail(u.getGmail())
                 .role(u.getRole())
+                .imageUrl(u.getImageUrl())
                 .isActive(u.getIsActive())
                 .createdAt(u.getCreatedAt())
                 .build();
     }
 
     private RoleName parseRoleOrDefault(String input, RoleName fallback) {
-        if (input == null) return fallback;
+        if (input == null)
+            return fallback;
         String s = input.trim().toUpperCase();
-        if ("ADMIN".equals(s) || "ROLE_ADMIN".equals(s)) return RoleName.ROLE_ADMIN;
-        if ("USER".equals(s) || "ROLE_USER".equals(s)) return RoleName.ROLE_USER;
-        if ("TEACHER".equals(s) || "ROLE_TEACHER".equals(s)) return RoleName.ROLE_TEACHER;
+        if ("ADMIN".equals(s) || "ROLE_ADMIN".equals(s))
+            return RoleName.ROLE_ADMIN;
+        if ("USER".equals(s) || "ROLE_USER".equals(s))
+            return RoleName.ROLE_USER;
+        if ("TEACHER".equals(s) || "ROLE_TEACHER".equals(s))
+            return RoleName.ROLE_TEACHER;
         return fallback;
     }
 
     private String emptyToNull(String s) {
-        if (s == null) return null;
+        if (s == null)
+            return null;
         String t = s.trim();
         return t.isEmpty() ? null : t;
     }
