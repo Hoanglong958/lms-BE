@@ -42,6 +42,7 @@ public class PostServiceImpl implements IPostService {
         post.setTitle(request.getTitle());
         post.setSlug(request.getSlug());
         post.setContent(request.getContent());
+        post.setImageUrl(request.getImageUrl());
 
         User author = userRepository.findById(
                 Objects.requireNonNull(request.getAuthorId(), "authorId must not be null"))
@@ -100,6 +101,7 @@ public class PostServiceImpl implements IPostService {
         post.setTitle(request.getTitle());
         post.setSlug(request.getSlug());
         post.setContent(request.getContent());
+        post.setImageUrl(request.getImageUrl());
         post.setStatus(PostStatus.valueOf(request.getStatus()));
         post.setTags(buildTags(request.getTagNames()));
 
@@ -130,6 +132,7 @@ public class PostServiceImpl implements IPostService {
                 .title(post.getTitle())
                 .slug(post.getSlug())
                 .content(post.getContent())
+                .imageUrl(post.getImageUrl())
                 .status(post.getStatus().name())
                 .createdAt(post.getCreatedAt())
                 .author(authorDTO)

@@ -30,6 +30,9 @@ public class Post {
     @Column(nullable = false)
     private String content;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @ManyToOne
     @JoinColumn(name = "author_id")
     private User author;
