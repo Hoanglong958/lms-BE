@@ -97,13 +97,10 @@ public class AuthServiceImpl implements IAuthService {
 
         // ===== Tạo User =====
         User user = User.builder()
-                .firstName(formRegister.getFirstName())
-                .lastName(formRegister.getLastName())
                 .fullName(formRegister.getFullName())
                 .gmail(formRegister.getGmail())
                 .password(passwordEncoder.encode(formRegister.getPassword())) // encode 1 lần
                 .phone(formRegister.getPhone())
-                .avatar(formRegister.getAvatar())
                 .role(role) // set theo role đã validate ở trên
                 .isActive(true)
                 .createdAt(LocalDateTime.now())
@@ -312,21 +309,12 @@ public class AuthServiceImpl implements IAuthService {
         User user = userRepository.findByGmail(username)
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy người dùng!"));
 
-        if (request.getFirstName() != null)
-            user.setFirstName(request.getFirstName());
-        if (request.getLastName() != null)
-            user.setLastName(request.getLastName());
+        if (request.getFullName() != null)
+            user.setFullName(request.getFullName());
         if (request.getPhone() != null)
             user.setPhone(request.getPhone());
         if (request.getAvatar() != null)
             user.setAvatar(request.getAvatar());
-
-        // Cập nhật fullName nếu cần (ghép lastName + firstName)
-        if (request.getFirstName() != null || request.getLastName() != null) {
-            String last = user.getLastName() != null ? user.getLastName() : "";
-            String first = user.getFirstName() != null ? user.getFirstName() : "";
-            user.setFullName((last + " " + first).trim());
-        }
 
         userRepository.save(user);
         return mapToUserResponse(user);

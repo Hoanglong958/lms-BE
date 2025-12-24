@@ -14,7 +14,6 @@ import java.util.List;
 public class PostRequestDTO {
     private String title;
     private String slug;
-    private String imageUrl;
     private String content;
     private Long authorId; // id của user tạo bài
     private List<String> tagNames; // danh sách tên tag

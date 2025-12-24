@@ -2,10 +2,7 @@ package com.ra.base_spring_boot.model;
 
 import com.ra.base_spring_boot.model.constants.PostStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -29,16 +26,13 @@ public class Post {
     @Column(unique = true, nullable = false, length = 255)
     private String slug;
 
-    @Column(length = 255)
-    private String imageUrl;
-
     @Lob
     @Column(nullable = false)
     private String content;
 
     @ManyToOne
     @JoinColumn(name = "author_id")
-    private User author; // liên kết với bảng users
+    private User author;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
@@ -51,10 +45,7 @@ public class Post {
     @ManyToMany
     @JoinTable(name = "post_tags", joinColumns = @JoinColumn(name = "post_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
     @Builder.Default
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
     private Set<Tag> tags = new HashSet<>();
-
-    @PreUpdate
-    public void preUpdate() {
-    }
-
 }

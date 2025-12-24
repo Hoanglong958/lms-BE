@@ -13,8 +13,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class FormRegister {
         @NotBlank(message = "Không được để trống")
-        private String firstName;
-        private String lastName;
         private String fullName;
 
         @NotBlank(message = "Không được để trống")
@@ -28,6 +26,4 @@ public class FormRegister {
         private String phone;
 
         private String role;
-
-        private String avatar;
 }

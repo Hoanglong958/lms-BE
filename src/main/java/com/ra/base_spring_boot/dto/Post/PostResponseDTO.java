@@ -16,7 +16,6 @@ public class PostResponseDTO {
     private Long id;
     private String title;
     private String slug;
-    private String imageUrl;
     private String content;
     private AuthorResponse author;
     private String status;

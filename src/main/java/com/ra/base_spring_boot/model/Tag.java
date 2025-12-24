@@ -1,13 +1,11 @@
 package com.ra.base_spring_boot.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.HashSet;
 import java.util.Set;
+
 @Data
 @Entity
 @NoArgsConstructor
@@ -25,6 +23,7 @@ public class Tag {
 
     @ManyToMany(mappedBy = "tags")
     @Builder.Default
-    private  Set<Post> posts = new HashSet<>();
-
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    private Set<Post> posts = new HashSet<>();
 }
