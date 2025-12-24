@@ -33,7 +33,8 @@ public class RoadmapServiceImpl implements IRoadmapService {
         Long courseId = Objects.requireNonNull(req.getCourseId(), "courseId must not be null");
 
         // Load schedule for the target class + optional filter by periods
-        List<ScheduleItem> schedule = scheduleItemRepository.findByClassCourse_Course_IdOrderByDateAscSessionNumberAsc(courseId);
+        List<ScheduleItem> schedule = scheduleItemRepository
+                .findByClassCourse_Course_IdOrderByDateAscSessionNumberAsc(courseId);
         if (req.getPeriodIds() != null && !req.getPeriodIds().isEmpty()) {
             Set<Long> wanted = new HashSet<>(req.getPeriodIds());
             schedule = schedule.stream()
@@ -52,7 +53,8 @@ public class RoadmapServiceImpl implements IRoadmapService {
         // Load existing or create new assignment
         RoadmapAssignment assignment = roadmapAssignmentRepository
                 .findByClazz_IdAndCourse_Id(classId, courseId)
-                .orElseGet(() -> RoadmapAssignment.builder().clazz(clazz).course(course).items(new ArrayList<>()).build());
+                .orElseGet(
+                        () -> RoadmapAssignment.builder().clazz(clazz).course(course).items(new ArrayList<>()).build());
 
         // Clear current items
         assignment.getItems().clear();
@@ -78,7 +80,8 @@ public class RoadmapServiceImpl implements IRoadmapService {
             }
         }
 
-        // Validate lessons belong to the above sessions (if provided), otherwise to course's sessions
+        // Validate lessons belong to the above sessions (if provided), otherwise to
+        // course's sessions
         Map<Long, Lesson> lessonMap = new HashMap<>();
         if (req.getLessonIds() != null && !req.getLessonIds().isEmpty()) {
             List<Lesson> lessons = lessonRepository.findAllById(req.getLessonIds());
@@ -89,8 +92,10 @@ public class RoadmapServiceImpl implements IRoadmapService {
                 if (s == null || s.getCourse() == null || !Objects.equals(s.getCourse().getId(), courseId)) {
                     throw new HttpBadRequest("Lesson " + l.getId() + " không thuộc course " + courseId);
                 }
-                // optional: if request provided sessionIds, ensure lesson's session is within those
-                if (req.getSessionIds() != null && !req.getSessionIds().isEmpty() && !sessionMap.containsKey(s.getId())) {
+                // optional: if request provided sessionIds, ensure lesson's session is within
+                // those
+                if (req.getSessionIds() != null && !req.getSessionIds().isEmpty()
+                        && !sessionMap.containsKey(s.getId())) {
                     throw new HttpBadRequest("Lesson " + l.getId() + " không thuộc các session đã chọn");
                 }
                 lessonMap.put(l.getId(), l);
@@ -117,70 +122,68 @@ public class RoadmapServiceImpl implements IRoadmapService {
             }
         }
 
-        // Build items with stable order: sessions first by orderIndex, then lessons by their session/orderIndex
+        // Build items with stable order: sessions and their lessons interleaved.
+        // If a session has specific lessons selected, we only add the lessons to avoid
+        // redundant roadmap steps.
         int order = 1;
-        // Add sessions
-        List<Session> orderedSessions = sessionMap.values().stream()
+        List<Session> allOrderedSessions = sessionMap.values().stream()
                 .sorted(Comparator.comparing(Session::getOrderIndex))
                 .toList();
-        for (Session s : orderedSessions) {
-            RoadmapItem item = RoadmapItem.builder()
-                    .assignment(assignment)
-                    .session(s)
-                    .orderIndex(order++)
-                    .build();
-            assignment.getItems().add(item);
-        }
-        // Add lessons
-        List<Lesson> orderedLessons = lessonMap.values().stream()
-                .sorted(Comparator.comparing((Lesson l) -> l.getSession().getOrderIndex())
-                        .thenComparing(Lesson::getOrderIndex))
-                .toList();
-        for (Lesson l : orderedLessons) {
-            RoadmapItem item = RoadmapItem.builder()
-                    .assignment(assignment)
-                    .session(l.getSession())
-                    .lesson(l)
-                    .orderIndex(order++)
-                    .build();
-            assignment.getItems().add(item);
+
+        for (Session s : allOrderedSessions) {
+            List<Lesson> lessonsForThisSession = lessonMap.values().stream()
+                    .filter(l -> l.getSession().getId().equals(s.getId()))
+                    .sorted(Comparator.comparing(Lesson::getOrderIndex))
+                    .toList();
+
+            if (lessonsForThisSession.isEmpty()) {
+                // Case: Session has no selected lessons -> add the session as a unit
+                RoadmapItem item = RoadmapItem.builder()
+                        .assignment(assignment)
+                        .session(s)
+                        .orderIndex(order++)
+                        .build();
+                assignment.getItems().add(item);
+            } else {
+                // Case: Session has selected lessons -> add only the lessons to represent the
+                // session's content
+                for (Lesson l : lessonsForThisSession) {
+                    RoadmapItem item = RoadmapItem.builder()
+                            .assignment(assignment)
+                            .session(s)
+                            .lesson(l)
+                            .orderIndex(order++)
+                            .build();
+                    assignment.getItems().add(item);
+                }
+            }
         }
 
         RoadmapAssignment saved = roadmapAssignmentRepository.save(assignment);
 
-        // Map ordered sessions and lessons to filtered schedule items via round-robin
-        List<ScheduleItem> targetSchedule = schedule;
-        if (targetSchedule.isEmpty()) {
+        // Map assigned roadmap items to filtered schedule slots via round-robin
+        // distribution
+        if (schedule.isEmpty()) {
             throw new HttpBadRequest("Không tìm thấy buổi học phù hợp với periodIds được chỉ định");
         }
 
         List<ScheduleItemContent> contents = new ArrayList<>();
         int idx = 0;
         int contentOrder = 1;
-        List<Object> units = new ArrayList<>();
-        units.addAll(orderedSessions);
-        units.addAll(orderedLessons);
 
-        for (Object u : units) {
-            ScheduleItem si = targetSchedule.get(idx % targetSchedule.size());
+        // Spread the learning units (items) across available schedule slots
+        // (sessions/periods)
+        for (RoadmapItem item : assignment.getItems()) {
+            ScheduleItem si = schedule.get(idx % schedule.size());
             idx++;
 
-            if (u instanceof Session s) {
-                contents.add(ScheduleItemContent.builder()
-                        .assignment(saved)
-                        .scheduleItem(si)
-                        .session(s)
-                        .orderIndex(contentOrder++)
-                        .build());
-            } else if (u instanceof Lesson l) {
-                contents.add(ScheduleItemContent.builder()
-                        .assignment(saved)
-                        .scheduleItem(si)
-                        .session(l.getSession())
-                        .lesson(l)
-                        .orderIndex(contentOrder++)
-                        .build());
-            }
+            contents.add(ScheduleItemContent.builder()
+                    .assignment(saved)
+                    .scheduleItem(si)
+                    .session(item.getSession())
+                    .lesson(item.getLesson())
+                    .orderIndex(contentOrder++)
+                    .build());
         }
 
         if (!contents.isEmpty()) {
@@ -195,7 +198,8 @@ public class RoadmapServiceImpl implements IRoadmapService {
     public RoadmapResponse get(Long classId, Long courseId) {
         RoadmapAssignment assignment = roadmapAssignmentRepository
                 .findByClazz_IdAndCourse_Id(classId, courseId)
-                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy lộ trình cho classId=" + classId + ", courseId=" + courseId));
+                .orElseThrow(() -> new HttpBadRequest(
+                        "Không tìm thấy lộ trình cho classId=" + classId + ", courseId=" + courseId));
         return toResponse(assignment);
     }
 
