@@ -11,7 +11,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -220,11 +231,11 @@ public class RoadmapServiceImpl implements IRoadmapService {
 
     @Override
     @Transactional
-    public List<RoadmapResponse> assignBulk(List<RoadmapAssignRequest> requests) {
+    public java.util.List<RoadmapResponse> assignBulk(java.util.List<RoadmapAssignRequest> requests) {
         if (requests == null || requests.isEmpty()) {
             return new ArrayList<>();
         }
-        List<RoadmapResponse> responses = new ArrayList<>();
+        java.util.List<RoadmapResponse> responses = new ArrayList<>();
         for (RoadmapAssignRequest req : requests) {
             responses.add(this.assign(req));
         }

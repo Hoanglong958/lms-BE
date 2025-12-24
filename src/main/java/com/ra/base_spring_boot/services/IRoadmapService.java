@@ -8,7 +8,7 @@ import java.util.List;
 public interface IRoadmapService {
     RoadmapResponse assign(RoadmapAssignRequest req);
 
-    List<RoadmapResponse> assignBulk(List<RoadmapAssignRequest> requests);
+    java.util.List<RoadmapResponse> assignBulk(java.util.List<RoadmapAssignRequest> requests);
 
     RoadmapResponse get(Long classId, Long courseId);
 
