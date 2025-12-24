@@ -33,5 +33,3 @@ public interface IClassStudentRepository extends JpaRepository<ClassStudent, Lon
     @Query("SELECT COALESCE(AVG(cs.attendanceRate),0) FROM ClassStudent cs WHERE cs.classroom.id = :classroomId")
     BigDecimal averageAttendanceRateByClassroomId(Long classroomId);
 }
-
-

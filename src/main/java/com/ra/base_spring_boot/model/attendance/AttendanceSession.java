@@ -26,6 +26,9 @@ public class AttendanceSession {
     @JoinColumn(name = "class_id", nullable = false)
     private Class classroom;
 
+    @Column(length = 255)
+    private String title;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id")
     private Course course;

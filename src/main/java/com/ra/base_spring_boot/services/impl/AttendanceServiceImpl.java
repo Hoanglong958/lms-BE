@@ -48,10 +48,12 @@ public class AttendanceServiceImpl implements IAttendanceService {
         LocalDate date = LocalDate.parse(request.getSessionDate());
         LocalTime start = request.getStartTime() != null ? LocalTime.parse(request.getStartTime()) : null;
         LocalTime end = request.getEndTime() != null ? LocalTime.parse(request.getEndTime()) : null;
-        SessionStatus status = request.getStatus() != null ? SessionStatus.valueOf(request.getStatus()) : SessionStatus.NOT_STARTED;
+        SessionStatus status = request.getStatus() != null ? SessionStatus.valueOf(request.getStatus())
+                : SessionStatus.NOT_STARTED;
 
         AttendanceSession session = AttendanceSession.builder()
                 .classroom(classroom)
+                .title(request.getTitle())
                 .sessionDate(date)
                 .startTime(start)
                 .endTime(end)
@@ -76,9 +78,10 @@ public class AttendanceServiceImpl implements IAttendanceService {
                 .orElseThrow(() -> new IllegalArgumentException("Session not found: " + safeSessionId));
 
         Long classId = session.getClassroom().getId();
-        List<ClassStudent> students = classStudentRepo.findByClassroomId(classId);
+        List<ClassStudent> students = classStudentRepo.findByClassroomIdWithRelations(classId);
         List<AttendanceRecord> existing = recordRepo.findBySession_Id(sessionId);
-        Map<Long, AttendanceRecord> mapByStudent = existing.stream().collect(Collectors.toMap(r -> r.getStudent().getId(), r -> r));
+        Map<Long, AttendanceRecord> mapByStudent = existing.stream()
+                .collect(Collectors.toMap(r -> r.getStudent().getId(), r -> r));
 
         List<AttendanceRecordResponseDTO> result = new ArrayList<>();
         for (ClassStudent cs : students) {
@@ -103,14 +106,16 @@ public class AttendanceServiceImpl implements IAttendanceService {
     @Override
     public AttendanceRecordResponseDTO markAttendance(AttendanceRecordRequestDTO request) {
         Objects.requireNonNull(request, "request must not be null");
-        Long safeSessionId = Objects.requireNonNull(request.getAttendanceSessionId(), "attendanceSessionId must not be null");
+        Long safeSessionId = Objects.requireNonNull(request.getAttendanceSessionId(),
+                "attendanceSessionId must not be null");
         Long safeStudentId = Objects.requireNonNull(request.getStudentId(), "studentId must not be null");
         AttendanceSession session = sessionRepo.findById(safeSessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Session not found: " + safeSessionId));
         User student = userRepo.findById(safeStudentId)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found: " + safeStudentId));
 
-        AttendanceStatus status = request.getStatus() != null ? AttendanceStatus.valueOf(request.getStatus()) : AttendanceStatus.ABSENT;
+        AttendanceStatus status = request.getStatus() != null ? AttendanceStatus.valueOf(request.getStatus())
+                : AttendanceStatus.ABSENT;
         LocalDateTime checkin = request.getCheckinTime() != null ? LocalDateTime.parse(request.getCheckinTime()) : null;
 
         Optional<AttendanceRecord> opt = recordRepo.findBySession_IdAndStudent_Id(session.getId(), student.getId());
@@ -126,12 +131,14 @@ public class AttendanceServiceImpl implements IAttendanceService {
     }
 
     @Override
-    public List<AttendanceRecordResponseDTO> markAttendanceBulk(Long sessionId, List<AttendanceRecordRequestDTO> records) {
+    public List<AttendanceRecordResponseDTO> markAttendanceBulk(Long sessionId,
+            List<AttendanceRecordRequestDTO> records) {
         Long safeSessionId = Objects.requireNonNull(sessionId, "sessionId must not be null");
         List<AttendanceRecordRequestDTO> safeRecords = Objects.requireNonNull(records, "records must not be null");
         List<AttendanceRecordResponseDTO> result = new ArrayList<>();
         for (AttendanceRecordRequestDTO r : safeRecords) {
-            if (r.getAttendanceSessionId() == null) r.setAttendanceSessionId(safeSessionId);
+            if (r.getAttendanceSessionId() == null)
+                r.setAttendanceSessionId(safeSessionId);
             result.add(markAttendance(r));
         }
         return result;
@@ -166,7 +173,8 @@ public class AttendanceServiceImpl implements IAttendanceService {
     public AttendanceCourseSummaryResponseDTO summarizeByClassAndCourse(Long classId, Long courseId) {
         Long safeClassId = Objects.requireNonNull(classId, "classId must not be null");
         Long safeCourseId = Objects.requireNonNull(courseId, "courseId must not be null");
-        List<AttendanceSession> sessions = sessionRepo.findByClassroom_IdAndCourse_IdOrderBySessionDateDesc(safeClassId, safeCourseId);
+        List<AttendanceSession> sessions = sessionRepo.findByClassroom_IdAndCourse_IdOrderBySessionDateDesc(safeClassId,
+                safeCourseId);
         List<AttendanceCourseSummaryResponseDTO.Item> items = new ArrayList<>();
         for (AttendanceSession s : sessions) {
             long present = recordRepo.countBySession_IdAndStatus(s.getId(), AttendanceStatus.PRESENT);
@@ -196,7 +204,7 @@ public class AttendanceServiceImpl implements IAttendanceService {
                 .attendanceSessionId(s.getId())
                 .classId(s.getClassroom().getId())
                 .className(s.getClassroom().getClassName())
-                .title(null)
+                .title(s.getTitle())
                 .sessionDate(s.getSessionDate())
                 .startTime(s.getStartTime())
                 .endTime(s.getEndTime())
