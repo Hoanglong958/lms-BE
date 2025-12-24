@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user_roadmap_progress", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"user_id", "assignment_id"})
+        @UniqueConstraint(columnNames = { "user_id", "assignment_id" })
 })
 @Getter
 @Setter
@@ -46,6 +46,10 @@ public class UserRoadmapProgress {
     @Builder.Default
     private Integer totalItems = 0;
 
+    @Column(name = "progress_percent", precision = 5, scale = 2)
+    @Builder.Default
+    private java.math.BigDecimal progressPercent = java.math.BigDecimal.ZERO;
+
     @Column(name = "started_at")
     private LocalDateTime startedAt;
 
@@ -57,10 +61,14 @@ public class UserRoadmapProgress {
 
     @PrePersist
     public void onCreate() {
-        if (status == null) status = LessonProgressStatus.NOT_STARTED;
-        if (completedItems == null) completedItems = 0;
-        if (totalItems == null) totalItems = 0;
-        if (updatedAt == null) updatedAt = LocalDateTime.now();
+        if (status == null)
+            status = LessonProgressStatus.NOT_STARTED;
+        if (completedItems == null)
+            completedItems = 0;
+        if (totalItems == null)
+            totalItems = 0;
+        if (updatedAt == null)
+            updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate

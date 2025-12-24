@@ -107,50 +107,11 @@ public class UserProgressServiceImpl implements IUserProgressService {
         }
 
         userSessionProgressRepository.save(progress);
-        List<ClassStudent> enrollments = classStudentRepository.findByStudent_Id(user.getId());
-        for (ClassStudent cs : enrollments) {
-            Long classId = cs.getClassroom().getId();
-            Long courseId = course.getId();
-            RoadmapAssignment ra = roadmapAssignmentRepository
-                    .findByClazz_IdAndCourse_Id(classId, courseId)
-                    .orElse(null);
-            if (ra == null)
-                continue;
+        userSessionProgressRepository.flush();
 
-            UserRoadmapProgress rp = userRoadmapProgressRepository
-                    .findByUserIdAndAssignmentId(user.getId(), ra.getId())
-                    .orElseGet(() -> UserRoadmapProgress.builder()
-                            .user(user)
-                            .assignment(ra)
-                            .totalItems(ra.getItems() != null ? ra.getItems().size() : 0)
-                            .build());
+        // Đồng bộ sang Roadmap
+        trySyncRoadmapProgress(user, course, session, null, progress.getStatus());
 
-            if (ra.getItems() != null) {
-                ra.getItems().stream()
-                        .filter(i -> i.getSession() != null && Objects.equals(i.getSession().getId(), session.getId()))
-                        .findFirst()
-                        .ifPresent(rp::setCurrentItem);
-            }
-
-            if (progress.getStatus() == LessonProgressStatus.IN_PROGRESS && rp.getStartedAt() == null) {
-                rp.setStartedAt(LocalDateTime.now());
-                rp.setStatus(LessonProgressStatus.IN_PROGRESS);
-            }
-            int total = ra.getItems() != null ? ra.getItems().size() : 0;
-            int completed = computeCompletedRoadmapItems(user, ra);
-            rp.setTotalItems(total);
-            rp.setCompletedItems(completed);
-            if (total > 0 && completed >= total) {
-                rp.setStatus(LessonProgressStatus.COMPLETED);
-                if (rp.getCompletedAt() == null)
-                    rp.setCompletedAt(LocalDateTime.now());
-            } else if (completed > 0 && rp.getStatus() == LessonProgressStatus.NOT_STARTED) {
-                rp.setStatus(LessonProgressStatus.IN_PROGRESS);
-            }
-
-            userRoadmapProgressRepository.save(rp);
-            break;
-        }
         return toSessionDto(progress);
     }
 
@@ -201,21 +162,37 @@ public class UserProgressServiceImpl implements IUserProgressService {
 
         // Xử lý video progress nếu là bài học video
         if (progress.getType() == LessonType.VIDEO) {
+            // Tự động lấy duration từ các video của bài học nếu DTO không gửi lên hoặc hiện
+            // tại đang trống
+            if (progress.getVideoDuration() == null || progress.getVideoDuration() == 0) {
+                if (dto.getVideoDuration() != null && dto.getVideoDuration() > 0) {
+                    progress.setVideoDuration(dto.getVideoDuration());
+                } else {
+                    // Lấy tổng duration từ các video của lesson
+                    int totalDuration = (lesson.getVideos() != null) ? lesson.getVideos().stream()
+                            .mapToInt(v -> v.getDurationSeconds() != null ? v.getDurationSeconds() : 0)
+                            .sum() : 0;
+                    if (totalDuration > 0) {
+                        progress.setVideoDuration(totalDuration);
+                    }
+                }
+            }
+
             if (dto.getLastPosition() != null) {
                 progress.setLastPosition(dto.getLastPosition());
             }
-            if (dto.getVideoDuration() != null && dto.getVideoDuration() > 0) {
-                progress.setVideoDuration(dto.getVideoDuration());
-                // Tự động tính % nếu có duration và lastPosition
-                if (progress.getLastPosition() != null) {
-                    double percent = (progress.getLastPosition().doubleValue()
-                            / progress.getVideoDuration().doubleValue()) * 100;
-                    progress.setProgressPercent(normalizePercent(BigDecimal.valueOf(percent)));
-                }
+
+            // Tự động tính % nếu có duration và lastPosition
+            if (progress.getVideoDuration() != null && progress.getVideoDuration() > 0
+                    && progress.getLastPosition() != null) {
+                double percent = (progress.getLastPosition().doubleValue()
+                        / progress.getVideoDuration().doubleValue()) * 100;
+                progress.setProgressPercent(normalizePercent(BigDecimal.valueOf(percent)));
             }
-            // Nếu % >= 95 thì tự động hoàn thành (tùy chọn, ở đây ta để user gửi COMPLETED
-            // hoặc dựa trên % nếu muốn)
-            if (progress.getProgressPercent().compareTo(BigDecimal.valueOf(95)) >= 0) {
+
+            // 🔥 Tự động hoàn thành nếu đã xem > 95%
+            if (progress.getStatus() != LessonProgressStatus.COMPLETED &&
+                    progress.getProgressPercent().compareTo(BigDecimal.valueOf(95)) >= 0) {
                 progress.setStatus(LessonProgressStatus.COMPLETED);
             }
         }
@@ -233,7 +210,7 @@ public class UserProgressServiceImpl implements IUserProgressService {
 
         // Đồng bộ lên Session -> Course -> Roadmap
         trySyncSessionProgress(user, session);
-        trySyncRoadmapProgress(user, course, lesson, progress.getStatus());
+        trySyncRoadmapProgress(user, course, null, lesson, progress.getStatus());
 
         return toLessonDto(progress);
     }
@@ -463,7 +440,8 @@ public class UserProgressServiceImpl implements IUserProgressService {
         return toRoadmapDto(rp);
     }
 
-    private void trySyncRoadmapProgress(User user, Course course, Lesson lesson, LessonProgressStatus status) {
+    private void trySyncRoadmapProgress(User user, Course course, Session session, Lesson lesson,
+            LessonProgressStatus status) {
         // Tìm roadmap assignment phù hợp: theo các lớp mà user thuộc và có assignment
         // cho course này
         List<ClassStudent> enrollments = classStudentRepository.findByStudent_Id(user.getId());
@@ -485,12 +463,20 @@ public class UserProgressServiceImpl implements IUserProgressService {
                             .totalItems(ra.getItems() != null ? ra.getItems().size() : 0)
                             .build());
 
-            // Cập nhật current item theo lesson tương ứng (nếu có trong roadmap)
+            // Cập nhật current item theo lesson/session tương ứng (nếu có trong roadmap)
             if (ra.getItems() != null) {
-                ra.getItems().stream()
-                        .filter(i -> i.getLesson() != null && Objects.equals(i.getLesson().getId(), lesson.getId()))
-                        .findFirst()
-                        .ifPresent(rp::setCurrentItem);
+                if (lesson != null) {
+                    ra.getItems().stream()
+                            .filter(i -> i.getLesson() != null && Objects.equals(i.getLesson().getId(), lesson.getId()))
+                            .findFirst()
+                            .ifPresent(rp::setCurrentItem);
+                } else if (session != null) {
+                    ra.getItems().stream()
+                            .filter(i -> i.getSession() != null
+                                    && Objects.equals(i.getSession().getId(), session.getId()))
+                            .findFirst()
+                            .ifPresent(rp::setCurrentItem);
+                }
             }
 
             if (status == LessonProgressStatus.IN_PROGRESS && rp.getStartedAt() == null) {
@@ -501,12 +487,23 @@ public class UserProgressServiceImpl implements IUserProgressService {
             int completed = computeCompletedRoadmapItems(user, ra);
             rp.setTotalItems(total);
             rp.setCompletedItems(completed);
+
+            // 🔥 Tính % hoàn thành lộ trình
+            if (total > 0) {
+                double percent = (double) completed / total * 100;
+                rp.setProgressPercent(normalizePercent(BigDecimal.valueOf(percent)));
+            } else {
+                rp.setProgressPercent(BigDecimal.ZERO);
+            }
+
             if (total > 0 && completed >= total) {
                 rp.setStatus(LessonProgressStatus.COMPLETED);
                 if (rp.getCompletedAt() == null)
                     rp.setCompletedAt(LocalDateTime.now());
             } else if (completed > 0 && rp.getStatus() == LessonProgressStatus.NOT_STARTED) {
                 rp.setStatus(LessonProgressStatus.IN_PROGRESS);
+                if (rp.getStartedAt() == null)
+                    rp.setStartedAt(LocalDateTime.now());
             }
 
             userRoadmapProgressRepository.save(rp);
@@ -646,6 +643,7 @@ public class UserProgressServiceImpl implements IUserProgressService {
                 .currentItemId(rp.getCurrentItem() != null ? rp.getCurrentItem().getId() : null)
                 .completedItems(rp.getCompletedItems())
                 .totalItems(rp.getTotalItems())
+                .progressPercent(rp.getProgressPercent())
                 .startedAt(rp.getStartedAt())
                 .completedAt(rp.getCompletedAt())
                 .updatedAt(rp.getUpdatedAt())

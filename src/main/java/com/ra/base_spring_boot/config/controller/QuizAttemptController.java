@@ -9,6 +9,10 @@ import com.ra.base_spring_boot.services.validate.AttemptFileValidator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +29,30 @@ public class QuizAttemptController {
     private final IQuizAttemptService attemptService;
     private final AttemptFileValidator fileValidator;
     private final AttemptAttachmentStorage attachmentStorage;
+
+    @Operation(summary = "Danh sách tất cả lượt làm quiz")
+    @GetMapping
+    public ResponseEntity<List<QuizAttemptResponse>> findAll() {
+        return ResponseEntity.ok(attemptService.findAll());
+    }
+
+    @Operation(summary = "Danh sách tất cả lượt làm quiz (phân trang)")
+    @GetMapping("/paging")
+    public ResponseEntity<Page<QuizAttemptResponse>> findAllPaging(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "sort", defaultValue = "createdAt,desc") String sort) {
+
+        Sort sortObj;
+        String[] sortParts = sort.split(",");
+        if (sortParts.length == 2) {
+            sortObj = Sort.by(Sort.Direction.fromString(sortParts[1]), sortParts[0]);
+        } else {
+            sortObj = Sort.by(Sort.Direction.DESC, "createdAt");
+        }
+        Pageable pageable = PageRequest.of(page, size, sortObj);
+        return ResponseEntity.ok(attemptService.findAll(pageable));
+    }
 
     @Operation(summary = "Bắt đầu lượt làm quiz")
     @PostMapping("/start")

@@ -12,6 +12,8 @@ import com.ra.base_spring_boot.repository.IUserRepository;
 import com.ra.base_spring_boot.repository.quiz.IQuizAttemptRepository;
 import com.ra.base_spring_boot.services.IQuizAttemptService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -99,6 +101,18 @@ public class QuizAttemptServiceImpl implements IQuizAttemptService {
                 java.util.Objects.requireNonNull(userId, "userId must not be null"),
                 java.util.Objects.requireNonNull(quizId, "quizId must not be null")).stream().map(this::toDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<QuizAttemptResponse> findAll() {
+        return attemptRepo.findAllByOrderByCreatedAtDesc().stream().map(this::toDto).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<QuizAttemptResponse> findAll(Pageable pageable) {
+        return attemptRepo.findAll(pageable).map(this::toDto);
     }
 
     private QuizAttemptResponse toDto(QuizAttempt a) {

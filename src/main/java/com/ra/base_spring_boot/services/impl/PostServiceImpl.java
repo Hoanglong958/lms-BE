@@ -66,6 +66,18 @@ public class PostServiceImpl implements IPostService {
                 .map(this::toPostResponseDTO);
     }
 
+    // ================= LIST DRAFTS =================
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PostResponseDTO> getDraftPosts(int page, int size) {
+
+        return postRepository
+                .findByStatusWithTags(
+                        PostStatus.DRAFT,
+                        PageRequest.of(page, size))
+                .map(this::toPostResponseDTO);
+    }
+
     // ================= DETAIL =================
     @Override
     @Transactional(readOnly = true)

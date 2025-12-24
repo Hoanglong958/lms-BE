@@ -92,4 +92,25 @@ public class PostController {
         Page<PostResponseDTO> posts = postService.getPublishedPosts(pageable.getPageNumber(), pageable.getPageSize());
         return ResponseEntity.ok(posts);
     }
+
+    // ================== GET DRAFT POSTS (ADMIN) ==================
+    @GetMapping("/drafts")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Danh sách bài viết bản nháp", description = "Chỉ ADMIN xem được danh sách bài viết DRAFT, phân trang")
+    public ResponseEntity<Page<PostResponseDTO>> getDraftPosts(
+            @Parameter(description = "Trang bắt đầu từ 0") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Kích thước trang") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Sắp xếp, ví dụ: createdAt,desc hoặc title,asc") @RequestParam(defaultValue = "createdAt,desc") String sort) {
+        Sort sortObj;
+        String[] sortParts = sort.split(",");
+        if (sortParts.length == 2) {
+            sortObj = Sort.by(Sort.Direction.fromString(sortParts[1]), sortParts[0]);
+        } else {
+            sortObj = Sort.by(Sort.Direction.DESC, "createdAt");
+        }
+
+        Pageable pageable = PageRequest.of(page, size, sortObj);
+        Page<PostResponseDTO> posts = postService.getDraftPosts(pageable.getPageNumber(), pageable.getPageSize());
+        return ResponseEntity.ok(posts);
+    }
 }

@@ -3,6 +3,8 @@ package com.ra.base_spring_boot.services;
 import com.ra.base_spring_boot.dto.Quiz.QuizAttemptResponse;
 import com.ra.base_spring_boot.dto.Quiz.StartAttemptRequest;
 import com.ra.base_spring_boot.dto.Quiz.SubmitAttemptRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -18,4 +20,8 @@ public interface IQuizAttemptService {
     List<QuizAttemptResponse> byQuiz(Long quizId);
 
     List<QuizAttemptResponse> byUserAndQuiz(Long userId, Long quizId);
+
+    List<QuizAttemptResponse> findAll();
+
+    Page<QuizAttemptResponse> findAll(Pageable pageable);
 }

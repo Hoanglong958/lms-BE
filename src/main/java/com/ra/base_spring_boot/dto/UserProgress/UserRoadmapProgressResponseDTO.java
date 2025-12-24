@@ -31,6 +31,9 @@ public class UserRoadmapProgressResponseDTO {
     @Schema(example = "10")
     private Integer totalItems;
 
+    @Schema(example = "30.00")
+    private java.math.BigDecimal progressPercent;
+
     private LocalDateTime startedAt;
     private LocalDateTime completedAt;
     private LocalDateTime updatedAt;

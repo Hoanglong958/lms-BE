@@ -101,49 +101,55 @@ public class LessonVideoServiceImpl implements ILessonVideoService {
 
     private Integer fetchDurationFromCloudinary(String videoUrl) {
         log.info("[Cloudinary] Fetching duration for URL: {}", videoUrl);
-        if (videoUrl == null || !videoUrl.contains("cloudinary.com")) {
-            log.warn("[Cloudinary] Not a Cloudinary URL, skipping duration fetch.");
+        if (videoUrl == null || videoUrl.isBlank() || !videoUrl.contains("cloudinary.com")) {
+            log.warn("[Cloudinary] Not a Cloudinary URL or empty, skipping duration fetch.");
             return null;
         }
 
         try {
-            // Extract publicId using a more robust approach
-            String publicId = videoUrl;
+            // Sử dụng Regex để trích xuất publicId chính xác hơn từ URL Cloudinary
+            // Pattern này hỗ trợ cả version (v123...) và các transformations
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(
+                    ".*/(?:video|upload)/(?:v\\d+/)?(?:[^/]+/)*?([^./?#]+(?:/[^./?#]+)*)(?:\\.[a-z0-9]+)?(?:[?#].*)?$");
+            java.util.regex.Matcher matcher = pattern.matcher(videoUrl);
 
-            // 1. Get everything after /upload/ (or /fetch/, /video/, etc if needed)
-            if (publicId.contains("/upload/")) {
-                publicId = publicId.substring(publicId.lastIndexOf("/upload/") + 8);
-            } else if (publicId.contains("/video/")) {
-                publicId = publicId.substring(publicId.lastIndexOf("/video/") + 7);
+            String publicId = null;
+            if (matcher.find()) {
+                publicId = matcher.group(1);
+            } else {
+                // Fallback: Lấy phần cuối của URL
+                String temp = videoUrl;
+                if (temp.contains("/upload/"))
+                    temp = temp.substring(temp.lastIndexOf("/upload/") + 8);
+                else if (temp.contains("/video/"))
+                    temp = temp.substring(temp.lastIndexOf("/video/") + 7);
+                else
+                    temp = temp.substring(temp.lastIndexOf("/") + 1);
+
+                if (temp.contains("."))
+                    temp = temp.substring(0, temp.lastIndexOf("."));
+                publicId = temp;
             }
 
-            // 2. Remove version (e.g., v123456789/)
-            if (publicId.matches("v\\d+/.*")) {
-                publicId = publicId.substring(publicId.indexOf("/") + 1);
-            }
+            log.info("[Cloudinary] Extracted PublicId: {}", publicId);
 
-            // 3. Remove extension (.mp4, .mp1, .mov, etc.)
-            if (publicId.contains(".")) {
-                publicId = publicId.substring(0, publicId.lastIndexOf("."));
-            }
-
-            log.info("[Cloudinary] Final PublicId extracted: {}", publicId);
-
-            // 4. Call Admin API (requires api_secret)
+            // Gọi Admin API để lấy thông tin chi tiết (bao gồm duration)
+            // Lưu ý: api_key và api_secret phải được cấu hình đúng
             Map<String, Object> details = (Map<String, Object>) cloudinary.api().resource(publicId,
-                    ObjectUtils.asMap("resource_type", "video"));
+                    com.cloudinary.utils.ObjectUtils.asMap("resource_type", "video"));
 
             if (details != null && details.containsKey("duration")) {
                 Object durationObj = details.get("duration");
                 Double duration = Double.parseDouble(durationObj.toString());
-                log.info("[Cloudinary] Found duration: {} seconds for {}", duration, publicId);
+                log.info("[Cloudinary] Found duration: {} seconds", duration);
                 return (int) Math.round(duration);
             } else {
-                log.warn("[Cloudinary] Duration not found in details for {}. Keys present: {}", publicId,
-                        details != null ? details.keySet() : "null");
+                log.warn("[Cloudinary] Resource found but duration is missing for {}. Full response: {}", publicId,
+                        details);
             }
         } catch (Exception e) {
-            log.error("[Cloudinary] Error fetching duration for {}: {}", videoUrl, e.getMessage());
+            log.error("[Cloudinary] Failed to fetch duration for {}. Error: {} - {}", videoUrl,
+                    e.getClass().getSimpleName(), e.getMessage());
         }
         return null;
     }

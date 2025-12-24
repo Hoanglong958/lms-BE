@@ -12,6 +12,9 @@ public interface IPostService {
     // Lấy danh sách bài viết đã xuất bản (phân trang)
     Page<PostResponseDTO> getPublishedPosts(int page, int size);
 
+    // Lấy danh sách bài viết bản nháp (phân trang)
+    Page<PostResponseDTO> getDraftPosts(int page, int size);
+
     // Lấy chi tiết bài viết theo ID
     PostResponseDTO getPostById(Long id);
 
