@@ -14,7 +14,7 @@ public interface IAttendanceService {
 
     List<AttendanceSessionResponseDTO> listSessionsByClass(Long classId);
 
-    List<AttendanceRecordResponseDTO> listStudentsForSession(Long sessionId);
+    List<AttendanceRecordResponseDTO> listStudentsForSession(Long attendanceSessionId);
 
     AttendanceRecordResponseDTO markAttendance(AttendanceRecordRequestDTO request);
 

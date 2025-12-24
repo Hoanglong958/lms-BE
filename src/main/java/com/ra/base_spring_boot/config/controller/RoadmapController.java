@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/roadmaps")
 @RequiredArgsConstructor
@@ -23,6 +25,13 @@ public class RoadmapController {
     @Operation(summary = "Gán lộ trình cho khóa học thuộc ca học")
     public ResponseEntity<RoadmapResponse> assign(@RequestBody RoadmapAssignRequest req) {
         return ResponseEntity.ok(roadmapService.assign(req));
+    }
+
+    @PostMapping("/bulk-assign")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Gán hàng loạt lộ trình")
+    public ResponseEntity<List<RoadmapResponse>> bulkAssign(@RequestBody List<RoadmapAssignRequest> requests) {
+        return ResponseEntity.ok(roadmapService.assignBulk(requests));
     }
 
     @GetMapping

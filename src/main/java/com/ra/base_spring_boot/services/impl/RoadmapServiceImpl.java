@@ -147,12 +147,12 @@ public class RoadmapServiceImpl implements IRoadmapService {
 
         List<RoadmapItem> newItemsToMap = new ArrayList<>(); // Items from this request that need to be mapped to slots
         List<Session> orderedSessions = sessionMap.values().stream()
-                .sorted(Comparator.comparing(Session::getOrderIndex)).toList();
+                .sorted(Comparator.comparing(s -> s.getOrderIndex() != null ? s.getOrderIndex() : 0)).toList();
 
         for (Session s : orderedSessions) {
             List<Lesson> lessonsForThisSession = lessonMap.values().stream()
                     .filter(l -> l.getSession().getId().equals(s.getId()))
-                    .sorted(Comparator.comparing(Lesson::getOrderIndex)).toList();
+                    .sorted(Comparator.comparing(l -> l.getOrderIndex() != null ? l.getOrderIndex() : 0)).toList();
 
             if (lessonsForThisSession.isEmpty()) {
                 // Case: Session has no selected lessons -> add the session as a unit
@@ -216,6 +216,19 @@ public class RoadmapServiceImpl implements IRoadmapService {
         }
 
         return toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public List<RoadmapResponse> assignBulk(List<RoadmapAssignRequest> requests) {
+        if (requests == null || requests.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<RoadmapResponse> responses = new ArrayList<>();
+        for (RoadmapAssignRequest req : requests) {
+            responses.add(this.assign(req));
+        }
+        return responses;
     }
 
     @Override

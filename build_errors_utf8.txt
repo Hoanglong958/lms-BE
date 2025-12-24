@@ -1,0 +1,72 @@
+﻿To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.10.2/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Task :compileJava
+./gradlew : C:\Users\HP VICT
+US\api\src\main\java\com\ra\
+base_spring_boot\config\cont
+roller\RoadmapController.jav
+a:31: error: cannot find 
+symbol
+At line:1 char:1
++ ./gradlew compileJava 
+--no-daemon > 
+build_errors.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~
+    + CategoryInfo          
+    : NotSpecified: (C:\Us  
+  ers\HP VIC...not find s   
+ ymbol:String) [], Remot    
+eException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+    public ResponseEntity<Li
+st<RoadmapResponse>> 
+bulkAssign(@RequestBody 
+List<RoadmapAssignRequest> 
+requests) {
+                            
+                            
+                 ^
+  symbol:   class List
+  location: class 
+RoadmapController
+C:\Users\HP VICTUS\api\src\m
+ain\java\com\ra\base_spring_
+boot\config\controller\Roadm
+apController.java:31: 
+error: cannot find symbol
+    public ResponseEntity<Li
+st<RoadmapResponse>> 
+bulkAssign(@RequestBody 
+List<RoadmapAssignRequest> 
+requests) {
+                          ^
+  symbol:   class List
+  location: class 
+RoadmapController
+2 errors
+
+> Task :compileJava FAILED
+
+FAILURE: Build failed with 
+an exception.
+
+* What went wrong:
+Execution failed for task 
+':compileJava'.
+> Compilation failed; see 
+the compiler error output 
+for details.
+
+* Try:
+> Run with --info option to 
+get more log output.
+> Run with --scan to get 
+full insights.
+
+BUILD FAILED in 10s
+1 actionable task: 1 executed

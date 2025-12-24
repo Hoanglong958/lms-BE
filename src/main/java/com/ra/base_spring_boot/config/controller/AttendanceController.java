@@ -31,9 +31,10 @@ public class AttendanceController {
     }
 
     @Operation(summary = "Danh sách học viên cần điểm danh theo buổi")
-    @GetMapping("/attendance-sessions/{sessionId}/students")
-    public ResponseEntity<List<AttendanceRecordResponseDTO>> listStudentsForSession(@PathVariable Long sessionId) {
-        return ResponseEntity.ok(attendanceService.listStudentsForSession(sessionId));
+    @GetMapping("/attendance-sessions/{attendanceSessionId}/students")
+    public ResponseEntity<List<AttendanceRecordResponseDTO>> listStudentsForSession(
+            @PathVariable Long attendanceSessionId) {
+        return ResponseEntity.ok(attendanceService.listStudentsForSession(attendanceSessionId));
     }
 
     @Operation(summary = "Điểm danh từng học viên")
@@ -44,7 +45,8 @@ public class AttendanceController {
 
     @Operation(summary = "Điểm danh hàng loạt")
     @PostMapping("/attendance/bulk")
-    public ResponseEntity<List<AttendanceRecordResponseDTO>> markAttendanceBulk(@RequestBody AttendanceBulkRequestDTO req) {
+    public ResponseEntity<List<AttendanceRecordResponseDTO>> markAttendanceBulk(
+            @RequestBody AttendanceBulkRequestDTO req) {
         return ResponseEntity.ok(attendanceService.markAttendanceBulk(req.getSessionId(), req.getRecords()));
     }
 
@@ -58,8 +60,7 @@ public class AttendanceController {
     @GetMapping("/classes/{classId}/courses/{courseId}/attendance")
     public ResponseEntity<AttendanceCourseSummaryResponseDTO> summarizeByCourse(
             @PathVariable Long classId,
-            @PathVariable Long courseId
-    ) {
+            @PathVariable Long courseId) {
         return ResponseEntity.ok(attendanceService.summarizeByClassAndCourse(classId, courseId));
     }
 }
