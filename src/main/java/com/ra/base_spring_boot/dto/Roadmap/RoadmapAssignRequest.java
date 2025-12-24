@@ -9,6 +9,6 @@ public class RoadmapAssignRequest {
     private Long classId;
     private Long courseId;
     private List<Long> sessionIds; // optional
-    private List<Long> lessonIds;  // optional
-    private List<Long> periodIds;  // optional: lọc theo ca học muốn gán
+    private List<Long> lessonIds; // optional
+    private List<Long> scheduleIds; // optional: lọc theo các buổi học (ScheduleItem) muốn gán
 }
