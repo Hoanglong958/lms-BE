@@ -11,5 +11,8 @@ public interface IQuizAttemptRepository extends JpaRepository<QuizAttempt, Long>
     int maxAttemptNumberByQuizAndUser(Long quizId, Long userId);
 
     List<QuizAttempt> findByUser_IdOrderByCreatedAtDesc(Long userId);
+
     List<QuizAttempt> findByQuiz_IdOrderByCreatedAtDesc(Long quizId);
+
+    List<QuizAttempt> findByUser_IdAndQuiz_IdOrderByCreatedAtDesc(Long userId, Long quizId);
 }

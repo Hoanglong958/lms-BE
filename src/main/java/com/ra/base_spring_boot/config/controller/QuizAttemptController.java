@@ -35,7 +35,7 @@ public class QuizAttemptController {
     @Operation(summary = "Nộp bài/ghi điểm lượt làm quiz")
     @PostMapping("/{attemptId}/submit")
     public ResponseEntity<QuizAttemptResponse> submit(@PathVariable Long attemptId,
-                                                      @RequestBody SubmitAttemptRequest req) {
+            @RequestBody SubmitAttemptRequest req) {
         return ResponseEntity.ok(attemptService.submit(attemptId, req));
     }
 
@@ -57,11 +57,18 @@ public class QuizAttemptController {
         return ResponseEntity.ok(attemptService.byQuiz(quizId));
     }
 
+    @Operation(summary = "Danh sách lượt làm của user trong 1 quiz cụ thể")
+    @GetMapping("/by-user/{userId}/quiz/{quizId}")
+    public ResponseEntity<List<QuizAttemptResponse>> byUserAndQuiz(@PathVariable Long userId,
+            @PathVariable Long quizId) {
+        return ResponseEntity.ok(attemptService.byUserAndQuiz(userId, quizId));
+    }
+
     // ===== Upload đính kèm (tùy chọn sử dụng cho dạng tự luận) =====
     @Operation(summary = "Upload file đính kèm cho lượt làm", description = "Kiểm tra file và lưu local, trả URL công khai")
     @PostMapping(value = "/{attemptId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> upload(@PathVariable Long attemptId,
-                                         @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file) {
         fileValidator.validate(file);
         String url = attachmentStorage.storeAttemptFile(attemptId, file);
         return ResponseEntity.ok(url);

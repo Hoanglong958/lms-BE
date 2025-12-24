@@ -228,6 +228,8 @@ public class UserProgressServiceImpl implements IUserProgressService {
         }
 
         userLessonProgressRepository.save(progress);
+        userLessonProgressRepository.flush(); // 🔥 Quan trọng: Đảm bảo dữ liệu được đẩy xuống DB để các câu query sau
+                                              // thấy được
 
         // Đồng bộ lên Session -> Course -> Roadmap
         trySyncSessionProgress(user, session);
@@ -244,15 +246,21 @@ public class UserProgressServiceImpl implements IUserProgressService {
                         .user(user)
                         .session(session)
                         .course(course)
+                        .status(LessonProgressStatus.NOT_STARTED)
+                        .progressPercent(BigDecimal.ZERO)
                         .build());
 
         List<Lesson> lessons = session.getLessons();
-        if (lessons.isEmpty())
+        if (lessons == null || lessons.isEmpty()) {
             return;
+        }
 
-        long completedCount = lessons.stream()
-                .map(l -> userLessonProgressRepository.findByUserIdAndLessonId(user.getId(), l.getId()).orElse(null))
-                .filter(p -> p != null && p.getStatus() == LessonProgressStatus.COMPLETED)
+        // Lấy tất cả progress bài học của user trong session này
+        List<UserLessonProgress> lessonProgresses = userLessonProgressRepository
+                .findByUserIdAndSessionId(user.getId(), session.getId());
+
+        long completedCount = lessonProgresses.stream()
+                .filter(p -> p.getStatus() == LessonProgressStatus.COMPLETED)
                 .count();
 
         double percent = (double) completedCount / lessons.size() * 100;
@@ -269,6 +277,7 @@ public class UserProgressServiceImpl implements IUserProgressService {
         }
 
         userSessionProgressRepository.save(sp);
+        userSessionProgressRepository.flush(); // 🔥 Flush để khóa học thấy được trạng thái mới
         trySyncCourseProgress(user, course);
     }
 
@@ -278,26 +287,49 @@ public class UserProgressServiceImpl implements IUserProgressService {
                 .orElseGet(() -> UserCourseProgress.builder()
                         .user(user)
                         .course(course)
+                        .status(UserCourseStatus.ENROLLED)
+                        .progressPercent(BigDecimal.ZERO)
                         .build());
 
         List<Session> sessions = course.getSessions();
-        int total = sessions.size();
-        if (total == 0)
+        if (sessions == null || sessions.isEmpty()) {
             return;
+        }
 
-        long completedCount = sessions.stream()
-                .map(s -> userSessionProgressRepository.findByUserIdAndSessionId(user.getId(), s.getId()).orElse(null))
-                .filter(p -> p != null && p.getStatus() == LessonProgressStatus.COMPLETED)
-                .count();
+        // Lấy tất cả progress của từng session trong khóa học
+        List<UserSessionProgress> sessionProgresses = userSessionProgressRepository
+                .findByUserIdAndCourseId(user.getId(), course.getId());
 
-        cp.setTotalSessions(total);
-        cp.setCompletedSessions((int) completedCount);
-        double percent = (double) completedCount / total * 100;
-        cp.setProgressPercent(normalizePercent(BigDecimal.valueOf(percent)));
+        // Tạo map để tra cứu nhanh theo sessionId
+        java.util.Map<Long, UserSessionProgress> progressMap = sessionProgresses.stream()
+                .collect(java.util.stream.Collectors.toMap(p -> p.getSession().getId(), p -> p));
 
-        if (completedCount >= total) {
+        BigDecimal totalPercent = BigDecimal.ZERO;
+        int completedCount = 0;
+
+        for (Session s : sessions) {
+            UserSessionProgress sp = progressMap.get(s.getId());
+            if (sp != null) {
+                totalPercent = totalPercent.add(sp.getProgressPercent());
+                if (sp.getStatus() == LessonProgressStatus.COMPLETED) {
+                    completedCount++;
+                }
+            }
+        }
+
+        int totalSessions = sessions.size();
+        cp.setTotalSessions(totalSessions);
+        cp.setCompletedSessions(completedCount);
+
+        // Tiến độ khóa học = Trung bình cộng tiến độ của các chương
+        BigDecimal averagePercent = totalPercent.divide(BigDecimal.valueOf(totalSessions), 2,
+                java.math.RoundingMode.HALF_UP);
+        cp.setProgressPercent(normalizePercent(averagePercent));
+
+        // Cập nhật trạng thái
+        if (completedCount >= totalSessions) {
             cp.setStatus(UserCourseStatus.COMPLETED);
-        } else if (completedCount > 0 || cp.getProgressPercent().compareTo(BigDecimal.ZERO) > 0) {
+        } else if (cp.getProgressPercent().compareTo(BigDecimal.ZERO) > 0 || completedCount > 0) {
             cp.setStatus(UserCourseStatus.IN_PROGRESS);
         }
 
@@ -484,19 +516,33 @@ public class UserProgressServiceImpl implements IUserProgressService {
     }
 
     private int computeCompletedRoadmapItems(User user, RoadmapAssignment ra) {
-        if (ra.getItems() == null)
+        if (ra.getItems() == null || ra.getItems().isEmpty())
             return 0;
+
+        // Lấy tất cả progress của user cho khóa học này để check nhanh
+        List<UserLessonProgress> lessonProgs = userLessonProgressRepository.findByUserIdAndCourseId(user.getId(),
+                ra.getCourse().getId());
+        List<UserSessionProgress> sessionProgs = userSessionProgressRepository.findByUserIdAndCourseId(user.getId(),
+                ra.getCourse().getId());
+
+        java.util.Set<Long> completedLessonIds = lessonProgs.stream()
+                .filter(p -> p.getStatus() == LessonProgressStatus.COMPLETED)
+                .map(p -> p.getLesson().getId())
+                .collect(java.util.stream.Collectors.toSet());
+
+        java.util.Set<Long> completedSessionIds = sessionProgs.stream()
+                .filter(p -> p.getStatus() == LessonProgressStatus.COMPLETED)
+                .map(p -> p.getSession().getId())
+                .collect(java.util.stream.Collectors.toSet());
+
         int done = 0;
         for (RoadmapItem item : ra.getItems()) {
             if (item.getLesson() != null) {
-                var lp = userLessonProgressRepository.findByUserIdAndLessonId(user.getId(), item.getLesson().getId());
-                if (lp.isPresent() && lp.get().getStatus() == LessonProgressStatus.COMPLETED) {
+                if (completedLessonIds.contains(item.getLesson().getId())) {
                     done++;
                 }
             } else if (item.getSession() != null) {
-                var sp = userSessionProgressRepository.findByUserIdAndSessionId(user.getId(),
-                        item.getSession().getId());
-                if (sp.isPresent() && sp.get().getStatus() == LessonProgressStatus.COMPLETED) {
+                if (completedSessionIds.contains(item.getSession().getId())) {
                     done++;
                 }
             }

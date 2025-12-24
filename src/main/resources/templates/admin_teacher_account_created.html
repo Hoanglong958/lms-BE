@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thông báo cấp tài khoản - Mankai Academy</title>
+    <style>
+      @media only screen and (max-width: 600px) {
+        .container {
+          padding: 20px !important;
+        }
+        h1 {
+          font-size: 24px !important;
+        }
+        h2 {
+          font-size: 20px !important;
+        }
+        p {
+          font-size: 14px !important;
+        }
+        .info-box {
+          padding: 20px !important;
+        }
+        .cta-button {
+          padding: 12px 24px !important;
+          font-size: 15px !important;
+        }
+      }
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px dashed #ffd1c1;
+      }
+      .info-row:last-child {
+        border-bottom: none;
+      }
+      .label {
+        color: #777777;
+        font-weight: 500;
+      }
+      .value {
+        color: #333333;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body
+    style="
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom, #fff5f0 0%, #ffe8d6 100%);
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+      color: #333333;
+    "
+  >
+    <table
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      style="
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      "
+    >
+      <!-- Hero Header -->
+      <tr>
+        <td
+          style="
+            background: linear-gradient(
+              135deg,
+              #ff6b35 0%,
+              #f7931e 50%,
+              #ff8a65 100%
+            );
+            padding: 50px 30px;
+            text-align: center;
+            color: #ffffff;
+            position: relative;
+          "
+        >
+          <div
+            style="
+              position: absolute;
+              top: 20px;
+              right: 20px;
+              font-size: 80px;
+              opacity: 0.1;
+            "
+          >
+            💼
+          </div>
+          <div
+            style="
+              position: absolute;
+              bottom: 20px;
+              left: 20px;
+              font-size: 80px;
+              opacity: 0.1;
+            "
+          >
+            🔑
+          </div>
+          <h1
+            style="
+              margin: 0 0 10px;
+              font-size: 32px;
+              font-weight: 800;
+              letter-spacing: -1px;
+            "
+          >
+            Chào mừng <span th:text="${roleName}"></span> mới! 🎊
+          </h1>
+          <p style="margin: 0; font-size: 18px; opacity: 0.95">
+            Tài khoản của bạn đã sẵn sàng hoạt động tại Mankai
+          </p>
+        </td>
+      </tr>
+
+      <!-- Content -->
+      <tr>
+        <td style="padding: 40px 30px">
+          <h2
+            style="
+              color: #333333;
+              font-size: 26px;
+              margin: 0 0 20px;
+              text-align: center;
+            "
+          >
+            Xin chào, <span th:text="${username}"></span>! 👋
+          </h2>
+
+          <p
+            style="
+              font-size: 16px;
+              color: #555555;
+              margin: 0 0 25px;
+              text-align: center;
+            "
+          >
+            Quản trị viên đã cấp cho bạn quyền
+            <strong style="color: #ff6b35" th:text="${roleName}"></strong> trên
+            hệ thống <strong style="color: #ff6b35">Mankai Academy</strong>.
+            Dưới đây là thông tin đăng nhập của bạn.
+          </p>
+
+          <!-- Credentials Box -->
+          <div
+            style="
+              background: #ffffff;
+              border: 2px solid #ff6b35;
+              padding: 30px;
+              margin: 25px 0;
+              border-radius: 20px;
+              box-shadow: 0 4px 15px rgba(255, 107, 53, 0.1);
+            "
+          >
+            <div style="text-align: center; margin-bottom: 20px">
+              <span
+                style="
+                  background: #fff5f0;
+                  color: #ff6b35;
+                  padding: 8px 16px;
+                  border-radius: 20px;
+                  font-size: 14px;
+                  font-weight: 700;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                "
+                >Thông tin bảo mật</span
+              >
+            </div>
+
+            <div
+              class="info-row"
+              style="
+                display: flex;
+                justify-content: space-between;
+                padding: 12px 0;
+                border-bottom: 1px dashed #ffd1c1;
+              "
+            >
+              <span class="label" style="color: #777777"
+                >Tên đăng nhập (Email)</span
+              >
+              <span
+                class="value"
+                style="color: #333333; font-weight: 700"
+                th:text="${email}"
+              ></span>
+            </div>
+
+            <div
+              class="info-row"
+              style="
+                display: flex;
+                justify-content: space-between;
+                padding: 12px 0;
+              "
+            >
+              <span class="label" style="color: #777777"
+                >Mật khẩu tạm thời</span
+              >
+              <span
+                class="value"
+                style="
+                  color: #ff6b35;
+                  font-size: 18px;
+                  font-weight: 800;
+                  letter-spacing: 1px;
+                "
+                th:text="${tempPassword}"
+              ></span>
+            </div>
+          </div>
+
+          <div
+            style="
+              background: #fff9f6;
+              border-left: 4px solid #ff6b35;
+              padding: 15px 20px;
+              margin-bottom: 30px;
+              border-radius: 0 12px 12px 0;
+            "
+          >
+            <p
+              style="
+                margin: 0;
+                font-size: 14px;
+                color: #bf360c;
+                font-weight: 600;
+              "
+            >
+              ⚠️ Quan trọng: Vì lý do bảo mật, bạn bắt buộc phải thay đổi mật
+              khẩu ngay sau lần đăng nhập đầu tiên.
+            </p>
+          </div>
+
+          <!-- CTA Button -->
+          <div style="text-align: center; margin: 35px 0">
+            <a
+              href="https://mankai.academy/login"
+              class="cta-button"
+              style="
+                background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+                color: #ffffff;
+                padding: 18px 45px;
+                text-decoration: none;
+                border-radius: 50px;
+                font-size: 18px;
+                font-weight: 700;
+                display: inline-block;
+                box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+                letter-spacing: 0.5px;
+              "
+            >
+              Đăng nhập hệ thống ngay 🚀
+            </a>
+          </div>
+
+          <p
+            style="
+              font-size: 15px;
+              color: #777777;
+              margin: 0;
+              text-align: center;
+            "
+          >
+            Nếu bạn có bất kỳ thắc mắc nào về quyền hạn hoặc cách sử dụng hệ
+            thống, vui lòng liên hệ trực tiếp với Quản trị viên cấp cao.
+          </p>
+        </td>
+      </tr>
+
+      <!-- Footer -->
+      <tr>
+        <td
+          style="
+            background: linear-gradient(135deg, #fff5f0 0%, #ffe8d6 100%);
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #ffd1c1;
+          "
+        >
+          <p style="font-size: 15px; color: #e65100; margin: 0 0 10px">
+            <strong>Hệ thống Quản lý Đào tạo Mankai Academy</strong>
+          </p>
+          <p style="font-size: 13px; color: #ff8a65; margin: 0">
+            Email này được gửi tự động từ hệ thống. Vui lòng không trả lời trực
+            tiếp.<br />
+            © 2025 Mankai Academy. All rights reserved.
+          </p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

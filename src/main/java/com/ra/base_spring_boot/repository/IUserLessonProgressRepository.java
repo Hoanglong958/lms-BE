@@ -10,7 +10,7 @@ public interface IUserLessonProgressRepository extends JpaRepository<UserLessonP
 
     Optional<UserLessonProgress> findByUserIdAndLessonId(Long userId, Long lessonId);
 
+    List<UserLessonProgress> findByUserIdAndSessionId(Long userId, Long sessionId);
+
     List<UserLessonProgress> findByUserIdAndCourseId(Long userId, Long courseId);
 }
-
-

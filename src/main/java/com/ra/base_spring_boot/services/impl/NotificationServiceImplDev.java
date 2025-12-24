@@ -14,18 +14,17 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "spring.profiles.active", havingValue = "dev")
 public class NotificationServiceImplDev implements NotificationService {
-    
+
     private final GmailService gmailService;
 
     @Override
     public void sendAccountCreatedEmail(String to, String username) {
         try {
             EmailDTO emailDTO = new EmailDTO(
-                to, 
-                "Chào mừng bạn đến với hệ thống", 
-                "user_created", 
-                java.util.Map.of("username", username)
-            );
+                    to,
+                    "Chào mừng bạn đến với hệ thống",
+                    "user_created",
+                    java.util.Map.of("username", username));
             gmailService.sendEmail(emailDTO);
             log.info("Email sent successfully to: {}", to);
         } catch (Exception e) {
@@ -35,21 +34,26 @@ public class NotificationServiceImplDev implements NotificationService {
 
     @Override
     public void sendTeacherAccountCreatedEmail(String to, String username, String tempPassword) {
+        sendAdminTeacherAccountCreatedEmail(to, username, tempPassword, "Giảng viên");
+    }
+
+    @Override
+    public void sendAdminTeacherAccountCreatedEmail(String to, String username, String tempPassword,
+            String roleDisplayName) {
         try {
             EmailDTO emailDTO = new EmailDTO(
-                to,
-                "Thông báo tạo tài khoản giảng viên",
-                "teacher_account_created",
-                java.util.Map.of(
-                    "username", username,
-                    "tempPassword", tempPassword,
-                    "email", to
-                )
-            );
+                    to,
+                    "Thông báo cấp tài khoản " + roleDisplayName,
+                    "admin_teacher_account_created",
+                    java.util.Map.of(
+                            "username", username,
+                            "roleName", roleDisplayName,
+                            "tempPassword", tempPassword,
+                            "email", to));
             gmailService.sendEmail(emailDTO);
-            log.info("Teacher account creation email sent successfully to: {}", to);
+            log.info("Admin/Teacher account creation email sent successfully to: {}", to);
         } catch (Exception e) {
-            log.error("Failed to send teacher account creation email: {}", e.getMessage(), e);
+            log.error("Failed to send admin/teacher account creation email: {}", e.getMessage(), e);
         }
     }
 
@@ -57,11 +61,10 @@ public class NotificationServiceImplDev implements NotificationService {
     public void sendForgotPasswordEmail(String to, String resetLink) {
         try {
             EmailDTO emailDTO = new EmailDTO(
-                to, 
-                "Đặt lại mật khẩu", 
-                "forgot_password", 
-                java.util.Map.of("resetLink", resetLink)
-            );
+                    to,
+                    "Đặt lại mật khẩu",
+                    "forgot_password",
+                    java.util.Map.of("resetLink", resetLink));
             gmailService.sendEmail(emailDTO);
             log.info("Password reset email sent successfully to: {}", to);
         } catch (Exception e) {
@@ -73,11 +76,10 @@ public class NotificationServiceImplDev implements NotificationService {
     public void sendAddedToClassEmail(String to, String className) {
         try {
             EmailDTO emailDTO = new EmailDTO(
-                to, 
-                "Bạn đã được thêm vào lớp học", 
-                "added_to_class", 
-                java.util.Map.of("className", className)
-            );
+                    to,
+                    "Bạn đã được thêm vào lớp học",
+                    "added_to_class",
+                    java.util.Map.of("className", className));
             gmailService.sendEmail(emailDTO);
             log.info("Added to class email sent successfully to: {}", to);
         } catch (Exception e) {
@@ -89,11 +91,10 @@ public class NotificationServiceImplDev implements NotificationService {
     public void sendNewCourseEmail(String to, String courseName, String className) {
         try {
             EmailDTO emailDTO = new EmailDTO(
-                to, 
-                "Khóa học mới", 
-                "new_course", 
-                java.util.Map.of("courseName", courseName, "className", className)
-            );
+                    to,
+                    "Khóa học mới",
+                    "new_course",
+                    java.util.Map.of("courseName", courseName, "className", className));
             gmailService.sendEmail(emailDTO);
             log.info("New course email sent successfully to: {}", to);
         } catch (Exception e) {
@@ -105,11 +106,10 @@ public class NotificationServiceImplDev implements NotificationService {
     public void sendNewExamEmail(String to, String examName, String className) {
         try {
             EmailDTO emailDTO = new EmailDTO(
-                to, 
-                "Bài kiểm tra mới", 
-                "new_exam", 
-                java.util.Map.of("examName", examName, "className", className)
-            );
+                    to,
+                    "Bài kiểm tra mới",
+                    "new_exam",
+                    java.util.Map.of("examName", examName, "className", className));
             gmailService.sendEmail(emailDTO);
             log.info("New exam email sent successfully to: {}", to);
         } catch (Exception e) {

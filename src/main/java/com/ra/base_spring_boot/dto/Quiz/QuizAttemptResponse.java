@@ -16,6 +16,9 @@ public class QuizAttemptResponse {
     @Schema(example = "10")
     private Long quizId;
 
+    @Schema(example = "Kiểm tra kiến thức Java Core")
+    private String quizTitle;
+
     @Schema(example = "1001")
     private Long userId;
 
