@@ -1,7 +1,13 @@
 package com.ra.base_spring_boot.config.controller;
 
 import com.ra.base_spring_boot.dto.ResponseWrapper;
-import com.ra.base_spring_boot.dto.req.*;
+import com.ra.base_spring_boot.dto.req.ChangePasswordRequest;
+import com.ra.base_spring_boot.dto.req.ForgotPasswordRequest;
+import com.ra.base_spring_boot.dto.req.FormLogin;
+import com.ra.base_spring_boot.dto.req.FormRegister;
+import com.ra.base_spring_boot.dto.req.ResetPasswordRequest;
+import com.ra.base_spring_boot.dto.req.UpdateProfileRequest;
+import com.ra.base_spring_boot.dto.req.VerifyOtpRequest;
 import com.ra.base_spring_boot.services.IAuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +42,7 @@ public class AuthController {
                         .status(HttpStatus.OK)
                         .code(200)
                         .data(authService.login(formLogin))
-                        .build()
-        );
+                        .build());
     }
 
     /**
@@ -54,29 +59,27 @@ public class AuthController {
                         .status(HttpStatus.CREATED)
                         .code(201)
                         .data("Đăng ký tài khoản thành công!")
-                        .build()
-        );
+                        .build());
     }
 
     /**
      * @param request ChangePasswordRequest
-     * @apiNote Handle change password with { oldPassword , newPassword , confirmPassword }
+     * @apiNote Handle change password with { oldPassword , newPassword ,
+     *          confirmPassword }
      */
     @PutMapping("/change-password")
     @Operation(summary = "Đổi mật khẩu", description = "Yêu cầu xác thực bằng JWT")
     @ApiResponse(responseCode = "200", description = "Đổi mật khẩu thành công")
     public ResponseEntity<?> changePassword(
             @Valid @RequestBody ChangePasswordRequest request,
-            Authentication authentication
-    ) {
+            Authentication authentication) {
         if (authentication == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                     ResponseWrapper.builder()
                             .status(HttpStatus.UNAUTHORIZED)
                             .code(401)
                             .data("JWT không hợp lệ hoặc đã hết hạn!")
-                            .build()
-            );
+                            .build());
         }
 
         String username = authentication.getName();
@@ -87,11 +90,56 @@ public class AuthController {
                         .status(HttpStatus.OK)
                         .code(200)
                         .data("Đổi mật khẩu thành công!")
-                        .build()
-        );
+                        .build());
     }
 
-    
+    /**
+     * Lấy thông tin cá nhân của người dùng hiện tại
+     */
+    @GetMapping("/profile")
+    @Operation(summary = "Lấy hồ sơ cá nhân", description = "Lấy thông tin của người dùng đang đăng nhập")
+    @ApiResponse(responseCode = "200", description = "Thành công")
+    public ResponseEntity<?> getProfile(Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    ResponseWrapper.builder()
+                            .status(HttpStatus.UNAUTHORIZED)
+                            .code(401)
+                            .data("Chưa đăng nhập!")
+                            .build());
+        }
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data(authService.getProfile(authentication.getName()))
+                        .build());
+    }
+
+    /**
+     * Cập nhật thông tin cá nhân
+     */
+    @PutMapping("/profile")
+    @Operation(summary = "Cập nhật hồ sơ cá nhân", description = "Chỉnh sửa thông tin Họ tên, SĐT, Ảnh đại diện")
+    @ApiResponse(responseCode = "200", description = "Cập nhật thành công")
+    public ResponseEntity<?> updateProfile(
+            @Valid @RequestBody UpdateProfileRequest request,
+            Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    ResponseWrapper.builder()
+                            .status(HttpStatus.UNAUTHORIZED)
+                            .code(401)
+                            .data("Chưa đăng nhập!")
+                            .build());
+        }
+        return ResponseEntity.ok(
+                ResponseWrapper.builder()
+                        .status(HttpStatus.OK)
+                        .code(200)
+                        .data(authService.updateProfile(authentication.getName(), request))
+                        .build());
+    }
 
     /**
      * @param request ResetPasswordRequest
@@ -107,8 +155,7 @@ public class AuthController {
                         .status(HttpStatus.OK)
                         .code(200)
                         .data("Đặt lại mật khẩu thành công! Bạn có thể đăng nhập bằng mật khẩu mới.")
-                        .build()
-        );
+                        .build());
     }
 
     /**
@@ -124,8 +171,7 @@ public class AuthController {
                         .status(HttpStatus.OK)
                         .code(200)
                         .data("Đã gửi OTP về email. Vui lòng kiểm tra email và nhập OTP để tiếp tục.")
-                        .build()
-        );
+                        .build());
     }
 
     /**
@@ -140,7 +186,6 @@ public class AuthController {
                         .status(HttpStatus.OK)
                         .code(200)
                         .data(authService.verifyOtp(request))
-                        .build()
-        );
+                        .build());
     }
 }

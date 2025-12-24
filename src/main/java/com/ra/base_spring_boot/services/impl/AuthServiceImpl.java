@@ -97,11 +97,13 @@ public class AuthServiceImpl implements IAuthService {
 
         // ===== Tạo User =====
         User user = User.builder()
+                .firstName(formRegister.getFirstName())
+                .lastName(formRegister.getLastName())
                 .fullName(formRegister.getFullName())
                 .gmail(formRegister.getGmail())
                 .password(passwordEncoder.encode(formRegister.getPassword())) // encode 1 lần
                 .phone(formRegister.getPhone())
-                .imageUrl(formRegister.getImageUrl())
+                .avatar(formRegister.getAvatar())
                 .role(role) // set theo role đã validate ở trên
                 .isActive(true)
                 .createdAt(LocalDateTime.now())
@@ -294,6 +296,54 @@ public class AuthServiceImpl implements IAuthService {
         return VerifyOtpResponse.builder()
                 .token(tokenResp.getToken())
                 .expiresAt(tokenResp.getExpiresAt())
+                .build();
+    }
+
+    @Override
+    public com.ra.base_spring_boot.dto.resp.UserResponse getProfile(String username) {
+        User user = userRepository.findByGmail(username)
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy người dùng!"));
+        return mapToUserResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public com.ra.base_spring_boot.dto.resp.UserResponse updateProfile(String username, UpdateProfileRequest request) {
+        User user = userRepository.findByGmail(username)
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy người dùng!"));
+
+        if (request.getFirstName() != null)
+            user.setFirstName(request.getFirstName());
+        if (request.getLastName() != null)
+            user.setLastName(request.getLastName());
+        if (request.getPhone() != null)
+            user.setPhone(request.getPhone());
+        if (request.getAvatar() != null)
+            user.setAvatar(request.getAvatar());
+
+        // Cập nhật fullName nếu cần (ghép lastName + firstName)
+        if (request.getFirstName() != null || request.getLastName() != null) {
+            String last = user.getLastName() != null ? user.getLastName() : "";
+            String first = user.getFirstName() != null ? user.getFirstName() : "";
+            user.setFullName((last + " " + first).trim());
+        }
+
+        userRepository.save(user);
+        return mapToUserResponse(user);
+    }
+
+    private com.ra.base_spring_boot.dto.resp.UserResponse mapToUserResponse(User user) {
+        return com.ra.base_spring_boot.dto.resp.UserResponse.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .fullName(user.getFullName())
+                .gmail(user.getGmail())
+                .phone(user.getPhone())
+                .role(user.getRole())
+                .avatar(user.getAvatar())
+                .isActive(user.getIsActive())
+                .createdAt(user.getCreatedAt())
                 .build();
     }
 }

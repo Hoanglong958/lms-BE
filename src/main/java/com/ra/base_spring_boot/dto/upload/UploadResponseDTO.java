@@ -11,4 +11,5 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UploadResponseDTO {
     private String url;
+    private Double duration;
 }

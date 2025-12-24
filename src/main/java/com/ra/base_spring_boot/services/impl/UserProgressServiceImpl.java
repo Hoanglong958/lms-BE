@@ -198,6 +198,28 @@ public class UserProgressServiceImpl implements IUserProgressService {
         if (dto.getProgressPercent() != null) {
             progress.setProgressPercent(normalizePercent(dto.getProgressPercent()));
         }
+
+        // Xử lý video progress nếu là bài học video
+        if (progress.getType() == LessonType.VIDEO) {
+            if (dto.getLastPosition() != null) {
+                progress.setLastPosition(dto.getLastPosition());
+            }
+            if (dto.getVideoDuration() != null && dto.getVideoDuration() > 0) {
+                progress.setVideoDuration(dto.getVideoDuration());
+                // Tự động tính % nếu có duration và lastPosition
+                if (progress.getLastPosition() != null) {
+                    double percent = (progress.getLastPosition().doubleValue()
+                            / progress.getVideoDuration().doubleValue()) * 100;
+                    progress.setProgressPercent(normalizePercent(BigDecimal.valueOf(percent)));
+                }
+            }
+            // Nếu % >= 95 thì tự động hoàn thành (tùy chọn, ở đây ta để user gửi COMPLETED
+            // hoặc dựa trên % nếu muốn)
+            if (progress.getProgressPercent().compareTo(BigDecimal.valueOf(95)) >= 0) {
+                progress.setStatus(LessonProgressStatus.COMPLETED);
+            }
+        }
+
         if (progress.getStatus() == LessonProgressStatus.IN_PROGRESS && progress.getStartedAt() == null) {
             progress.setStartedAt(LocalDateTime.now());
         }
@@ -206,9 +228,81 @@ public class UserProgressServiceImpl implements IUserProgressService {
         }
 
         userLessonProgressRepository.save(progress);
-        // Đồng bộ trạng thái lộ trình ở mức tổng thể nếu có thể suy ra
+
+        // Đồng bộ lên Session -> Course -> Roadmap
+        trySyncSessionProgress(user, session);
         trySyncRoadmapProgress(user, course, lesson, progress.getStatus());
+
         return toLessonDto(progress);
+    }
+
+    private void trySyncSessionProgress(User user, Session session) {
+        Course course = session.getCourse();
+        UserSessionProgress sp = userSessionProgressRepository
+                .findByUserIdAndSessionId(user.getId(), session.getId())
+                .orElseGet(() -> UserSessionProgress.builder()
+                        .user(user)
+                        .session(session)
+                        .course(course)
+                        .build());
+
+        List<Lesson> lessons = session.getLessons();
+        if (lessons.isEmpty())
+            return;
+
+        long completedCount = lessons.stream()
+                .map(l -> userLessonProgressRepository.findByUserIdAndLessonId(user.getId(), l.getId()).orElse(null))
+                .filter(p -> p != null && p.getStatus() == LessonProgressStatus.COMPLETED)
+                .count();
+
+        double percent = (double) completedCount / lessons.size() * 100;
+        sp.setProgressPercent(normalizePercent(BigDecimal.valueOf(percent)));
+
+        if (completedCount >= lessons.size()) {
+            sp.setStatus(LessonProgressStatus.COMPLETED);
+            if (sp.getCompletedAt() == null)
+                sp.setCompletedAt(LocalDateTime.now());
+        } else if (completedCount > 0 || sp.getProgressPercent().compareTo(BigDecimal.ZERO) > 0) {
+            sp.setStatus(LessonProgressStatus.IN_PROGRESS);
+            if (sp.getStartedAt() == null)
+                sp.setStartedAt(LocalDateTime.now());
+        }
+
+        userSessionProgressRepository.save(sp);
+        trySyncCourseProgress(user, course);
+    }
+
+    private void trySyncCourseProgress(User user, Course course) {
+        UserCourseProgress cp = userCourseProgressRepository
+                .findByUserIdAndCourseId(user.getId(), course.getId())
+                .orElseGet(() -> UserCourseProgress.builder()
+                        .user(user)
+                        .course(course)
+                        .build());
+
+        List<Session> sessions = course.getSessions();
+        int total = sessions.size();
+        if (total == 0)
+            return;
+
+        long completedCount = sessions.stream()
+                .map(s -> userSessionProgressRepository.findByUserIdAndSessionId(user.getId(), s.getId()).orElse(null))
+                .filter(p -> p != null && p.getStatus() == LessonProgressStatus.COMPLETED)
+                .count();
+
+        cp.setTotalSessions(total);
+        cp.setCompletedSessions((int) completedCount);
+        double percent = (double) completedCount / total * 100;
+        cp.setProgressPercent(normalizePercent(BigDecimal.valueOf(percent)));
+
+        if (completedCount >= total) {
+            cp.setStatus(UserCourseStatus.COMPLETED);
+        } else if (completedCount > 0 || cp.getProgressPercent().compareTo(BigDecimal.ZERO) > 0) {
+            cp.setStatus(UserCourseStatus.IN_PROGRESS);
+        }
+
+        cp.setLastAccessedAt(LocalDateTime.now());
+        userCourseProgressRepository.save(cp);
     }
 
     @Override
@@ -490,6 +584,8 @@ public class UserProgressServiceImpl implements IUserProgressService {
                 .courseTitle(progress.getCourse().getTitle())
                 .status(progress.getStatus().name())
                 .progressPercent(progress.getProgressPercent())
+                .lastPosition(progress.getLastPosition())
+                .videoDuration(progress.getVideoDuration())
                 .startedAt(progress.getStartedAt())
                 .completedAt(progress.getCompletedAt())
                 .build();

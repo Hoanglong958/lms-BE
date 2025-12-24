@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user_lesson_progress", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"user_id", "lesson_id"})
+        @UniqueConstraint(columnNames = { "user_id", "lesson_id" })
 })
 @Getter
 @Setter
@@ -52,6 +52,12 @@ public class UserLessonProgress {
     @Builder.Default
     private BigDecimal progressPercent = BigDecimal.ZERO;
 
+    @Column(name = "last_position")
+    private Integer lastPosition; // Vị trí cuối cùng trong video (giây)
+
+    @Column(name = "video_duration")
+    private Integer videoDuration; // Tổng thời lượng video (giây)
+
     @Column(name = "started_at")
     private LocalDateTime startedAt;
 
@@ -68,5 +74,3 @@ public class UserLessonProgress {
         }
     }
 }
-
-

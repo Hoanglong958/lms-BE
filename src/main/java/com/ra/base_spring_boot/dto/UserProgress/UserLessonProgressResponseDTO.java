@@ -47,11 +47,15 @@ public class UserLessonProgressResponseDTO {
     @Schema(example = "80.00")
     private BigDecimal progressPercent;
 
+    @Schema(example = "120")
+    private Integer lastPosition;
+
+    @Schema(example = "300")
+    private Integer videoDuration;
+
     @Schema(example = "2025-01-05T08:00:00")
     private LocalDateTime startedAt;
 
     @Schema(example = "2025-01-05T08:30:00")
     private LocalDateTime completedAt;
 }
-
-

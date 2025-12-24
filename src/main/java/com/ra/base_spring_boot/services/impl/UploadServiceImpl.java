@@ -65,7 +65,16 @@ public class UploadServiceImpl implements IUploadService {
             if (url == null || url.isBlank()) {
                 url = (String) result.get("url");
             }
-            return UploadResponseDTO.builder().url(url).build();
+
+            Double duration = null;
+            if (result.get("duration") != null) {
+                duration = Double.parseDouble(result.get("duration").toString());
+            }
+
+            return UploadResponseDTO.builder()
+                    .url(url)
+                    .duration(duration)
+                    .build();
         } catch (IOException e) {
             throw new RuntimeException("Failed to upload video to Cloudinary", e);
         }

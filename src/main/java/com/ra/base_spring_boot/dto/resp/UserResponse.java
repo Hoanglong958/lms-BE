@@ -14,10 +14,13 @@ import java.time.LocalDateTime;
 @Builder
 public class UserResponse {
     private Long id;
+    private String firstName;
+    private String lastName;
     private String fullName;
     private String gmail;
+    private String phone;
     private RoleName role;
-    private String imageUrl;
+    private String avatar;
     private Boolean isActive;
     private LocalDateTime createdAt;
 }

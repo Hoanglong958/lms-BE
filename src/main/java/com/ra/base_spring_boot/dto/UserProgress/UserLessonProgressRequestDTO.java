@@ -28,6 +28,10 @@ public class UserLessonProgressRequestDTO {
 
     @Schema(example = "80.00")
     private BigDecimal progressPercent;
+
+    @Schema(example = "120")
+    private Integer lastPosition;
+
+    @Schema(example = "300")
+    private Integer videoDuration;
 }
-
-

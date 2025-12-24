@@ -97,7 +97,7 @@ public class UserServiceImpl implements IUserService {
                 .gmail(req.getGmail())
                 .password(passwordEncoder.encode(req.getPassword()))
                 .phone(req.getPhone())
-                .imageUrl(req.getImageUrl())
+                .avatar(req.getAvatar())
                 .role(role)
                 .isActive(active)
                 .createdAt(LocalDateTime.now())
@@ -149,8 +149,8 @@ public class UserServiceImpl implements IUserService {
         if (req.getFullName() != null) {
             user.setFullName(req.getFullName());
         }
-        if (req.getImageUrl() != null) {
-            user.setImageUrl(req.getImageUrl());
+        if (req.getAvatar() != null) {
+            user.setAvatar(req.getAvatar());
         }
         if (req.getRole() != null) {
             user.setRole(parseRoleOrDefault(req.getRole(), user.getRole()));
@@ -190,10 +190,13 @@ public class UserServiceImpl implements IUserService {
     private UserResponse toResponse(User u) {
         return UserResponse.builder()
                 .id(u.getId())
+                .firstName(u.getFirstName())
+                .lastName(u.getLastName())
                 .fullName(u.getFullName())
                 .gmail(u.getGmail())
+                .phone(u.getPhone())
                 .role(u.getRole())
-                .imageUrl(u.getImageUrl())
+                .avatar(u.getAvatar())
                 .isActive(u.getIsActive())
                 .createdAt(u.getCreatedAt())
                 .build();

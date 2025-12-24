@@ -29,7 +29,7 @@ public class UserCreateRequest {
 
         private String role;
 
-        private String imageUrl;
+        private String avatar;
 
         private Boolean isActive;
 }

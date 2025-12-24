@@ -19,6 +19,8 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String firstName;
+    private String lastName;
     private String fullName;
     @Column(name = "gmail", nullable = false, unique = true)
     private String gmail;
@@ -30,7 +32,7 @@ public class User {
     @Column(unique = true)
     private String phone;
 
-    private String imageUrl;
+    private String avatar;
 
     @Enumerated(EnumType.STRING)
     private RoleName role;

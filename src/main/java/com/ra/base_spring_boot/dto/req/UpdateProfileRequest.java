@@ -9,9 +9,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 @Builder
-public class UserUpdateRequest {
-    private String fullName;
+public class UpdateProfileRequest {
+    private String firstName;
+    private String lastName;
+    private String phone;
     private String avatar;
-    private String role;
-    private Boolean isActive;
 }
