@@ -23,7 +23,7 @@ public class LessonController {
 
     // ======= Lấy danh sách bài học theo session =======
     @GetMapping(params = "sessionId")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
     @Operation(summary = "Danh sách bài học theo session", description = "Trả về danh sách bài học thuộc 1 session")
     @ApiResponse(responseCode = "200", description = "Thành công")
     public ResponseEntity<List<LessonResponseDTO>> getBySession(@RequestParam Long sessionId) {
@@ -32,37 +32,37 @@ public class LessonController {
 
     // ======= Lấy chi tiết bài học =======
     @GetMapping("/detail")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
     @Operation(summary = "Lấy chi tiết bài học", description = "Trả về thông tin bài học theo ID")
     @ApiResponse(responseCode = "200", description = "Thành công")
     public ResponseEntity<LessonResponseDTO> getById(@RequestParam Long id) {
         return ResponseEntity.ok(lessonService.getById(id));
     }
 
-    // ======= Tạo bài học mới (chỉ ADMIN) =======
+    // ======= Tạo bài học mới (ADMIN + TEACHER) =======
     @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Operation(summary = "Tạo bài học", description = "Chỉ ADMIN được phép tạo bài học mới")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
+    @Operation(summary = "Tạo bài học", description = "ADMIN hoặc TEACHER được phép tạo bài học mới")
     @ApiResponse(responseCode = "200", description = "Tạo thành công")
     public ResponseEntity<LessonResponseDTO> create(@RequestBody LessonRequestDTO dto) {
         return ResponseEntity.ok(lessonService.create(dto));
     }
-    // ======= Cập nhật bài học (chỉ ADMIN) =======
+
+    // ======= Cập nhật bài học (ADMIN + TEACHER) =======
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Operation(summary = "Cập nhật bài học", description = "Chỉ ADMIN được phép cập nhật thông tin bài học")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
+    @Operation(summary = "Cập nhật bài học", description = "ADMIN hoặc TEACHER được phép cập nhật thông tin bài học")
     @ApiResponse(responseCode = "200", description = "Cập nhật thành công")
     public ResponseEntity<LessonResponseDTO> update(
             @PathVariable Long id,
-            @RequestBody LessonRequestDTO dto
-    ) {
+            @RequestBody LessonRequestDTO dto) {
         return ResponseEntity.ok(lessonService.update(id, dto));
     }
 
-    // ======= Xóa bài học (chỉ ADMIN) =======
+    // ======= Xóa bài học (ADMIN + TEACHER) =======
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Operation(summary = "Xóa bài học", description = "Chỉ ADMIN được phép xóa bài học")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
+    @Operation(summary = "Xóa bài học", description = "ADMIN hoặc TEACHER được phép xóa bài học")
     @ApiResponse(responseCode = "204", description = "Xóa thành công")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         lessonService.delete(id);

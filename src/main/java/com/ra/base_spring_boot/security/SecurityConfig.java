@@ -28,7 +28,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(jsr250Enabled = true)
+@EnableMethodSecurity(prePostEnabled = true, jsr250Enabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -53,14 +53,15 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // Chỉ cho phép các endpoint public thuộc auth (login/register/forgot/reset/verify)
+                        // Chỉ cho phép các endpoint public thuộc auth
+                        // (login/register/forgot/reset/verify)
                         .requestMatchers(
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/forgot-password-otp",
                                 "/api/v1/auth/verify-otp",
-                                "/api/v1/auth/reset-password"
-                        ).permitAll()
+                                "/api/v1/auth/reset-password")
+                        .permitAll()
                         .requestMatchers(
 
                                 "/api/v1/users/check",
@@ -81,19 +82,21 @@ public class SecurityConfig {
                                 "/ws/**",
                                 // Error handling endpoint
                                 "/error",
-                                "/error/**"
-                        ).permitAll()
+                                "/error/**")
+                        .permitAll()
                         .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.name())
-                        .requestMatchers("/api/v1/questions/**").hasAnyAuthority(RoleName.ROLE_ADMIN.name(), RoleName.ROLE_USER.name())
+                        .requestMatchers("/api/v1/questions/**")
+                        .hasAnyAuthority(RoleName.ROLE_ADMIN.name(), RoleName.ROLE_USER.name())
                         // Các endpoint quản lý user: chỉ ADMIN
+                        .requestMatchers("/api/v1/posts/**")
+                        .hasAnyAuthority(RoleName.ROLE_ADMIN.name(), RoleName.ROLE_USER.name(),
+                                RoleName.ROLE_TEACHER.name())
                         .requestMatchers("/api/v1/users/**").hasAuthority(RoleName.ROLE_ADMIN.name())
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(jwtEntryPoint)
-                        .accessDeniedHandler(accessDenied)
-                )
+                        .accessDeniedHandler(accessDenied))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

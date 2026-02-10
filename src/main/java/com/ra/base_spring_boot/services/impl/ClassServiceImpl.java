@@ -289,6 +289,14 @@ public class ClassServiceImpl implements IClassService {
                 .build();
     }
 
+    @Override
+    public List<ClassroomResponseDTO> findClassesByTeacher(Long teacherId) {
+        List<ClassTeacher> assignments = classTeacherRepository.findByTeacherId(teacherId);
+        return assignments.stream()
+                .map(ct -> toClassroomDto(ct.getClazz()))
+                .toList();
+    }
+
     // ==================== PRIVATE HELPERS ====================
 
     private Class getClassroom(Long id) {

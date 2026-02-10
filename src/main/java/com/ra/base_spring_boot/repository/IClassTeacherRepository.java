@@ -14,11 +14,13 @@ public interface IClassTeacherRepository extends JpaRepository<ClassTeacher, Lon
 
     Optional<ClassTeacher> findByClazzIdAndTeacherId(Long classId, Long teacherId);
 
-    @EntityGraph(attributePaths = {"clazz", "teacher"})
+    @EntityGraph(attributePaths = { "clazz", "teacher" })
     List<ClassTeacher> findByClazzId(Long classId);
 
     long countByClazzId(Long classId);
 
     long countByClazzIdAndRole(Long classId, ClassTeacherRole role);
-}
 
+    @EntityGraph(attributePaths = { "clazz", "teacher" })
+    List<ClassTeacher> findByTeacherId(Long teacherId);
+}

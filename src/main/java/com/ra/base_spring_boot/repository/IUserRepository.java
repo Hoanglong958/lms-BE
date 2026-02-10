@@ -35,19 +35,20 @@ public interface IUserRepository extends JpaRepository<User, Long> {
                       Pageable pageable);
 
     @Query("SELECT COUNT(u) FROM User u WHERE u.role = :role")
-    long countByRole(RoleName role);
+long countByRole(@Param("role") RoleName role);
 
-    // Count users created since
-    @Query("SELECT COUNT(u) FROM User u WHERE u.role = :role AND u.createdAt >= :since")
-    long countByRoleSince(RoleName role, LocalDateTime since);
+@Query("SELECT COUNT(u) FROM User u WHERE u.role = :role AND u.createdAt >= :since")
+long countByRoleSince(@Param("role") RoleName role,
+                      @Param("since") LocalDateTime since);
 
-    // Count users created before given date (useful for previous period)
-    @Query("SELECT COUNT(u) FROM User u WHERE u.role = :role AND u.createdAt < :before")
-    long countByRoleBefore(RoleName role, LocalDateTime before);
+@Query("SELECT COUNT(u) FROM User u WHERE u.role = :role AND u.createdAt < :before")
+long countByRoleBefore(@Param("role") RoleName role,
+                       @Param("before") LocalDateTime before);
 
-    // Find new users since date
-    @Query("SELECT u FROM User u WHERE u.role = :role AND u.createdAt >= :since ORDER BY u.createdAt DESC")
-    List<User> findNewUsersSince(RoleName role, LocalDateTime since);
+@Query("SELECT u FROM User u WHERE u.role = :role AND u.createdAt >= :since ORDER BY u.createdAt DESC")
+List<User> findNewUsersSince(@Param("role") RoleName role,
+                             @Param("since") LocalDateTime since);
+
 
     // Top students (if averageScore stored in user or join with UserCourse/Exam)
     @Query("SELECT u FROM User u JOIN UserCourse uc ON uc.user = u GROUP BY u.id ORDER BY AVG(uc.averageScore) DESC")

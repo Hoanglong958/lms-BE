@@ -41,4 +41,6 @@ public interface IClassService {
     List<ClassCourseResponseDTO> findCourses(Long classId);
 
     ClassStatsResponseDTO getClassStats(Long classId);
+
+    List<ClassroomResponseDTO> findClassesByTeacher(Long teacherId);
 }

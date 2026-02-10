@@ -34,7 +34,7 @@ public class QuestionController {
 
         // ================== GET QUESTIONS (PAGING + SEARCH) ==================
         @GetMapping("/page")
-        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
         @Operation(summary = "Lấy danh sách câu hỏi (phân trang + tìm kiếm)", description = "Hỗ trợ phân trang, tìm theo nội dung câu hỏi và category")
         public ResponseEntity<?> getQuestionsPaging(
                         @RequestParam(defaultValue = "0") Integer page,
@@ -46,7 +46,7 @@ public class QuestionController {
         }
 
         @GetMapping("/categories")
-        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
         @Operation(summary = "Lấy danh sách danh mục câu hỏi (có phân trang)", description = "Trả về danh sách các category duy nhất hiện có")
         public ResponseEntity<?> getCategories(
                         @RequestParam(defaultValue = "0") Integer page,
@@ -56,8 +56,8 @@ public class QuestionController {
 
         // ================== GET BY ID ==================
         @GetMapping("/detail")
-        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
-        @Operation(summary = "Lấy chi tiết câu hỏi", description = "Cho phép ADMIN và USER xem chi tiết một câu hỏi")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
+        @Operation(summary = "Lấy chi tiết câu hỏi", description = "Cho phép ADMIN, TEACHER và USER xem chi tiết một câu hỏi")
         @ApiResponse(responseCode = "200", description = "Lấy chi tiết thành công")
         public ResponseEntity<QuestionResponseDTO> getQuestionById(
                         @RequestParam Long id) {
@@ -66,8 +66,8 @@ public class QuestionController {
 
         // ================== CREATE ==================
         @PostMapping
-        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-        @Operation(summary = "Tạo câu hỏi mới", description = "Chỉ ADMIN được phép tạo mới câu hỏi")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
+        @Operation(summary = "Tạo câu hỏi mới", description = "ADMIN hoặc TEACHER được phép tạo mới câu hỏi")
         @ApiResponse(responseCode = "201", description = "Tạo câu hỏi thành công")
         public ResponseEntity<QuestionResponseDTO> createQuestion(
                         @Valid @RequestBody QuestionRequestDTO requestDTO) {
@@ -77,8 +77,8 @@ public class QuestionController {
 
         // ================== UPDATE ==================
         @PutMapping("/{id}")
-        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-        @Operation(summary = "Cập nhật câu hỏi", description = "Chỉ ADMIN được phép chỉnh sửa câu hỏi")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
+        @Operation(summary = "Cập nhật câu hỏi", description = "ADMIN hoặc TEACHER được phép chỉnh sửa câu hỏi")
         @ApiResponse(responseCode = "200", description = "Cập nhật thành công")
         public ResponseEntity<QuestionResponseDTO> updateQuestion(
                         @PathVariable Long id,
@@ -88,7 +88,7 @@ public class QuestionController {
 
         // ================== UPLOAD EXCEL ==================
         @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
         @Operation(summary = "Tải lên câu hỏi từ file Excel (Multipart)", description = "Lưu file lên Cloudinary và tạo câu hỏi trong DB. Định dạng: Cột 0: Category, Cột 1: Question, Cột 2-5: Options, Cột 6: Correct Answer, Cột 7: Explanation")
         @ApiResponse(responseCode = "201", description = "Tải lên thành công")
         @ApiResponse(responseCode = "400", description = "File không đúng định dạng")
@@ -111,7 +111,7 @@ public class QuestionController {
         }
 
         @PostMapping(value = "/upload", consumes = MediaType.APPLICATION_JSON_VALUE)
-        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
         @Operation(summary = "Tải lên câu hỏi từ URL (JSON)", description = "Nhận JSON { \"file\": \"url_excel\" } và tạo câu hỏi trong DB")
         public ResponseEntity<?> uploadQuestionsJson(@RequestBody Map<String, String> body) {
                 String fileUrl = body.get("file");
@@ -154,8 +154,8 @@ public class QuestionController {
 
         // ================== DELETE ==================
         @DeleteMapping("/{id}")
-        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-        @Operation(summary = "Xóa câu hỏi", description = "Chỉ ADMIN được phép xóa câu hỏi")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
+        @Operation(summary = "Xóa câu hỏi", description = "ADMIN hoặc TEACHER được phép xóa câu hỏi")
         @ApiResponse(responseCode = "204", description = "Xóa thành công")
         public ResponseEntity<Void> deleteQuestion(
                         @PathVariable Long id) {

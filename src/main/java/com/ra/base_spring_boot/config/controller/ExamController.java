@@ -18,23 +18,23 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 @RequestMapping("/api/v1/exams")
 @RequiredArgsConstructor
 @Tag(name = "09 - Exams", description = "Quản lý kỳ thi")
-public class    ExamController {
+public class ExamController {
 
     private final IExamService examService;
 
-    // ======= Tạo exam (ADMIN) =======
+    // ======= Tạo exam (ADMIN + TEACHER) =======
     @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Operation(summary = "Tạo kỳ thi", description = "Chỉ ADMIN được phép tạo mới kỳ thi")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
+    @Operation(summary = "Tạo kỳ thi", description = "ADMIN hoặc TEACHER được phép tạo mới kỳ thi")
     @ApiResponse(responseCode = "200", description = "Tạo thành công")
     public ResponseEntity<ExamResponseDTO> createExam(@RequestBody ExamRequestDTO dto) {
         return ResponseEntity.ok(examService.createExam(dto));
     }
 
-    // ======= Cập nhật exam (ADMIN) =======
+    // ======= Cập nhật exam (ADMIN + TEACHER) =======
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Operation(summary = "Cập nhật kỳ thi", description = "Chỉ ADMIN được phép cập nhật kỳ thi")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
+    @Operation(summary = "Cập nhật kỳ thi", description = "ADMIN hoặc TEACHER được phép cập nhật kỳ thi")
     @ApiResponse(responseCode = "200", description = "Cập nhật thành công")
     public ResponseEntity<ExamResponseDTO> updateExam(
             @Parameter(description = "Mã kỳ thi") @PathVariable Long id,
@@ -42,38 +42,38 @@ public class    ExamController {
         return ResponseEntity.ok(examService.updateExam(id, dto));
     }
 
-    // ======= Xóa exam (ADMIN) =======
+    // ======= Xóa exam (ADMIN + TEACHER) =======
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Operation(summary = "Xóa kỳ thi", description = "Chỉ ADMIN được phép xóa kỳ thi")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
+    @Operation(summary = "Xóa kỳ thi", description = "ADMIN hoặc TEACHER được phép xóa kỳ thi")
     @ApiResponse(responseCode = "204", description = "Xóa thành công")
     public ResponseEntity<Void> deleteExam(@Parameter(description = "Mã kỳ thi") @PathVariable Long id) {
         examService.deleteExam(id);
         return ResponseEntity.noContent().build();
     }
 
-    // ======= Lấy exam theo ID (ADMIN + USER) =======
+    // ======= Lấy exam theo ID (ADMIN + TEACHER + USER) =======
     @GetMapping("/detail")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
     @Operation(summary = "Lấy chi tiết kỳ thi", description = "Trả về thông tin kỳ thi theo ID")
     @ApiResponse(responseCode = "200", description = "Thành công")
     public ResponseEntity<ExamResponseDTO> getExam(@Parameter(description = "Mã kỳ thi") @RequestParam Long id) {
         return ResponseEntity.ok(examService.getExam(id));
     }
 
-    // ======= Lấy tất cả exam (ADMIN + USER) =======
+    // ======= Lấy tất cả exam (ADMIN + TEACHER + USER) =======
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
     @Operation(summary = "Danh sách kỳ thi", description = "Trả về tất cả kỳ thi")
     @ApiResponse(responseCode = "200", description = "Thành công")
     public ResponseEntity<List<ExamResponseDTO>> getAllExams() {
         return ResponseEntity.ok(examService.getAllExams());
     }
 
-    // ======= API thêm câu hỏi vào exam (ADMIN) =======
+    // ======= API thêm câu hỏi vào exam (ADMIN + TEACHER) =======
     @PostMapping("/{id}/questions")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Operation(summary = "Thêm câu hỏi vào kỳ thi", description = "Chỉ ADMIN được thêm câu hỏi")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
+    @Operation(summary = "Thêm câu hỏi vào kỳ thi", description = "ADMIN hoặc TEACHER được thêm câu hỏi")
     public ResponseEntity<String> addQuestionsToExam(
             @Parameter(description = "Mã kỳ thi") @PathVariable Long id,
             @RequestBody AddQuestionsToExamDTO dto) {

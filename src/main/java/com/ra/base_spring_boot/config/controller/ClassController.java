@@ -42,7 +42,7 @@ public class ClassController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER')")
     @Operation(summary = "Cập nhật lớp học")
     public ResponseEntity<ClassroomResponseDTO> update(@PathVariable Long id,
-                                                       @RequestBody ClassroomRequestDTO dto) {
+            @RequestBody ClassroomRequestDTO dto) {
         return ResponseEntity.ok(classroomService.update(id, dto));
     }
 
@@ -75,11 +75,12 @@ public class ClassController {
             @RequestParam(value = "q", required = false) String keyword,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
-            @RequestParam(value = "sort", defaultValue = "createdAt,desc") String sort
-    ) {
-        String[] sortParts = sort != null ? sort.split(",") : new String[]{};
-        String property = (sortParts.length >= 1 && sortParts[0] != null && !sortParts[0].isBlank()) ? sortParts[0] : "createdAt";
-        String directionStr = (sortParts.length >= 2 && sortParts[1] != null && !sortParts[1].isBlank()) ? sortParts[1] : "DESC";
+            @RequestParam(value = "sort", defaultValue = "createdAt,desc") String sort) {
+        String[] sortParts = sort != null ? sort.split(",") : new String[] {};
+        String property = (sortParts.length >= 1 && sortParts[0] != null && !sortParts[0].isBlank()) ? sortParts[0]
+                : "createdAt";
+        String directionStr = (sortParts.length >= 2 && sortParts[1] != null && !sortParts[1].isBlank()) ? sortParts[1]
+                : "DESC";
         Sort.Direction direction = Sort.Direction.fromString(Objects.requireNonNull(directionStr));
         Sort sortObj = Sort.by(direction, property);
         Pageable pageable = PageRequest.of(page, size, sortObj);
@@ -92,12 +93,9 @@ public class ClassController {
     // =========== Thống kê lớp học ===========
     @GetMapping("/stats")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER','ROLE_USER')")
-    @Operation(summary = "Thống kê các chỉ số trong lớp học",
-            description = "Trả về sĩ số, số HV active/completed/dropped, điểm trung bình và tỉ lệ điểm danh")
+    @Operation(summary = "Thống kê các chỉ số trong lớp học", description = "Trả về sĩ số, số HV active/completed/dropped, điểm trung bình và tỉ lệ điểm danh")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Thống kê lớp học",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ClassStatsResponseDTO.class))),
+            @ApiResponse(responseCode = "200", description = "Thống kê lớp học", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ClassStatsResponseDTO.class))),
             @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
             @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
             @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
@@ -106,5 +104,15 @@ public class ClassController {
     })
     public ResponseEntity<ClassStatsResponseDTO> getClassStats(@RequestParam Long id) {
         return ResponseEntity.ok(classroomService.getClassStats(id));
+    }
+
+    @GetMapping("/my-classes")
+    @PreAuthorize("hasAuthority('ROLE_TEACHER')")
+    @Operation(summary = "Danh sách lớp học của giảng viên hiện tại")
+    public ResponseEntity<List<ClassroomResponseDTO>> getMyClasses() {
+        // Lấy user từ Security Context
+        com.ra.base_spring_boot.security.principle.MyUserDetails userPrincipal = (com.ra.base_spring_boot.security.principle.MyUserDetails) org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication().getPrincipal();
+        return ResponseEntity.ok(classroomService.findClassesByTeacher(userPrincipal.getUser().getId()));
     }
 }
