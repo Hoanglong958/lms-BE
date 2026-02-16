@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -62,5 +63,23 @@ public class AttendanceController {
             @PathVariable Long classId,
             @PathVariable Long courseId) {
         return ResponseEntity.ok(attendanceService.summarizeByClassAndCourse(classId, courseId));
+    }
+
+    @Operation(summary = "Kiểm tra ngày có lịch học không")
+    @GetMapping("/classes/{classId}/schedule/validate")
+    public ResponseEntity<Map<String, Object>> validateScheduleDate(
+            @PathVariable Long classId,
+            @RequestParam String date) {
+        boolean hasSchedule = attendanceService.validateScheduleForDate(classId, date);
+        return ResponseEntity.ok(Map.of("hasSchedule", hasSchedule));
+    }
+
+    @Operation(summary = "Lấy điểm danh theo lớp và ngày")
+    @GetMapping("/classes/{classId}/attendance")
+    public ResponseEntity<List<AttendanceRecordResponseDTO>> getAttendanceByClassAndDate(
+            @PathVariable Long classId,
+            @RequestParam String date) {
+        List<AttendanceRecordResponseDTO> records = attendanceService.getAttendanceByClassAndDate(classId, date);
+        return ResponseEntity.ok(records);
     }
 }

@@ -9,6 +9,7 @@ import com.ra.base_spring_boot.dto.Attendance.AttendanceCourseSummaryResponseDTO
 import com.ra.base_spring_boot.model.Class;
 import com.ra.base_spring_boot.model.ClassStudent;
 import com.ra.base_spring_boot.model.User;
+import com.ra.base_spring_boot.model.ScheduleItem;
 import com.ra.base_spring_boot.model.attendance.AttendanceRecord;
 import com.ra.base_spring_boot.model.attendance.AttendanceSession;
 import com.ra.base_spring_boot.model.constants.AttendanceStatus;
@@ -25,7 +26,6 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.Objects;
 
@@ -38,8 +38,10 @@ public class AttendanceServiceImpl implements IAttendanceService {
         private final IClassRepository classRepo;
         private final IUserRepository userRepo;
         private final IClassStudentRepository classStudentRepo;
+        private final IScheduleItemRepository scheduleItemRepository;
 
         @Override
+        @Transactional
         public AttendanceSessionResponseDTO createSession(AttendanceSessionRequestDTO request) {
                 Objects.requireNonNull(request, "request must not be null");
                 Long classId = Objects.requireNonNull(request.getClassId(), "classId must not be null");
@@ -47,6 +49,26 @@ public class AttendanceServiceImpl implements IAttendanceService {
                                 .orElseThrow(() -> new IllegalArgumentException("Class not found: " + classId));
 
                 LocalDate date = LocalDate.parse(request.getSessionDate());
+
+                // Validate session date is within class date range
+                if (classroom.getStartDate() != null && date.isBefore(classroom.getStartDate())) {
+                        throw new IllegalArgumentException(
+                                        "Session date " + date + " is before class start date "
+                                                        + classroom.getStartDate());
+                }
+                if (classroom.getEndDate() != null && date.isAfter(classroom.getEndDate())) {
+                        throw new IllegalArgumentException(
+                                        "Session date " + date + " is after class end date " + classroom.getEndDate());
+                }
+
+                // NEW: Validate that this date has a scheduled class
+                boolean hasSchedule = validateScheduleExists(classId, date, request.getStartTime());
+                if (!hasSchedule) {
+                        throw new IllegalArgumentException(
+                                        "Không thể tạo buổi điểm danh cho ngày " + date +
+                                                        " vì không có lịch học vào thời gian này. Vui lòng kiểm tra lại thời khóa biểu.");
+                }
+
                 LocalTime start = request.getStartTime() != null ? LocalTime.parse(request.getStartTime()) : null;
                 LocalTime end = request.getEndTime() != null ? LocalTime.parse(request.getEndTime()) : null;
                 SessionStatus status = request.getStatus() != null ? SessionStatus.valueOf(request.getStatus())
@@ -109,6 +131,7 @@ public class AttendanceServiceImpl implements IAttendanceService {
         }
 
         @Override
+        @Transactional
         public AttendanceRecordResponseDTO markAttendance(AttendanceRecordRequestDTO request) {
                 Objects.requireNonNull(request, "request must not be null");
                 Long safeSessionId = Objects.requireNonNull(request.getAttendanceSessionId(),
@@ -124,12 +147,24 @@ public class AttendanceServiceImpl implements IAttendanceService {
                 LocalDateTime checkin = request.getCheckinTime() != null ? LocalDateTime.parse(request.getCheckinTime())
                                 : null;
 
-                Optional<AttendanceRecord> opt = recordRepo.findBySession_IdAndStudent_Id(session.getId(),
-                                student.getId());
-                AttendanceRecord rec = opt.orElseGet(() -> AttendanceRecord.builder()
-                                .session(session)
-                                .student(student)
-                                .build());
+                AttendanceRecord rec;
+
+                // NEW: Check if this is an update (has attendanceRecordId) or create new
+                if (request.getAttendanceRecordId() != null) {
+                        // Update existing record
+                        rec = recordRepo.findById(request.getAttendanceRecordId())
+                                        .orElseThrow(() -> new IllegalArgumentException("Attendance record not found: "
+                                                        + request.getAttendanceRecordId()));
+                } else {
+                        // ALWAYS create new record for each day - don't search for existing ones
+                        // This prevents overwriting previous day's attendance
+                        rec = AttendanceRecord.builder()
+                                        .session(session)
+                                        .student(student)
+                                        .sessionDate(session.getSessionDate())
+                                        .build();
+                }
+
                 rec.setStatus(status);
                 rec.setCheckinTime(checkin);
                 rec.setNote(request.getNote());
@@ -138,6 +173,7 @@ public class AttendanceServiceImpl implements IAttendanceService {
         }
 
         @Override
+        @Transactional
         public List<AttendanceRecordResponseDTO> markAttendanceBulk(Long sessionId,
                         List<AttendanceRecordRequestDTO> records) {
                 Long safeSessionId = Objects.requireNonNull(sessionId, "sessionId must not be null");
@@ -209,6 +245,79 @@ public class AttendanceServiceImpl implements IAttendanceService {
                                 .build();
         }
 
+        /**
+         * Validate that there's a schedule for the given class and date
+         */
+        @Override
+        @Transactional(readOnly = true)
+        public boolean validateScheduleForDate(Long classId, String date) {
+                try {
+                        LocalDate requestDate = LocalDate.parse(date);
+                        List<ScheduleItem> scheduleItems = scheduleItemRepository
+                                        .findByClassIdAndDate(classId, requestDate);
+                        return !scheduleItems.isEmpty();
+                } catch (Exception e) {
+                        System.err.println("Error validating schedule date: " + e.getMessage());
+                        return false;
+                }
+        }
+
+        /**
+         * Validate that there's a schedule for the given class and date
+         */
+        @Override
+        @Transactional(readOnly = true)
+        public List<AttendanceRecordResponseDTO> getAttendanceByClassAndDate(Long classId, String date) {
+                try {
+                        LocalDate requestDate = LocalDate.parse(date);
+                        List<AttendanceRecord> records = recordRepo
+                                        .findByClassIdAndSessionDate(classId, requestDate);
+                        return records.stream()
+                                        .map(this::toRecordDto)
+                                        .collect(Collectors.toList());
+                } catch (Exception e) {
+                        System.err.println("Error getting attendance by class and date: " + e.getMessage());
+                        return List.of();
+                }
+        }
+
+        /**
+         * Validate that there's a schedule for given class, date, and time
+         */
+        private boolean validateScheduleExists(Long classId, LocalDate date, String startTime) {
+                try {
+                        // Get schedule items for this class and specific date
+                        List<ScheduleItem> scheduleItems = scheduleItemRepository
+                                        .findByClassIdAndDate(classId, date);
+
+                        if (scheduleItems.isEmpty()) {
+                                return false;
+                        }
+
+                        // If no specific time provided, just check if any schedule exists for the date
+                        if (startTime == null) {
+                                return true;
+                        }
+
+                        // Check if there's a schedule matching both date and time
+                        LocalTime requestedTime = LocalTime.parse(startTime);
+                        return scheduleItems.stream()
+                                        .anyMatch(item -> {
+                                                // Check if the requested time matches the period time
+                                                LocalTime periodStart = item.getPeriod().getStartTime();
+                                                LocalTime periodEnd = item.getPeriod().getEndTime();
+
+                                                // Allow some flexibility (within 15 minutes)
+                                                return !requestedTime.isBefore(periodStart.minusMinutes(15)) &&
+                                                                !requestedTime.isAfter(periodEnd.plusMinutes(15));
+                                        });
+                } catch (Exception e) {
+                        // Log error but don't prevent session creation
+                        System.err.println("Error validating schedule: " + e.getMessage());
+                        return true; // Allow creation if validation fails
+                }
+        }
+
         private AttendanceSessionResponseDTO toSessionDto(AttendanceSession s) {
                 long total = recordRepo.findBySession_Id(s.getId()).size();
                 return AttendanceSessionResponseDTO.builder()
@@ -228,7 +337,7 @@ public class AttendanceServiceImpl implements IAttendanceService {
 
         private AttendanceRecordResponseDTO toRecordDto(AttendanceRecord r) {
                 return AttendanceRecordResponseDTO.builder()
-                                .attendanceRecordId(r.getId())
+                                .attendanceRecordId(r.getId()) // NEW: Include record ID
                                 .attendanceSessionId(r.getSession().getId())
                                 .studentId(r.getStudent().getId())
                                 .studentName(r.getStudent().getFullName())

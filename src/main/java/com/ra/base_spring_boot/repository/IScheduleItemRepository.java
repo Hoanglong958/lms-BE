@@ -22,16 +22,28 @@ public interface IScheduleItemRepository extends JpaRepository<ScheduleItem, Lon
 
     // Fetch đủ dữ liệu cho FE
     @Query("""
-        SELECT si
-        FROM ScheduleItem si
-        JOIN FETCH si.period
-        JOIN FETCH si.classCourse cc
-        JOIN FETCH cc.course
-        JOIN FETCH cc.clazz
-        WHERE cc.id = :classCourseId
-        ORDER BY si.sessionNumber
-    """)
+                SELECT si
+                FROM ScheduleItem si
+                JOIN FETCH si.period
+                JOIN FETCH si.classCourse cc
+                JOIN FETCH cc.course
+                JOIN FETCH cc.clazz
+                WHERE cc.id = :classCourseId
+                ORDER BY si.sessionNumber
+            """)
     List<ScheduleItem> findScheduleDetailByClassCourse(
-            @Param("classCourseId") Long classCourseId
-    );
+            @Param("classCourseId") Long classCourseId);
+
+    // Find schedule items by class ID and date
+    @Query("""
+                SELECT si
+                FROM ScheduleItem si
+                JOIN FETCH si.period
+                JOIN FETCH si.classCourse cc
+                WHERE cc.clazz.id = :classId
+                AND si.date = :date
+            """)
+    List<ScheduleItem> findByClassIdAndDate(
+            @Param("classId") Long classId,
+            @Param("date") java.time.LocalDate date);
 }

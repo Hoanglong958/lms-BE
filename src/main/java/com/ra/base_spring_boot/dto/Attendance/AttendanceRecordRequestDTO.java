@@ -9,6 +9,13 @@ public class AttendanceRecordRequestDTO {
     @Schema(example = "1", required = true)
     private Long attendanceSessionId;
 
+    @Schema(example = "1")
+    private Long attendanceRecordId; // NEW: For updates
+
+    public Long getAttendanceRecordId() {
+        return attendanceRecordId;
+    }
+
     @Schema(example = "1", required = true)
     private Long studentId;
 
@@ -21,4 +28,3 @@ public class AttendanceRecordRequestDTO {
     @Schema(example = "Điểm danh đúng giờ")
     private String note;
 }
-

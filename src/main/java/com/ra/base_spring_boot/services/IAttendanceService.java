@@ -23,4 +23,14 @@ public interface IAttendanceService {
     AttendanceClassSummaryResponseDTO summarizeByClass(Long classId);
 
     AttendanceCourseSummaryResponseDTO summarizeByClassAndCourse(Long classId, Long courseId);
+
+    /**
+     * Kiểm tra xem một ngày có lịch học không
+     */
+    boolean validateScheduleForDate(Long classId, String date);
+
+    /**
+     * Lấy điểm danh theo lớp và ngày
+     */
+    List<AttendanceRecordResponseDTO> getAttendanceByClassAndDate(Long classId, String date);
 }

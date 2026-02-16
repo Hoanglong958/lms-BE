@@ -5,6 +5,7 @@ import com.ra.base_spring_boot.model.constants.AttendanceStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -34,6 +35,9 @@ public class AttendanceRecord {
 
     @Column(name = "checkin_time")
     private LocalDateTime checkinTime;
+
+    @Column(name = "session_date", nullable = false)
+    private LocalDate sessionDate;
 
     @Column(columnDefinition = "TEXT")
     private String note;

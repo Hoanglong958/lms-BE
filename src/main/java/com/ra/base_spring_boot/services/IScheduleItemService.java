@@ -15,5 +15,11 @@ public interface IScheduleItemService {
     void clearScheduleForCourse(Long classCourseId);
 
     ScheduleItemResponseDTO updateScheduleItem(Long id, UpdateScheduleItemRequestDTO req);
+
     List<ScheduleItemResponseDTO> getScheduleByCourse(Long courseId);
+
+    // =========================================================
+    // 6. UPDATE WEEK SCHEDULE - Cập nhật lịch theo tuần cụ thể
+    // =========================================================
+    List<ScheduleItemResponseDTO> updateWeekSchedule(UpdateWeekScheduleRequestDTO req);
 }
