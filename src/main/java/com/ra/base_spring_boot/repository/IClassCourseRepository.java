@@ -15,7 +15,8 @@ public interface IClassCourseRepository extends JpaRepository<ClassCourse, Long>
 
     List<ClassCourse> findByClazzId(Long classId);
 
+    List<ClassCourse> findByCourse_Id(Long courseId);
+
     long countByClazzId(Long classId);
 
 }
-

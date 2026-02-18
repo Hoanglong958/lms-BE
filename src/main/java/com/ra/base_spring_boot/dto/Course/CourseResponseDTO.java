@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -33,4 +34,7 @@ public class CourseResponseDTO {
 
     @Schema(example = "https://example.com/course-image.jpg")
     private String imageUrl;
+
+    @Schema(example = "1000000.00")
+    private BigDecimal tuitionFee;
 }

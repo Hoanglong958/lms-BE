@@ -107,6 +107,7 @@ public class CourseServiceImpl implements ICourseService {
                 .level(course.getLevel().name())
                 .imageUrl(course.getImageUrl())
                 .totalSessions(course.getTotalSessions())
+                .tuitionFee(course.getTuitionFee())
                 .createdAt(course.getCreatedAt())
                 .updatedAt(course.getUpdatedAt())
                 .build();
