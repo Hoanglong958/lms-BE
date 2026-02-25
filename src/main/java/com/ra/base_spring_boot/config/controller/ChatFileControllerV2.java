@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import java.util.UUID;
 import java.util.Objects;
 
@@ -24,22 +25,41 @@ public class ChatFileControllerV2 {
 
     private final IChatMessageService chatMessageService;
     private final StorageService storageService; // CloudinaryStorageService is @Primary
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Operation(summary = "Gửi file/ảnh kèm (REST)")
     @PostMapping(path = "/messages/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ChatMessage> sendFile(@RequestParam UUID roomId,
-                                                @RequestParam Long senderId,
-                                                @RequestPart("file") MultipartFile file) {
+            @RequestParam Long senderId,
+            @RequestPart("file") MultipartFile file) {
         String contentType = Objects.requireNonNullElse(file.getContentType(), "application/octet-stream");
         boolean isImage = contentType.startsWith("image/");
         boolean isVideo = contentType.startsWith("video/");
-        String url = isImage ? storageService.storeImage(file) : (isVideo ? storageService.storeVideo(file) : storageService.storeImage(file));
+
+        String url;
+        ChatMessageType type;
+
+        if (isImage) {
+            url = storageService.storeImage(file);
+            type = ChatMessageType.IMAGE;
+        } else if (isVideo) {
+            url = storageService.storeVideo(file);
+            type = ChatMessageType.FILE; // Or add VIDEO to ChatMessageType if needed, but and existing model uses
+                                         // FILE/IMAGE
+        } else {
+            url = storageService.storeFile(file);
+            type = ChatMessageType.FILE;
+        }
+
         SendMessageRequest req = new SendMessageRequest();
         req.setRoomId(roomId);
         req.setSenderId(senderId);
-        req.setType(isImage ? ChatMessageType.IMAGE : (isVideo ? ChatMessageType.FILE : ChatMessageType.FILE));
+        req.setType(type);
         req.setFileUrl(url);
         req.setContent(file.getOriginalFilename());
-        return ResponseEntity.ok(chatMessageService.send(req));
+
+        ChatMessage saved = chatMessageService.send(req);
+        messagingTemplate.convertAndSend("/topic/rooms/" + saved.getRoom().getId(), saved);
+        return ResponseEntity.ok(saved);
     }
 }

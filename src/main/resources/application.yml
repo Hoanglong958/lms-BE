@@ -68,9 +68,9 @@ app:
     sendOnAdminCreate: true
 
 cloudinary:
-  cloud-name: dtbbrlnyc
-  api-key: 936751274181751
-  api-secret: ja4CTEXqeT9YD38oJHItIwiktW0
+  cloud-name: dhlngvmj5
+  api-key: 451186165751151
+  api-secret: YHZVyKDzQhp73vVM32iNj7ngYM4
 
 external:
   api:

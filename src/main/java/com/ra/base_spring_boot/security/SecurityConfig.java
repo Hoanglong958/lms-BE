@@ -91,7 +91,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/posts/**")
                         .hasAnyAuthority(RoleName.ROLE_ADMIN.name(), RoleName.ROLE_USER.name(),
                                 RoleName.ROLE_TEACHER.name())
-                        .requestMatchers("/api/v1/users/**").hasAuthority(RoleName.ROLE_ADMIN.name())
+                        .requestMatchers("/api/v1/users/**").hasAnyAuthority(
+                                RoleName.ROLE_ADMIN.name(),
+                                RoleName.ROLE_TEACHER.name(),
+                                RoleName.ROLE_USER.name())
                         .anyRequest().authenticated())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex

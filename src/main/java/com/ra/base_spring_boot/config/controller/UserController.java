@@ -41,13 +41,13 @@ public class UserController {
                         .status(HttpStatus.OK)
                         .code(200)
                         .data(java.util.Map.of("exists", exists)) // Trả về object { exists: true/false }
-                        .build()
-        );
+                        .build());
     }
 
     // ===================== Lấy danh sách người dùng =====================
     @GetMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')") // Chỉ ADMIN mới xem danh sách
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')") // Allow ADMIN, TEACHER and USER to view
+                                                                                // list for chat search
     @Operation(summary = "Danh sách người dùng", description = "Tìm kiếm và lọc theo vai trò, trạng thái")
     @ApiResponse(responseCode = "200", description = "OK")
     public ResponseEntity<?> listUsers(
@@ -59,7 +59,8 @@ public class UserController {
     ) {
         RoleName roleFilter = parseRole(role); // Chuyển role từ String sang enum
         Pageable safePageable = applyLimit(sanitizePageable(pageable), limit);
-        Page<UserResponse> page = userService.search(keyword, roleFilter, isActive, safePageable); // Gọi service tìm kiếm
+        Page<UserResponse> page = userService.search(keyword, roleFilter, isActive, safePageable); // Gọi service tìm
+                                                                                                   // kiếm
 
         java.util.Map<String, Object> payload = new java.util.HashMap<>();
         payload.put("content", page.getContent());
@@ -75,8 +76,7 @@ public class UserController {
                         .status(HttpStatus.OK)
                         .code(200)
                         .data(payload)
-                        .build()
-        );
+                        .build());
     }
 
     // ===================== Lấy chi tiết người dùng theo ID =====================
@@ -91,8 +91,7 @@ public class UserController {
                         .status(HttpStatus.OK)
                         .code(200)
                         .data(resp)
-                        .build()
-        );
+                        .build());
     }
 
     // ===================== Tạo người dùng mới =====================
@@ -107,8 +106,7 @@ public class UserController {
                         .status(HttpStatus.CREATED)
                         .code(201)
                         .data(resp)
-                        .build()
-        );
+                        .build());
     }
 
     // ===================== Cập nhật người dùng =====================
@@ -123,11 +121,11 @@ public class UserController {
                         .status(HttpStatus.OK)
                         .code(200)
                         .data(resp)
-                        .build()
-        );
+                        .build());
     }
 
-    // ===================== Vô hiệu hóa người dùng (Soft delete) =====================
+    // ===================== Vô hiệu hóa người dùng (Soft delete)
+    // =====================
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')") // Chỉ ADMIN mới xóa
     @Operation(summary = "Vô hiệu hóa người dùng", description = "Soft delete: chuyển isActive=false")
@@ -149,13 +147,13 @@ public class UserController {
                         .status(HttpStatus.OK)
                         .code(200)
                         .data("Cập nhật trạng thái thành công")
-                        .build()
-        );
+                        .build());
     }
 
     // ===================== Chuyển role từ String sang Enum =====================
     private RoleName parseRole(String input) {
-        if (input == null) return null;
+        if (input == null)
+            return null;
         String normalized = input.trim().toUpperCase();
         if (!normalized.startsWith("ROLE_")) {
             normalized = "ROLE_" + normalized;
@@ -167,7 +165,8 @@ public class UserController {
         }
     }
 
-    // ===================== Làm sạch tham số phân trang/sắp xếp =====================
+    // ===================== Làm sạch tham số phân trang/sắp xếp
+    // =====================
     private Pageable sanitizePageable(Pageable pageable) {
         final int MAX_SIZE = 100;
         final int DEFAULT_PAGE = 0;
@@ -175,8 +174,7 @@ public class UserController {
         final Sort DEFAULT_SORT = Sort.by(Sort.Direction.DESC, "createdAt");
 
         java.util.Set<String> allowed = java.util.Set.of(
-                "id", "fullName", "gmail", "phone", "role", "isActive", "createdAt"
-        );
+                "id", "fullName", "gmail", "phone", "role", "isActive", "createdAt");
 
         // Guard null pageable
         if (pageable == null) {
@@ -202,7 +200,8 @@ public class UserController {
 
     private Pageable applyLimit(Pageable pageable, Integer limit) {
         final int MAX_SIZE = 100;
-        if (limit == null || limit <= 0) return pageable;
+        if (limit == null || limit <= 0)
+            return pageable;
         int size = Math.min(limit, MAX_SIZE);
         return PageRequest.of(0, size, pageable.getSort());
     }

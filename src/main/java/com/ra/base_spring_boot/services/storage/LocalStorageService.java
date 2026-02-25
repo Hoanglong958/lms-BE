@@ -28,6 +28,11 @@ public class LocalStorageService implements StorageService {
         return store(file, "videos");
     }
 
+    @Override
+    public String storeFile(MultipartFile file) {
+        return store(file, "files");
+    }
+
     private String store(MultipartFile file, String type) {
         try {
             String ext = StringUtils.getFilenameExtension(file.getOriginalFilename());
