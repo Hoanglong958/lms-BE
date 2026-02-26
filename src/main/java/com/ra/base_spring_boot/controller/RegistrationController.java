@@ -10,7 +10,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -109,5 +111,27 @@ public class RegistrationController {
                                                                 "accountName", accountName,
                                                                 "bankName", bankName))
                                                 .build());
+        }
+
+        @GetMapping("/export/excel")
+        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+        @Operation(summary = "Admin xuất danh sách đăng ký ra file Excel")
+        public ResponseEntity<byte[]> exportExcel() {
+                byte[] data = registrationService.exportToExcel();
+                return ResponseEntity.ok()
+                                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=registrations.xls")
+                                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                                .body(data);
+        }
+
+        @GetMapping("/{id}/export/pdf")
+        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+        @Operation(summary = "Admin xuất hóa đơn ra file PDF")
+        public ResponseEntity<byte[]> exportPdf(@PathVariable Long id) {
+                byte[] data = registrationService.generateInvoicePdf(id);
+                return ResponseEntity.ok()
+                                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=invoice_" + id + ".pdf")
+                                .contentType(MediaType.APPLICATION_PDF)
+                                .body(data);
         }
 }

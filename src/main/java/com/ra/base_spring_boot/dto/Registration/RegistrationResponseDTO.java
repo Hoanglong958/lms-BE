@@ -15,6 +15,8 @@ public class RegistrationResponseDTO {
     private Long id;
     private Long studentId;
     private String studentName;
+    private String studentEmail;
+    private String studentPhone;
     private Long courseId;
     private String courseTitle;
     private BigDecimal amount;

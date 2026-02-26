@@ -14,4 +14,8 @@ public interface IRegistrationService {
     List<RegistrationResponseDTO> getAllRegistrations();
 
     RegistrationResponseDTO confirmPayment(Long registrationId);
+
+    byte[] exportToExcel();
+
+    byte[] generateInvoicePdf(Long registrationId);
 }

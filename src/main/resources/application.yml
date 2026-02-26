@@ -86,6 +86,6 @@ logging:
 payment:
   bank:
     id: "970407"                  # Mã ngân hàng VietQR của Techcombank
-    account-no: "19038033877011"   # ⚠ Số tài khoản Techcombank của bạn
-    account-name: "NGUYEN DUC CONG MINH"      # Tên chủ tài khoản (VIẾT HOA, không dấu)
+    account-no: "19021698833015"   # ⚠ Số tài khoản Techcombank của bạn
+    account-name: "NGUYEN THI VAN"      # Tên chủ tài khoản (VIẾT HOA, không dấu)
     name: "Techcombank"           # Tên ngân hàng hiển thị
