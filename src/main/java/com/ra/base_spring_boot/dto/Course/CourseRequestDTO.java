@@ -21,4 +21,7 @@ public class CourseRequestDTO {
 
     @Schema(example = "https://example.com/course-image.jpg")
     private String imageUrl;
+
+    @Schema(example = "1000000.00")
+    private java.math.BigDecimal tuitionFee;
 }

@@ -1,0 +1,459 @@
+package com.ra.base_spring_boot.services.classroom.impl;
+
+import com.ra.base_spring_boot.dto.Classroom.*;
+import com.ra.base_spring_boot.dto.Gmail.EmailDTO;
+import com.ra.base_spring_boot.exception.HttpBadRequest;
+import com.ra.base_spring_boot.model.*;
+import com.ra.base_spring_boot.model.Class;
+import com.ra.base_spring_boot.model.constants.*;
+import com.ra.base_spring_boot.repository.classroom.IClassRepository;
+import com.ra.base_spring_boot.repository.classroom.IClassStudentRepository;
+import com.ra.base_spring_boot.repository.classroom.IClassTeacherRepository;
+import com.ra.base_spring_boot.repository.course.IClassCourseRepository;
+import com.ra.base_spring_boot.repository.course.ICourseRepository;
+import com.ra.base_spring_boot.repository.user.IUserRepository;
+import com.ra.base_spring_boot.services.classroom.IClassService;
+import com.ra.base_spring_boot.services.common.impl.GmailService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+@Service
+@RequiredArgsConstructor
+public class ClassServiceImpl implements IClassService {
+
+    private final IClassRepository classroomRepository;
+    private final IClassStudentRepository classStudentRepository;
+    private final IClassTeacherRepository classTeacherRepository;
+    private final IClassCourseRepository classCourseRepository;
+    private final IUserRepository userRepository;
+    private final ICourseRepository courseRepository;
+    private final GmailService gmailService;
+
+    @Override
+    public ClassroomResponseDTO create(ClassroomRequestDTO dto) {
+        Class aClass = Class.builder()
+                .className(requireText(dto.getClassName(), "Tên lớp học không được để trống"))
+                .description(dto.getDescription())
+                .startDate(parseDate(dto.getStartDate(), "Ngày bắt đầu lớp học không hợp lệ"))
+                .endDate(parseOptionalDate(dto.getEndDate()))
+                .build();
+        validateDateRange(aClass.getStartDate(), aClass.getEndDate());
+        classroomRepository.save(Objects.requireNonNull(aClass, "class must not be null"));
+        return toClassroomDto(aClass);
+    }
+
+    @Override
+    public ClassroomResponseDTO update(Long id, ClassroomRequestDTO dto) {
+        Class aClass = getClassroom(Objects.requireNonNull(id, "id must not be null"));
+        if (dto.getClassName() != null)
+            aClass.setClassName(dto.getClassName());
+        if (dto.getDescription() != null)
+            aClass.setDescription(dto.getDescription());
+        if (dto.getStartDate() != null)
+            aClass.setStartDate(parseDate(dto.getStartDate(), "Ngày bắt đầu lớp học không hợp lệ"));
+        if (dto.getEndDate() != null)
+            aClass.setEndDate(parseOptionalDate(dto.getEndDate()));
+        validateDateRange(aClass.getStartDate(), aClass.getEndDate());
+        classroomRepository.save(aClass);
+        return toClassroomDto(aClass);
+    }
+
+    @Override
+    public void delete(Long id) {
+        Class aClass = getClassroom(Objects.requireNonNull(id, "id must not be null"));
+        classroomRepository.delete(Objects.requireNonNull(aClass, "class must not be null"));
+    }
+
+    @Override
+    public ClassroomResponseDTO findById(Long id) {
+        return toClassroomDto(getClassroom(Objects.requireNonNull(id, "id must not be null")));
+    }
+
+    @Override
+    public List<ClassroomResponseDTO> findAll() {
+        return classroomRepository.findAll().stream()
+                .map(this::toClassroomDto)
+                .toList();
+    }
+
+    @Override
+    public Page<ClassroomResponseDTO> findAll(Pageable pageable) {
+        return classroomRepository.findAll(Objects.requireNonNull(pageable, "pageable must not be null"))
+                .map(this::toClassroomDto);
+    }
+
+    @Override
+    public Page<ClassroomResponseDTO> search(String keyword, Pageable pageable) {
+        String kw = keyword == null ? "" : keyword.trim();
+        return classroomRepository
+                .findByClassNameContainingIgnoreCase(kw, Objects.requireNonNull(pageable, "pageable must not be null"))
+                .map(this::toClassroomDto);
+    }
+
+    @Override
+    @Transactional
+    public ClassStudentResponseDTO enrollStudent(ClassStudentRequestDTO dto) {
+        Objects.requireNonNull(dto, "dto must not be null");
+        Class aClass = getClassroom(Objects.requireNonNull(dto.getClassId(), "classId must not be null"));
+        // Cho phép tìm học viên bằng studentId hoặc gmail
+        User student;
+        if (dto.getStudentId() != null) {
+            student = userRepository.findById(dto.getStudentId())
+                    .orElseThrow(() -> new HttpBadRequest("Không tìm thấy học viên với id = " + dto.getStudentId()));
+        } else if (dto.getGmail() != null && !dto.getGmail().isBlank()) {
+            student = userRepository.findByGmailIgnoreCase(dto.getGmail().trim())
+                    .orElseThrow(() -> new HttpBadRequest("Không tìm thấy học viên với gmail = " + dto.getGmail()));
+        } else {
+            throw new HttpBadRequest("Phải cung cấp studentId hoặc gmail của học viên");
+        }
+        if (student.getRole() != RoleName.ROLE_USER) {
+            throw new HttpBadRequest("student_id chỉ chấp nhận tài khoản role STUDENT (ROLE_USER)");
+        }
+        if (classStudentRepository.existsByClassroomIdAndStudentId(aClass.getId(), student.getId())) {
+            throw new HttpBadRequest("Học viên đã tồn tại trong lớp");
+        }
+        ClassStudent enrollment = ClassStudent.builder()
+                .classroom(aClass)
+                .student(student)
+                .status(parseEnrollmentStatus(dto.getStatus()))
+                .finalScore(normalizeScore(dto.getFinalScore()))
+                .attendanceRate(normalizeScore(dto.getAttendanceRate()))
+                .note(dto.getNote())
+                .build();
+        classStudentRepository.save(Objects.requireNonNull(enrollment, "enrollment must not be null"));
+
+        // ======= Gửi email thông báo =======
+        gmailService.sendEmail(new EmailDTO(
+                student.getGmail(),
+                "Bạn đã được thêm vào lớp",
+                "added_to_class",
+                Map.of(
+                        "username", student.getFullName(),
+                        "className", aClass.getClassName())));
+
+        return toStudentDto(enrollment);
+    }
+
+    @Override
+    public void removeStudent(Long classroomId, Long studentId) {
+        ClassStudent enrollment = classStudentRepository
+                .findByClassroomIdAndStudentId(Objects.requireNonNull(classroomId, "classroomId must not be null"),
+                        Objects.requireNonNull(studentId, "studentId must not be null"))
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy học viên trong lớp"));
+        classStudentRepository.delete(Objects.requireNonNull(enrollment, "enrollment must not be null"));
+    }
+
+    @Override
+    public List<ClassStudentResponseDTO> findStudents(Long classroomId) {
+        return classStudentRepository
+                .findByClassroomIdWithRelations(Objects.requireNonNull(classroomId, "classroomId must not be null"))
+                .stream()
+                .map(this::toStudentDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public ClassTeacherResponseDTO assignTeacher(ClassTeacherRequestDTO dto) {
+        Class aClass = getClassroom(dto.getClassId());
+        User teacher = userRepository.findById(dto.getTeacherId())
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy giảng viên với id = " + dto.getTeacherId()));
+        if (teacher.getRole() != RoleName.ROLE_TEACHER) {
+            throw new HttpBadRequest("teacher_id chỉ chấp nhận tài khoản role TEACHER");
+        }
+        if (classTeacherRepository.existsByClazzIdAndTeacherId(
+                Objects.requireNonNull(aClass.getId(), "classId must not be null"),
+                Objects.requireNonNull(teacher.getId(), "teacherId must not be null"))) {
+            throw new HttpBadRequest("Giảng viên đã được phân công cho lớp này");
+        }
+        ClassTeacher assignment = ClassTeacher.builder()
+                .clazz(aClass)
+                .teacher(teacher)
+                .role(ClassTeacherRole.INSTRUCTOR)
+                .note(dto.getNote())
+                .build();
+        classTeacherRepository.save(java.util.Objects.requireNonNull(assignment, "assignment must not be null"));
+        return toTeacherDto(assignment);
+    }
+
+    @Override
+    public void removeTeacher(Long classId, Long teacherId) {
+        ClassTeacher teacher = classTeacherRepository
+                .findByClazzIdAndTeacherId(Objects.requireNonNull(classId, "classId must not be null"),
+                        Objects.requireNonNull(teacherId, "teacherId must not be null"))
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy giảng viên trong lớp"));
+        classTeacherRepository.delete(Objects.requireNonNull(teacher, "teacher must not be null"));
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public List<ClassTeacherResponseDTO> findTeachers(Long classId) {
+        return classTeacherRepository.findByClazzId(Objects.requireNonNull(classId, "classId must not be null"))
+                .stream()
+                .map(this::toTeacherDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public ClassCourseResponseDTO assignCourse(ClassCourseRequestDTO dto) {
+        Class aClass = getClassroom(Objects.requireNonNull(dto.getClassId(), "classId must not be null"));
+        Course course = courseRepository
+                .findById(Objects.requireNonNull(dto.getCourseId(), "courseId must not be null"))
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học với id = " + dto.getCourseId()));
+        if (classCourseRepository.existsByClazzIdAndCourseId(
+                Objects.requireNonNull(aClass.getId(), "classId must not be null"),
+                Objects.requireNonNull(course.getId(), "courseId must not be null"))) {
+            throw new HttpBadRequest("Khóa học đã được gán cho lớp");
+        }
+        ClassCourse classCourse = ClassCourse.builder()
+                .clazz(aClass)
+                .course(course)
+                .note(dto.getNote())
+                .build();
+        classCourseRepository.save(java.util.Objects.requireNonNull(classCourse, "classCourse must not be null"));
+
+        List<ClassStudent> students = classStudentRepository
+                .findByClassroomIdWithRelations(Objects.requireNonNull(aClass.getId(), "classId must not be null"));
+
+        for (ClassStudent s : students) {
+            User student = s.getStudent();
+            gmailService.sendEmail(new EmailDTO(
+                    student.getGmail(),
+                    "Khóa học mới được thêm vào lớp",
+                    "new_course",
+                    Map.of(
+                            "username", student.getFullName(),
+                            "className", aClass.getClassName(),
+                            "courseName", course.getTitle())));
+        }
+
+        return toCourseDto(classCourse);
+    }
+
+    @Override
+    public void removeCourse(Long classId, Long courseId) {
+        ClassCourse classCourse = classCourseRepository
+                .findByClazz_IdAndCourse_Id(Objects.requireNonNull(classId, "classId must not be null"),
+                        Objects.requireNonNull(courseId, "courseId must not be null"))
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học trong lớp"));
+        classCourseRepository.delete(Objects.requireNonNull(classCourse, "classCourse must not be null"));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ClassCourseResponseDTO> findCourses(Long classId) {
+        return classCourseRepository.findByClazzId(Objects.requireNonNull(classId, "classId must not be null"))
+                .stream()
+                .map(this::toCourseDto)
+                .toList();
+    }
+
+    @Override
+    public ClassStatsResponseDTO getClassStats(Long classId) {
+        Class aClass = getClassroom(classId);
+
+        long totalStudents = classStudentRepository.countByClassroomId(classId);
+        long activeStudents = classStudentRepository.countByClassroomIdAndStatus(classId, ClassEnrollmentStatus.ACTIVE);
+        long completedStudents = classStudentRepository.countByClassroomIdAndStatus(classId,
+                ClassEnrollmentStatus.COMPLETED);
+        long droppedStudents = classStudentRepository.countByClassroomIdAndStatus(classId,
+                ClassEnrollmentStatus.DROPPED);
+
+        long totalTeachers = classTeacherRepository.countByClazzId(classId);
+        long instructors = classTeacherRepository.countByClazzIdAndRole(classId, ClassTeacherRole.INSTRUCTOR);
+        long assistants = classTeacherRepository.countByClazzIdAndRole(classId, ClassTeacherRole.ASSISTANT);
+
+        long totalCourses = classCourseRepository.countByClazzId(classId);
+
+        BigDecimal avgScore = classStudentRepository.averageFinalScoreByClassroomId(classId);
+        BigDecimal avgAttendance = classStudentRepository.averageAttendanceRateByClassroomId(classId);
+
+        return ClassStatsResponseDTO.builder()
+                .classId(aClass.getId())
+                .className(aClass.getClassName())
+                .totalStudents(totalStudents)
+                .activeStudents(activeStudents)
+                .completedStudents(completedStudents)
+                .droppedStudents(droppedStudents)
+                .averageFinalScore(avgScore)
+                .averageAttendanceRate(avgAttendance)
+                .totalTeachers(totalTeachers)
+                .instructors(instructors)
+                .assistants(assistants)
+                .totalCourses(totalCourses)
+                .build();
+    }
+
+    @Override
+    public List<ClassroomResponseDTO> findClassesByTeacher(Long teacherId) {
+        List<ClassTeacher> assignments = classTeacherRepository.findByTeacherId(teacherId);
+        return assignments.stream()
+                .map(ct -> toClassroomDto(ct.getClazz()))
+                .toList();
+    }
+
+    // ==================== PRIVATE HELPERS ====================
+
+    private Class getClassroom(Long id) {
+        Long safeId = Objects.requireNonNull(id, "id must not be null");
+        return classroomRepository.findById(safeId)
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy lớp học với id = " + id));
+    }
+
+    private ClassroomResponseDTO toClassroomDto(Class aClass) {
+        long classId = aClass.getId();
+        long studentCount = classStudentRepository.countByClassroomId(classId);
+        long teacherCount = classTeacherRepository.countByClazzId(classId);
+        long courseCount = classCourseRepository.countByClazzId(classId);
+
+        return ClassroomResponseDTO.builder()
+                .id(classId)
+                .className(aClass.getClassName())
+                .description(aClass.getDescription())
+                .startDate(aClass.getStartDate())
+                .endDate(aClass.getEndDate())
+                .scheduleInfo(aClass.getScheduleInfo())
+                .status(calculateStatus(aClass).name()) // <- status động
+                .createdAt(aClass.getCreatedAt())
+                .updatedAt(aClass.getUpdatedAt())
+                .totalStudents(studentCount)
+                .totalTeachers(teacherCount)
+                .totalCourses(courseCount)
+                .build();
+    }
+
+    private ClassStatus calculateStatus(Class aClass) {
+        LocalDate today = LocalDate.now();
+        if (aClass.getStartDate() != null && today.isBefore(aClass.getStartDate())) {
+            return ClassStatus.UPCOMING;
+        }
+        if (aClass.getEndDate() != null && today.isAfter(aClass.getEndDate())) {
+            return ClassStatus.COMPLETED;
+        }
+        if (aClass.getStartDate() != null && aClass.getEndDate() != null
+                && (!today.isBefore(aClass.getStartDate()) && !today.isAfter(aClass.getEndDate()))) {
+            return ClassStatus.ONGOING;
+        }
+        return ClassStatus.UPCOMING; // mặc định
+    }
+
+    private ClassStudentResponseDTO toStudentDto(ClassStudent classStudent) {
+        return ClassStudentResponseDTO.builder()
+                .id(classStudent.getId())
+                .classId(classStudent.getClassroom().getId())
+                .className(classStudent.getClassroom().getClassName())
+                .studentId(classStudent.getStudent().getId())
+                .studentName(classStudent.getStudent().getFullName())
+                .status(classStudent.getStatus().name())
+                .finalScore(classStudent.getFinalScore())
+                .attendanceRate(classStudent.getAttendanceRate())
+                .enrolledAt(classStudent.getEnrolledAt())
+                .note(classStudent.getNote())
+                .build();
+    }
+
+    private ClassTeacherResponseDTO toTeacherDto(ClassTeacher classTeacher) {
+        return ClassTeacherResponseDTO.builder()
+                .id(classTeacher.getId())
+                .classId(classTeacher.getClazz().getId())
+                .className(classTeacher.getClazz().getClassName())
+                .teacherId(classTeacher.getTeacher().getId())
+                .teacherName(classTeacher.getTeacher().getFullName())
+                .assignedAt(classTeacher.getAssignedAt())
+                .note(classTeacher.getNote())
+                .build();
+    }
+
+    private ClassCourseResponseDTO toCourseDto(ClassCourse classCourse) {
+        return ClassCourseResponseDTO.builder()
+                .id(classCourse.getId())
+                .classId(classCourse.getClazz().getId())
+                .className(classCourse.getClazz().getClassName())
+                .courseId(classCourse.getCourse().getId())
+                .courseTitle(classCourse.getCourse().getTitle())
+                .assignedAt(classCourse.getAssignedAt())
+                .note(classCourse.getNote())
+                .build();
+    }
+
+    private String requireText(String value, String message) {
+        if (value == null || value.isBlank()) {
+            throw new HttpBadRequest(message);
+        }
+        return value;
+    }
+
+    private LocalDate parseDate(String raw, String message) {
+        if (raw == null || raw.isBlank())
+            throw new HttpBadRequest(message);
+        try {
+            return LocalDate.parse(raw);
+        } catch (DateTimeParseException exception) {
+            throw new HttpBadRequest(message);
+        }
+    }
+
+    private LocalDate parseOptionalDate(String raw) {
+        if (raw == null || raw.isBlank())
+            return null;
+        try {
+            return LocalDate.parse(raw);
+        } catch (DateTimeParseException exception) {
+            throw new HttpBadRequest("Ngày kết thúc lớp học không hợp lệ");
+        }
+    }
+
+    private void validateDateRange(LocalDate start, LocalDate end) {
+        if (start == null)
+            return;
+        if (end != null && end.isBefore(start))
+            throw new HttpBadRequest("Ngày kết thúc không được trước ngày bắt đầu");
+    }
+
+    private ClassStatus parseStatus(String raw) {
+        if (raw == null || raw.isBlank())
+            return ClassStatus.UPCOMING;
+        try {
+            return ClassStatus.valueOf(raw.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new HttpBadRequest("Trạng thái lớp học không hợp lệ (UPCOMING/ONGOING/COMPLETED/CANCELLED)");
+        }
+    }
+
+    private ClassEnrollmentStatus parseEnrollmentStatus(String raw) {
+        if (raw == null || raw.isBlank())
+            return ClassEnrollmentStatus.ACTIVE;
+        try {
+            return ClassEnrollmentStatus.valueOf(raw.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new HttpBadRequest("Trạng thái học viên không hợp lệ (ACTIVE/COMPLETED/DROPPED)");
+        }
+    }
+
+    private ClassTeacherRole parseTeacherRole(String raw) {
+        if (raw == null || raw.isBlank())
+            return ClassTeacherRole.INSTRUCTOR;
+        try {
+            return ClassTeacherRole.valueOf(raw.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new HttpBadRequest("Vai trò giảng viên không hợp lệ (INSTRUCTOR/ASSISTANT)");
+        }
+    }
+
+    private BigDecimal normalizeScore(BigDecimal value) {
+        if (value == null || value.compareTo(BigDecimal.ZERO) < 0)
+            return BigDecimal.ZERO;
+        return value;
+    }
+}
