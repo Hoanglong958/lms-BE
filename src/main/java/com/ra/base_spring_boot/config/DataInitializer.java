@@ -2,7 +2,7 @@
 
 // import com.ra.base_spring_boot.model.User;
 // import com.ra.base_spring_boot.model.constants.RoleName;
-// import com.ra.base_spring_boot.repository.IUserRepository;
+// import com.ra.base_spring_boot.repository.user.IUserRepository;
 // import lombok.RequiredArgsConstructor;
 // import org.springframework.boot.CommandLineRunner;
 // import org.springframework.security.crypto.password.PasswordEncoder;
