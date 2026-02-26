@@ -227,7 +227,8 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                                 .stream()
                                 .filter(item -> {
                                         LocalDate itemDate = item.getDate();
-                                        return !itemDate.isBefore(req.getWeekStartDate()) && !itemDate.isAfter(req.getWeekEndDate());
+                                        return !itemDate.isBefore(req.getWeekStartDate())
+                                                        && !itemDate.isAfter(req.getWeekEndDate());
                                 })
                                 .toList();
 
@@ -248,7 +249,8 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                                 }
 
                                 Period period = periodRepository.findById(weekItem.getPeriodId().longValue())
-                                                .orElseThrow(() -> new HttpBadRequest("Period không tồn tại: " + weekItem.getPeriodId()));
+                                                .orElseThrow(() -> new HttpBadRequest(
+                                                                "Period không tồn tại: " + weekItem.getPeriodId()));
 
                                 String key = weekItem.getDate().toString() + "_" + weekItem.getPeriodId();
                                 ScheduleItem existingItem = existingItemsMap.get(key);
@@ -257,8 +259,10 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                                         // Update existing item
                                         existingItem.setPeriod(period);
                                         existingItem.setDate(weekItem.getDate());
-                                        existingItem.setStartAt(LocalDateTime.of(weekItem.getDate(), period.getStartTime()));
-                                        existingItem.setEndAt(LocalDateTime.of(weekItem.getDate(), period.getEndTime()));
+                                        existingItem.setStartAt(
+                                                        LocalDateTime.of(weekItem.getDate(), period.getStartTime()));
+                                        existingItem.setEndAt(
+                                                        LocalDateTime.of(weekItem.getDate(), period.getEndTime()));
                                         existingItem.setUpdatedAt(LocalDateTime.now());
                                         itemsToSave.add(existingItem);
                                         existingItemsMap.remove(key); // Remove from map so it won't be deleted
@@ -266,7 +270,8 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                                         // Create new item
                                         // Find the next available session number
                                         int maxSessionNumber = scheduleItemRepository
-                                                        .findByClassCourse_IdOrderBySessionNumber(req.getClassCourseId())
+                                                        .findByClassCourse_IdOrderBySessionNumber(
+                                                                        req.getClassCourseId())
                                                         .stream()
                                                         .mapToInt(ScheduleItem::getSessionNumber)
                                                         .max()
@@ -277,8 +282,10 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                                                         .period(period)
                                                         .sessionNumber(maxSessionNumber + 1)
                                                         .date(weekItem.getDate())
-                                                        .startAt(LocalDateTime.of(weekItem.getDate(), period.getStartTime()))
-                                                        .endAt(LocalDateTime.of(weekItem.getDate(), period.getEndTime()))
+                                                        .startAt(LocalDateTime.of(weekItem.getDate(),
+                                                                        period.getStartTime()))
+                                                        .endAt(LocalDateTime.of(weekItem.getDate(),
+                                                                        period.getEndTime()))
                                                         .status("SCHEDULED")
                                                         .createdAt(LocalDateTime.now())
                                                         .updatedAt(LocalDateTime.now())
@@ -335,5 +342,14 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                                 .endAt(item.getEndAt())
                                 .status(item.getStatus())
                                 .build();
+        }
+
+        // =========================================================
+        // 7. GET SCHEDULED DATES FOR A CLASS BY YEAR/MONTH
+        // =========================================================
+        @Override
+        @Transactional(readOnly = true)
+        public List<java.time.LocalDate> getScheduledDatesForClass(Long classId, int year, int month) {
+                return scheduleItemRepository.findScheduledDatesByClassAndMonth(classId, year, month);
         }
 }

@@ -26,76 +26,68 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 @Tag(name = "26 - Periods", description = "Quản lý ca học")
 public class PeriodController {
 
-    private final IPeriodService periodService;
+        private final IPeriodService periodService;
 
-    // ======= Tạo ca học (ADMIN) =======
-    @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Operation(summary = "Tạo ca học", description = "Chỉ ADMIN được phép tạo ca học")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Tạo thành công",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = PeriodResponseDTO.class),
-                            examples = @ExampleObject(value = "{\n  \"id\": 1,\n  \"name\": \"Ca sáng\",\n  \"startTime\": \"08:00:00\",\n  \"endTime\": \"10:00:00\",\n  \"createdAt\": \"2025-11-28T09:30:00\",\n  \"updatedAt\": \"2025-11-28T09:30:00\"\n}"))),
-            @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
-            @ApiResponse(responseCode = "500", description = "Lỗi hệ thống", content = @Content)
-    })
-    public ResponseEntity<PeriodResponseDTO> createPeriod(@RequestBody @Valid PeriodRequestDTO request) {
-        return ResponseEntity.ok(periodService.create(request));
-    }
+        // ======= Tạo ca học (ADMIN) =======
+        @PostMapping
+        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+        @Operation(summary = "Tạo ca học", description = "Chỉ ADMIN được phép tạo ca học")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Tạo thành công", content = @Content(mediaType = "application/json", schema = @Schema(implementation = PeriodResponseDTO.class), examples = @ExampleObject(value = "{\n  \"id\": 1,\n  \"name\": \"Ca sáng\",\n  \"startTime\": \"08:00:00\",\n  \"endTime\": \"10:00:00\",\n  \"createdAt\": \"2025-11-28T09:30:00\",\n  \"updatedAt\": \"2025-11-28T09:30:00\"\n}"))),
+                        @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
+                        @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
+                        @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
+                        @ApiResponse(responseCode = "500", description = "Lỗi hệ thống", content = @Content)
+        })
+        public ResponseEntity<PeriodResponseDTO> createPeriod(@RequestBody @Valid PeriodRequestDTO request) {
+                return ResponseEntity.ok(periodService.create(request));
+        }
 
-    // ======= Cập nhật ca học (ADMIN) =======
-    @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Operation(summary = "Cập nhật ca học", description = "Chỉ ADMIN được phép cập nhật ca học")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Cập nhật thành công",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = PeriodResponseDTO.class))),
-            @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
-            @ApiResponse(responseCode = "500", description = "Lỗi hệ thống", content = @Content)
-    })
-    public ResponseEntity<PeriodResponseDTO> updatePeriod(
-            @Parameter(description = "Mã ca học") @PathVariable Long id,
-            @RequestBody @Valid PeriodRequestDTO request) {
-        return ResponseEntity.ok(periodService.update(id, request));
-    }
+        // ======= Cập nhật ca học (ADMIN) =======
+        @PutMapping("/{id}")
+        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+        @Operation(summary = "Cập nhật ca học", description = "Chỉ ADMIN được phép cập nhật ca học")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Cập nhật thành công", content = @Content(mediaType = "application/json", schema = @Schema(implementation = PeriodResponseDTO.class))),
+                        @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
+                        @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
+                        @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
+                        @ApiResponse(responseCode = "500", description = "Lỗi hệ thống", content = @Content)
+        })
+        public ResponseEntity<PeriodResponseDTO> updatePeriod(
+                        @Parameter(description = "Mã ca học") @PathVariable Long id,
+                        @RequestBody @Valid PeriodRequestDTO request) {
+                return ResponseEntity.ok(periodService.update(id, request));
+        }
 
-    // ======= Xóa ca học (ADMIN) =======
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Operation(summary = "Xóa ca học", description = "Chỉ ADMIN được phép xóa ca học")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Xóa thành công", content = @Content),
-            @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
-            @ApiResponse(responseCode = "500", description = "Lỗi hệ thống", content = @Content)
-    })
-    public ResponseEntity<Void> deletePeriod(@Parameter(description = "Mã ca học") @PathVariable Long id) {
-        periodService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+        // ======= Xóa ca học (ADMIN) =======
+        @DeleteMapping("/{id}")
+        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+        @Operation(summary = "Xóa ca học", description = "Chỉ ADMIN được phép xóa ca học")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "204", description = "Xóa thành công", content = @Content),
+                        @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
+                        @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
+                        @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
+                        @ApiResponse(responseCode = "500", description = "Lỗi hệ thống", content = @Content)
+        })
+        public ResponseEntity<Void> deletePeriod(@Parameter(description = "Mã ca học") @PathVariable Long id) {
+                periodService.delete(id);
+                return ResponseEntity.noContent().build();
+        }
 
-    // ======= Lấy danh sách tất cả ca học (ADMIN + USER) =======
-    @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
-    @Operation(summary = "Danh sách ca học", description = "Trả về tất cả ca học")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Thành công",
-                    content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = PeriodResponseDTO.class)),
-                            examples = @ExampleObject(value = "[{\n  \"id\": 1,\n  \"name\": \"Ca sáng\",\n  \"startTime\": \"08:00:00\",\n  \"endTime\": \"10:00:00\",\n  \"createdAt\": \"2025-11-28T09:30:00\",\n  \"updatedAt\": \"2025-11-28T09:30:00\"\n}]"))),
-            @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
-            @ApiResponse(responseCode = "500", description = "Lỗi hệ thống", content = @Content)
-    })
-    public ResponseEntity<List<PeriodResponseDTO>> getAllPeriods() {
-        return ResponseEntity.ok(periodService.findAll());
-    }
+        // ======= Lấy danh sách tất cả ca học (ADMIN + USER) =======
+        @GetMapping
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
+        @Operation(summary = "Danh sách ca học", description = "Trả về tất cả ca học")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Thành công", content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = PeriodResponseDTO.class)), examples = @ExampleObject(value = "[{\n  \"id\": 1,\n  \"name\": \"Ca sáng\",\n  \"startTime\": \"08:00:00\",\n  \"endTime\": \"10:00:00\",\n  \"createdAt\": \"2025-11-28T09:30:00\",\n  \"updatedAt\": \"2025-11-28T09:30:00\"\n}]"))),
+                        @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
+                        @ApiResponse(responseCode = "401", description = "Chưa xác thực", content = @Content),
+                        @ApiResponse(responseCode = "403", description = "Không có quyền", content = @Content),
+                        @ApiResponse(responseCode = "500", description = "Lỗi hệ thống", content = @Content)
+        })
+        public ResponseEntity<List<PeriodResponseDTO>> getAllPeriods() {
+                return ResponseEntity.ok(periodService.findAll());
+        }
 }

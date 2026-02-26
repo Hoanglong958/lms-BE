@@ -117,6 +117,21 @@ public class GlobalHandleException {
         }
 
         /**
+         * @param ex AccessDeniedException
+         * @apiNote handle security access denied exception (403)
+         */
+        @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+        public ResponseEntity<?> handleAccessDeniedException(
+                        org.springframework.security.access.AccessDeniedException ex) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                                ResponseWrapper.builder()
+                                                .data("Bạn không có quyền truy cập tài nguyên này!")
+                                                .code(HttpStatus.FORBIDDEN.value())
+                                                .status(HttpStatus.FORBIDDEN)
+                                                .build());
+        }
+
+        /**
          * @param ex HttpNotFound
          * @apiNote handle exception not found (404)
          */
@@ -176,6 +191,9 @@ public class GlobalHandleException {
         public ResponseEntity<?> handleIllegalArgumentException(IllegalArgumentException ex) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                                 ResponseWrapper.builder()
+                                                .data(ex.getMessage())
+                                                .code(HttpStatus.BAD_REQUEST.value())
+                                                .status(HttpStatus.BAD_REQUEST)
                                                 .build());
         }
 

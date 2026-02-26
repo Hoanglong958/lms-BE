@@ -82,3 +82,11 @@ external:
 logging:
   level:
     "[org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsManagerConfigurer]": ERROR
+
+# Cấu hình thanh toán học phí - Cập nhật thông tin ngân hàng tại đây
+payment:
+  bank:
+    id: "970422"                  # Mã ngân hàng VietQR (970422 = MB Bank)
+    account-no: "0000000000"      # ⚠ Số tài khoản ngân hàng của bạn
+    account-name: "TRUONG HOC ONLINE"  # Tên chủ tài khoản (VIẾT HOA, không dấu)
+    name: "MB Bank"               # Tên ngân hàng hiển thị

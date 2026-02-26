@@ -2,10 +2,12 @@ package com.ra.base_spring_boot.config.controller;
 
 import com.ra.base_spring_boot.dto.Attendance.*;
 import com.ra.base_spring_boot.services.IAttendanceService;
+import com.ra.base_spring_boot.services.IScheduleItemService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,21 +20,25 @@ import java.util.Map;
 public class AttendanceController {
 
     private final IAttendanceService attendanceService;
+    private final IScheduleItemService scheduleItemService;
 
     @Operation(summary = "Tạo buổi học để điểm danh")
     @PostMapping("/attendance-sessions")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     public ResponseEntity<AttendanceSessionResponseDTO> createSession(@RequestBody AttendanceSessionRequestDTO req) {
         return ResponseEntity.ok(attendanceService.createSession(req));
     }
 
     @Operation(summary = "Danh sách buổi học của lớp")
     @GetMapping("/classes/{classId}/attendance-sessions")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
     public ResponseEntity<List<AttendanceSessionResponseDTO>> listSessions(@PathVariable Long classId) {
         return ResponseEntity.ok(attendanceService.listSessionsByClass(classId));
     }
 
     @Operation(summary = "Danh sách học viên cần điểm danh theo buổi")
     @GetMapping("/attendance-sessions/{attendanceSessionId}/students")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     public ResponseEntity<List<AttendanceRecordResponseDTO>> listStudentsForSession(
             @PathVariable Long attendanceSessionId) {
         return ResponseEntity.ok(attendanceService.listStudentsForSession(attendanceSessionId));
@@ -40,12 +46,14 @@ public class AttendanceController {
 
     @Operation(summary = "Điểm danh từng học viên")
     @PostMapping("/attendance")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     public ResponseEntity<AttendanceRecordResponseDTO> markAttendance(@RequestBody AttendanceRecordRequestDTO req) {
         return ResponseEntity.ok(attendanceService.markAttendance(req));
     }
 
     @Operation(summary = "Điểm danh hàng loạt")
     @PostMapping("/attendance/bulk")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     public ResponseEntity<List<AttendanceRecordResponseDTO>> markAttendanceBulk(
             @RequestBody AttendanceBulkRequestDTO req) {
         return ResponseEntity.ok(attendanceService.markAttendanceBulk(req.getSessionId(), req.getRecords()));
@@ -74,8 +82,23 @@ public class AttendanceController {
         return ResponseEntity.ok(Map.of("hasSchedule", hasSchedule));
     }
 
+    @Operation(summary = "Lấy danh sách ngày có lịch học trong tháng")
+    @GetMapping("/classes/{classId}/schedule-dates")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
+    public ResponseEntity<List<String>> getScheduledDates(
+            @PathVariable Long classId,
+            @RequestParam int year,
+            @RequestParam int month) {
+        List<String> dates = scheduleItemService.getScheduledDatesForClass(classId, year, month)
+                .stream()
+                .map(java.time.LocalDate::toString)
+                .collect(java.util.stream.Collectors.toList());
+        return ResponseEntity.ok(dates);
+    }
+
     @Operation(summary = "Lấy điểm danh theo lớp và ngày")
     @GetMapping("/classes/{classId}/attendance")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
     public ResponseEntity<List<AttendanceRecordResponseDTO>> getAttendanceByClassAndDate(
             @PathVariable Long classId,
             @RequestParam String date) {

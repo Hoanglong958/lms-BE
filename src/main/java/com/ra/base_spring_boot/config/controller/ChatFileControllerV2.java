@@ -59,7 +59,9 @@ public class ChatFileControllerV2 {
         req.setContent(file.getOriginalFilename());
 
         ChatMessage saved = chatMessageService.send(req);
-        messagingTemplate.convertAndSend("/topic/rooms/" + saved.getRoom().getId(), saved);
+        // Use roomId from request to avoid LazyInitializationException on @JsonIgnore
+        // room field
+        messagingTemplate.convertAndSend("/topic/rooms/" + req.getRoomId(), saved);
         return ResponseEntity.ok(saved);
     }
 }

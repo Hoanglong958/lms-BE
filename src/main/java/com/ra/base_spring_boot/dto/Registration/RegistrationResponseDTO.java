@@ -22,4 +22,5 @@ public class RegistrationResponseDTO {
     private LocalDateTime registrationDate;
     private LocalDateTime paymentDate;
     private String note;
+    private String transferRef;
 }

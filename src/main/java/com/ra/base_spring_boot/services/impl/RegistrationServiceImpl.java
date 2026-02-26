@@ -42,7 +42,12 @@ public class RegistrationServiceImpl implements IRegistrationService {
                 .note(dto.getNote())
                 .build();
 
-        return toDto(registrationRepository.save(registration));
+        registration = registrationRepository.save(registration);
+        // Generate unique transfer reference after we have the ID
+        registration.setTransferRef("TUITION" + registration.getId());
+        registration = registrationRepository.save(registration);
+
+        return toDto(registration);
     }
 
     @Override
@@ -113,6 +118,7 @@ public class RegistrationServiceImpl implements IRegistrationService {
                 .registrationDate(registration.getRegistrationDate())
                 .paymentDate(registration.getPaymentDate())
                 .note(registration.getNote())
+                .transferRef(registration.getTransferRef())
                 .build();
     }
 }

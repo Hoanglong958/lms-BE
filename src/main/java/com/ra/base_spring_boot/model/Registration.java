@@ -46,6 +46,9 @@ public class Registration {
     @Column(columnDefinition = "TEXT")
     private String note;
 
+    @Column(name = "transfer_ref", length = 50)
+    private String transferRef; // e.g. TUITION-123
+
     @PrePersist
     public void onCreate() {
         if (registrationDate == null) {
