@@ -4,6 +4,8 @@ import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
+import com.lowagie.text.pdf.BaseFont;
+import java.io.File;
 import com.ra.base_spring_boot.dto.Registration.RegistrationRequestDTO;
 import com.ra.base_spring_boot.dto.Registration.RegistrationResponseDTO;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
@@ -27,7 +29,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -164,6 +169,7 @@ public class RegistrationServiceImpl implements IRegistrationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public byte[] generateInvoicePdf(Long registrationId) {
         Registration reg = registrationRepository.findById(registrationId)
                 .orElseThrow(() -> new HttpBadRequest("Registration not found"));
@@ -173,10 +179,13 @@ public class RegistrationServiceImpl implements IRegistrationService {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            // Font setup (Basic fonts in OpenPDF)
-            com.lowagie.text.Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, Color.BLACK);
-            com.lowagie.text.Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 12, Color.BLACK);
-            com.lowagie.text.Font boldFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
+            // Load NotoSans font for Vietnamese support
+            BaseFont notoSansBase = loadNotoSansFont();
+
+            // Font setup with Vietnamese support
+            com.lowagie.text.Font titleFont = new com.lowagie.text.Font(notoSansBase, 18, com.lowagie.text.Font.BOLD, Color.BLACK);
+            com.lowagie.text.Font normalFont = new com.lowagie.text.Font(notoSansBase, 12, com.lowagie.text.Font.NORMAL, Color.BLACK);
+            com.lowagie.text.Font boldFont = new com.lowagie.text.Font(notoSansBase, 12, com.lowagie.text.Font.BOLD, Color.BLACK);
 
             // Title
             Paragraph title = new Paragraph("PAYMENT INVOICE / HOÁ ĐƠN THANH TOÁN", titleFont);
@@ -187,7 +196,7 @@ public class RegistrationServiceImpl implements IRegistrationService {
             // Invoice details
             document.add(new Paragraph("Invoice ID: #" + reg.getId(), boldFont));
             document.add(new Paragraph(
-                    "Date: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))));
+                    "Date: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")), normalFont));
             document.add(new Paragraph("Status: " + reg.getPaymentStatus(), boldFont));
             document.add(new Chunk("\n"));
 
@@ -222,7 +231,8 @@ public class RegistrationServiceImpl implements IRegistrationService {
             document.close();
             return out.toByteArray();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to generate PDF", e);
+            e.printStackTrace();
+            throw new RuntimeException("Failed to generate PDF: " + e.getMessage(), e);
         }
     }
 
@@ -230,6 +240,51 @@ public class RegistrationServiceImpl implements IRegistrationService {
         PdfPCell cell = new PdfPCell(new Phrase(text, font));
         cell.setPadding(8);
         table.addCell(cell);
+    }
+
+    private BaseFont loadNotoSansFont() {
+        try {
+            // Try file system paths first (works in dev mode)
+            String[] filePaths = {
+                System.getProperty("user.dir") + "/be/src/main/resources/static/NotoSans-Regular.ttf",
+                System.getProperty("user.dir") + "/src/main/resources/static/NotoSans-Regular.ttf",
+                "src/main/resources/static/NotoSans-Regular.ttf",
+                "be/src/main/resources/static/NotoSans-Regular.ttf"
+            };
+            
+            for (String path : filePaths) {
+                java.io.File fontFile = new java.io.File(path);
+                if (fontFile.exists()) {
+                    System.out.println("Loading NotoSans font from: " + path);
+                    return BaseFont.createFont(path, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+                }
+            }
+            
+            // Try classpath resources (works in production jar)
+            try (var fontStream = getClass().getClassLoader().getResourceAsStream("static/NotoSans-Regular.ttf")) {
+                if (fontStream != null) {
+                    // Copy to temp file but DO NOT delete it - OpenPDF needs it
+                    byte[] fontBytes = fontStream.readAllBytes();
+                    java.nio.file.Path tempDir = java.nio.file.Files.createTempDirectory("fonts");
+                    java.nio.file.Path tempPath = tempDir.resolve("NotoSans-Regular.ttf");
+                    java.nio.file.Files.write(tempPath, fontBytes);
+                    System.out.println("Loading NotoSans font from classpath to temp: " + tempPath);
+                    return BaseFont.createFont(tempPath.toString(), BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+                }
+            }
+            
+            System.err.println("Warning: Could not load NotoSans font, using Helvetica fallback");
+            return BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.EMBEDDED);
+            
+        } catch (Exception e) {
+            System.err.println("Error loading font: " + e.getMessage());
+            e.printStackTrace();
+            try {
+                return BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.EMBEDDED);
+            } catch (Exception fallbackException) {
+                throw new RuntimeException("Failed to load any font: " + fallbackException.getMessage());
+            }
+        }
     }
 
     private RegistrationResponseDTO toDto(Registration registration) {
