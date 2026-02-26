@@ -25,4 +25,5 @@ public class RegistrationResponseDTO {
     private LocalDateTime paymentDate;
     private String note;
     private String transferRef;
+    private String enrolledClassName; // Tên lớp học đã được thêm vào
 }

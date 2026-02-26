@@ -104,6 +104,7 @@ public class RegistrationServiceImpl implements IRegistrationService {
         registrationRepository.save(registration);
 
         // Tự động thêm vào lớp học (lấy lớp học đầu tiên được gán cho khóa học này)
+        String enrolledClassName = null;
         List<ClassCourse> classCourses = classCourseRepository.findByCourse_Id(registration.getCourse().getId());
         if (!classCourses.isEmpty()) {
             // Lấy class có ID cao nhất (giả định là lớp mới nhất)
@@ -121,10 +122,11 @@ public class RegistrationServiceImpl implements IRegistrationService {
                         .enrolledAt(LocalDateTime.now())
                         .build();
                 classStudentRepository.save(enrollment);
+                enrolledClassName = aClass.getClassName(); // Lưu tên lớp đã thêm
             }
         }
 
-        return toDto(registration);
+        return toDto(registration, enrolledClassName);
     }
 
     @Override
@@ -288,6 +290,10 @@ public class RegistrationServiceImpl implements IRegistrationService {
     }
 
     private RegistrationResponseDTO toDto(Registration registration) {
+        return toDto(registration, null);
+    }
+
+    private RegistrationResponseDTO toDto(Registration registration, String enrolledClassName) {
         if (registration == null)
             return null;
         return RegistrationResponseDTO.builder()
@@ -304,6 +310,7 @@ public class RegistrationServiceImpl implements IRegistrationService {
                 .paymentDate(registration.getPaymentDate())
                 .note(registration.getNote())
                 .transferRef(registration.getTransferRef())
+                .enrolledClassName(enrolledClassName)
                 .build();
     }
 }
