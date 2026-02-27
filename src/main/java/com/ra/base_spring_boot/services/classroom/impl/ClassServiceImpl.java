@@ -14,6 +14,7 @@ import com.ra.base_spring_boot.repository.course.ICourseRepository;
 import com.ra.base_spring_boot.repository.user.IUserRepository;
 import com.ra.base_spring_boot.services.classroom.IClassService;
 import com.ra.base_spring_boot.services.common.impl.GmailService;
+import com.ra.base_spring_boot.repository.registration.IRegistrationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,6 +38,7 @@ public class ClassServiceImpl implements IClassService {
     private final IClassCourseRepository classCourseRepository;
     private final IUserRepository userRepository;
     private final ICourseRepository courseRepository;
+    private final IRegistrationRepository registrationRepository;
     private final GmailService gmailService;
 
     @Override
@@ -223,6 +225,34 @@ public class ClassServiceImpl implements IClassService {
                 .build();
         classCourseRepository.save(java.util.Objects.requireNonNull(classCourse, "classCourse must not be null"));
 
+        // ======= Tự động thêm sinh viên đã thanh toán cho khóa học này vào lớp =======
+        List<Registration> paidRegistrations = registrationRepository.findByCourse_IdAndPaymentStatus(course.getId(),
+                PaymentStatus.PAID);
+        for (Registration reg : paidRegistrations) {
+            User student = reg.getStudent();
+            // Chỉ thêm nếu sinh viên chưa có trong bất kỳ lớp nào của khóa học này
+            if (!classStudentRepository.existsByStudentIdAndCourseId(student.getId(), course.getId())) {
+                ClassStudent enrollment = ClassStudent.builder()
+                        .classroom(aClass)
+                        .student(student)
+                        .status(ClassEnrollmentStatus.ACTIVE)
+                        .enrolledAt(LocalDateTime.now())
+                        .build();
+                classStudentRepository.save(enrollment);
+
+                // Gửi email thông báo cho sinh viên mới được thêm vào
+                gmailService.sendEmail(new EmailDTO(
+                        student.getGmail(),
+                        "Bạn đã được thêm vào lớp học",
+                        "added_to_class",
+                        Map.of(
+                                "username", student.getFullName(),
+                                "className", aClass.getClassName())));
+            }
+        }
+
+        // ======= Gửi email thông báo cho những sinh viên vốn đã có trong lớp (nếu có)
+        // =======
         List<ClassStudent> students = classStudentRepository
                 .findByClassroomIdWithRelations(Objects.requireNonNull(aClass.getId(), "classId must not be null"));
 

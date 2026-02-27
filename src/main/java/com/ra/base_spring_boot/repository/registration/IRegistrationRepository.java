@@ -19,4 +19,6 @@ public interface IRegistrationRepository extends JpaRepository<Registration, Lon
     List<Registration> findAll();
 
     Optional<Registration> findByStudent_IdAndCourse_Id(Long studentId, Long courseId);
+
+    List<Registration> findByCourse_IdAndPaymentStatus(Long courseId, PaymentStatus paymentStatus);
 }
