@@ -32,10 +32,10 @@ public class CourseController {
 
         private final ICourseService courseService;
 
-        // ======= Tạo khóa học (ADMIN) =======
+        // ======= Tạo khóa học (ADMIN + TEACHER) =======
         @PostMapping
-        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-        @Operation(summary = "Tạo khóa học", description = "Chỉ ADMIN được phép tạo mới khóa học")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
+        @Operation(summary = "Tạo khóa học", description = "ADMIN hoặc TEACHER được phép tạo mới khóa học")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "Tạo thành công", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CourseResponseDTO.class), examples = @ExampleObject(name = "CreatedCourse", value = "{\n  \"id\": 1,\n  \"title\": \"Spring Boot Fundamentals\",\n  \"description\": \"Learn how to build REST APIs with Spring Boot 3\",\n  \"level\": \"BEGINNER\",\n  \"createdAt\": \"2025-11-14T09:30:00\"\n}"))),
                         @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
@@ -47,10 +47,10 @@ public class CourseController {
                 return ResponseEntity.ok(courseService.create(dto));
         }
 
-        // ======= Cập nhật khóa học (ADMIN) =======
+        // ======= Cập nhật khóa học (ADMIN + TEACHER) =======
         @PutMapping("/{id}")
-        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-        @Operation(summary = "Cập nhật khóa học", description = "Chỉ ADMIN được phép cập nhật khóa học")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
+        @Operation(summary = "Cập nhật khóa học", description = "ADMIN hoặc TEACHER được phép cập nhật khóa học")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "Cập nhật thành công", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CourseResponseDTO.class), examples = @ExampleObject(name = "UpdatedCourse", value = "{\n  \"id\": 1,\n  \"title\": \"Spring Boot Advanced\",\n  \"description\": \"Deep dive into Spring Boot internals\",\n   \"level\": \"INTERMEDIATE\",\n  \"createdAt\": \"2025-11-14T10:00:00\"\n}"))),
                         @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
@@ -64,10 +64,10 @@ public class CourseController {
                 return ResponseEntity.ok(courseService.update(id, dto));
         }
 
-        // ======= Xóa khóa học (ADMIN) =======
+        // ======= Xóa khóa học (ADMIN + TEACHER) =======
         @DeleteMapping("/{id}")
-        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-        @Operation(summary = "Xóa khóa học", description = "Chỉ ADMIN được phép xóa khóa học")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
+        @Operation(summary = "Xóa khóa học", description = "ADMIN hoặc TEACHER được phép xóa khóa học")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "204", description = "Xóa thành công", content = @Content),
                         @ApiResponse(responseCode = "400", description = "Yêu cầu không hợp lệ", content = @Content),
@@ -80,9 +80,8 @@ public class CourseController {
                 return ResponseEntity.noContent().build();
         }
 
-        // ======= Lấy khóa học theo ID (ADMIN + USER) =======
         @GetMapping("/detail")
-        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER', 'ROLE_TEACHER')")
         @Operation(summary = "Lấy chi tiết khóa học", description = "Trả về thông tin khóa học theo ID")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "Thành công", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CourseResponseDTO.class), examples = @ExampleObject(name = "CourseDetail", value = "{\n  \"id\": 1,\n  \"title\": \"Spring Boot Fundamentals\",\n  \"description\": \"Learn how to build REST APIs with Spring Boot 3\",\n   \"level\": \"BEGINNER\",\n  \"createdAt\": \"2025-11-14T09:30:00\"\n}"))),
@@ -101,9 +100,9 @@ public class CourseController {
                                                 .build());
         }
 
-        // ======= Lấy tất cả khóa học (ADMIN + USER) =======
+        // ======= Lấy tất cả khóa học (ADMIN + USER + TEACHER) =======
         @GetMapping
-        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER', 'ROLE_TEACHER')")
         @Operation(summary = "Danh sách khóa học", description = "Trả về tất cả khóa học")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "Thành công", content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = CourseResponseDTO.class)), examples = @ExampleObject(name = "CourseList", value = "[{\n  \"id\": 1,\n  \"title\": \"Spring Boot Fundamentals\",\n  \"description\": \"Learn how to build REST APIs with Spring Boot 3\",\n   \"level\": \"BEGINNER\",\n  \"createdAt\": \"2025-11-14T09:30:00\"\n}]"))),
@@ -121,9 +120,10 @@ public class CourseController {
                                                 .build());
         }
 
-        // ======= Danh sách khóa học có phân trang + tìm kiếm (ADMIN + USER) =======
+        // ======= Danh sách khóa học có phân trang + tìm kiếm (ADMIN + USER + TEACHER)
+        // =======
         @GetMapping("/paging")
-        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER', 'ROLE_TEACHER')")
         @Operation(summary = "Danh sách khóa học (phân trang)", description = "Phân trang + tìm kiếm theo tiêu đề hoặc giảng viên")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "Thành công", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CourseResponseDTO.class), examples = @ExampleObject(name = "PagedCourse", value = "{\n  \"content\": [{\n    \"id\": 1,\n    \"title\": \"Spring Boot Fundamentals\",\n    \"description\": \"Learn how to build REST APIs with Spring Boot 3\",\n    \"level\": \"BEGINNER\",\n    \"createdAt\": \"2025-11-14T09:30:00\"\n  }],\n  \"pageable\": {\n    \"pageNumber\": 0,\n    \"pageSize\": 10\n  },\n  \"totalElements\": 1,\n  \"totalPages\": 1,\n  \"first\": true,\n  \"last\": true\n}"))),

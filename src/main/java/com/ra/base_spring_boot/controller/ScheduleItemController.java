@@ -69,6 +69,18 @@ public class ScheduleItemController {
         }
 
         // ===================================================================
+        // 3.5) Lấy toàn bộ lịch của lớp học
+        // ===================================================================
+        @GetMapping("/class/{classId}")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER','ROLE_TEACHER')")
+        @Operation(summary = "Lấy thời khóa biểu theo class", description = "Dùng cho student / teacher xem lịch của lớp")
+        public ResponseEntity<List<ScheduleItemResponseDTO>> getScheduleByClass(
+                        @Parameter(description = "Mã lớp học") @PathVariable Long classId) {
+                return ResponseEntity.ok(
+                                scheduleItemService.getScheduleByClass(classId));
+        }
+
+        // ===================================================================
         // 4) LẤY LỊCH THEO CLASS_COURSE (API CHUẨN CHO FE)
         // ===================================================================
         @GetMapping("/class-course/{classCourseId}/schedule")

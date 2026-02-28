@@ -26,7 +26,7 @@ public class SessionController {
 
     // ======= 1️⃣ Lấy danh sách session theo course =======
     @GetMapping(params = "courseId")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER', 'ROLE_TEACHER')")
     @Operation(summary = "Danh sách Chương học theo khóa học", description = "Trả về danh sách session thuộc một khóa học")
     @ApiResponse(responseCode = "200", description = "Thành công")
     public ResponseEntity<List<SessionResponseDTO>> getByCourse(@RequestParam Long courseId) {
@@ -35,17 +35,17 @@ public class SessionController {
 
     // ======= 2️⃣ Lấy chi tiết 1 session =======
     @GetMapping("/detail")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER', 'ROLE_TEACHER')")
     @Operation(summary = "Lấy chi tiết Chương học", description = "Trả về thông tin session theo ID")
     @ApiResponse(responseCode = "200", description = "Thành công")
     public ResponseEntity<SessionResponseDTO> getById(@RequestParam Long id) {
         return ResponseEntity.ok(sessionService.getById(id));
     }
 
-    // ======= 3️⃣ Tạo mới session (ADMIN) =======
+    // ======= 3️⃣ Tạo mới session (ADMIN + TEACHER) =======
     @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Operation(summary = "Tạo Chương học", description = "Chỉ ADMIN được phép tạo session mới")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
+    @Operation(summary = "Tạo Chương học", description = "ADMIN hoặc TEACHER được phép tạo session mới")
     @ApiResponse(responseCode = "201", description = "Tạo thành công")
     public ResponseEntity<SessionResponseDTO> create(@Valid @RequestBody SessionRequestDTO dto) {
         SessionResponseDTO created = sessionService.create(dto);
@@ -53,23 +53,22 @@ public class SessionController {
         return ResponseEntity.created(URI.create("/api/v1/sessions/" + created.getId())).body(created);
     }
 
-    // ======= 4️⃣ Cập nhật session (ADMIN) =======
+    // ======= 4️⃣ Cập nhật session (ADMIN + TEACHER) =======
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Operation(summary = "Cập nhật Chương học", description = "Chỉ ADMIN được phép cập nhật session")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
+    @Operation(summary = "Cập nhật Chương học", description = "ADMIN hoặc TEACHER được phép cập nhật session")
     @ApiResponse(responseCode = "200", description = "Cập nhật thành công")
     public ResponseEntity<SessionResponseDTO> update(
             @Parameter(description = "Mã session") @PathVariable Long id,
-            @Valid @RequestBody SessionRequestDTO dto
-    ) {
+            @Valid @RequestBody SessionRequestDTO dto) {
         SessionResponseDTO updated = sessionService.update(id, dto);
         return ResponseEntity.ok(updated);
     }
 
-    // ======= 5️⃣ Xoá session (ADMIN) =======
+    // ======= 5️⃣ Xoá session (ADMIN + TEACHER) =======
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @Operation(summary = "Xóa Chương học", description = "Chỉ ADMIN được phép xóa session")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
+    @Operation(summary = "Xóa Chương học", description = "ADMIN hoặc TEACHER được phép xóa session")
     @ApiResponse(responseCode = "204", description = "Xóa thành công")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         sessionService.delete(id);

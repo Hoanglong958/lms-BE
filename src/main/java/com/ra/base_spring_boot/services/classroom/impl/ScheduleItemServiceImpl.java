@@ -215,6 +215,21 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                                 .toList();
         }
 
+        @Override
+        @Transactional(readOnly = true)
+        public List<ScheduleItemResponseDTO> getScheduleByClass(Long classId) {
+
+                // kiểm tra class tồn tại
+                classRepository.findById(classId)
+                                .orElseThrow(() -> new HttpBadRequest("Class không tồn tại"));
+
+                return scheduleItemRepository
+                                .findByClassCourse_Clazz_IdOrderByDateAscSessionNumberAsc(classId)
+                                .stream()
+                                .map(this::toDto)
+                                .toList();
+        }
+
         // =========================================================
         // 6. UPDATE WEEK SCHEDULE - Cập nhật lịch theo tuần cụ thể
         // =========================================================

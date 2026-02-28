@@ -251,11 +251,14 @@ public class RoadmapServiceImpl implements IRoadmapService {
     @Override
     @Transactional(readOnly = true)
     public RoadmapResponse get(Long classId, Long courseId) {
-        RoadmapAssignment assignment = roadmapAssignmentRepository
+        return roadmapAssignmentRepository
                 .findByClazz_IdAndCourse_Id(classId, courseId)
-                .orElseThrow(() -> new HttpBadRequest(
-                        "Không tìm thấy lộ trình cho classId=" + classId + ", courseId=" + courseId));
-        return toResponse(assignment);
+                .map(this::toResponse)
+                .orElseGet(() -> RoadmapResponse.builder()
+                        .classId(classId)
+                        .courseId(courseId)
+                        .items(new ArrayList<>())
+                        .build());
     }
 
     @Override
