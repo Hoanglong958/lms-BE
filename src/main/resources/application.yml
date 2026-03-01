@@ -1,6 +1,12 @@
 spring:
   application:
     name: base_spring_boot
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+
 
   servlet:
     multipart:
@@ -89,9 +95,4 @@ payment:
     account-no: "19021698833015"   # ⚠ Số tài khoản Techcombank của bạn
     account-name: "NGUYEN THI VAN"      # Tên chủ tài khoản (VIẾT HOA, không dấu)
     name: "Techcombank"           # Tên ngân hàng hiển thị
-spring:
-  devtools:
-    restart:
-      enabled: true
-    livereload:
-      enabled: true
+
