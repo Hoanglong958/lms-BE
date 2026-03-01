@@ -23,7 +23,7 @@ public class LessonDocumentController {
 
     // Danh sách tài liệu theo lesson
     @GetMapping(params = "lessonId")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER', 'ROLE_TEACHER')")
     @Operation(summary = "Danh sách tài liệu theo bài học", description = "Trả về danh sách document của một lesson")
     @ApiResponse(responseCode = "200", description = "Thành công")
     public ResponseEntity<List<LessonDocumentResponseDTO>> getByLesson(@RequestParam Long lessonId) {
@@ -32,7 +32,7 @@ public class LessonDocumentController {
 
     // Chi tiết tài liệu
     @GetMapping("/detail")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER', 'ROLE_TEACHER')")
     @Operation(summary = "Chi tiết tài liệu", description = "Lấy tài liệu theo id")
     @ApiResponse(responseCode = "200", description = "Thành công")
     public ResponseEntity<LessonDocumentResponseDTO> getById(@RequestParam Long id) {
@@ -41,7 +41,7 @@ public class LessonDocumentController {
 
     // Tạo mới (ADMIN)
     @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     @Operation(summary = "Tạo tài liệu", description = "Chỉ ADMIN được phép tạo")
     @ApiResponse(responseCode = "200", description = "Tạo thành công")
     public ResponseEntity<LessonDocumentResponseDTO> create(@RequestBody LessonDocumentRequestDTO dto) {
@@ -50,7 +50,7 @@ public class LessonDocumentController {
 
     // Cập nhật (ADMIN)
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     @Operation(summary = "Cập nhật tài liệu", description = "Chỉ ADMIN được phép cập nhật")
     @ApiResponse(responseCode = "200", description = "Cập nhật thành công")
     public ResponseEntity<LessonDocumentResponseDTO> update(@PathVariable Long id,
@@ -60,7 +60,7 @@ public class LessonDocumentController {
 
     // Xóa (ADMIN)
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     @Operation(summary = "Xóa tài liệu", description = "Chỉ ADMIN được phép xóa")
     @ApiResponse(responseCode = "204", description = "Xóa thành công")
     public ResponseEntity<Void> delete(@PathVariable Long id) {

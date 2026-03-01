@@ -22,7 +22,7 @@ public class SessionExerciseController {
     private final ISessionExerciseService sessionExerciseService;
 
     @GetMapping(params = "sessionId")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER', 'ROLE_TEACHER')")
     @Operation(summary = "Danh sách bài tập theo session", description = "Lấy tất cả bài tập thuộc 1 session cụ thể")
     @ApiResponse(responseCode = "200", description = "Thành công")
     public ResponseEntity<List<SessionExerciseResponseDTO>> getBySession(@RequestParam Long sessionId) {
@@ -30,7 +30,7 @@ public class SessionExerciseController {
     }
 
     @GetMapping("/detail")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER', 'ROLE_TEACHER')")
     @Operation(summary = "Chi tiết bài tập", description = "Lấy thông tin chi tiết của 1 bài tập theo ID")
     @ApiResponse(responseCode = "200", description = "Thành công")
     public ResponseEntity<SessionExerciseResponseDTO> getById(@RequestParam Long id) {
@@ -38,7 +38,7 @@ public class SessionExerciseController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     @Operation(summary = "Tạo bài tập mới", description = "Chỉ ADMIN được phép thêm bài tập mới vào session")
     @ApiResponse(responseCode = "200", description = "Tạo thành công")
     public ResponseEntity<SessionExerciseResponseDTO> create(@RequestBody SessionExerciseRequestDTO dto) {
@@ -46,7 +46,7 @@ public class SessionExerciseController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     @Operation(summary = "Cập nhật bài tập", description = "Chỉ ADMIN được phép chỉnh sửa nội dung bài tập")
     @ApiResponse(responseCode = "200", description = "Cập nhật thành công")
     public ResponseEntity<SessionExerciseResponseDTO> update(
@@ -56,7 +56,7 @@ public class SessionExerciseController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     @Operation(summary = "Xóa bài tập", description = "Chỉ ADMIN được phép xóa bài tập khỏi session")
     @ApiResponse(responseCode = "204", description = "Xóa thành công")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
