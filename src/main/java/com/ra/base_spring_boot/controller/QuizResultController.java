@@ -26,7 +26,7 @@ public class QuizResultController {
 
     // ========== ADMIN: Xem tất cả kết quả ==========
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
     @Operation(summary = "Lấy danh sách kết quả quiz", description = "Chỉ ADMIN được xem toàn bộ kết quả")
     @ApiResponse(responseCode = "200", description = "Thành công", content = @Content(schema = @Schema(implementation = QuizResultResponseDTO.class)))
     public ResponseEntity<List<QuizResultResponseDTO>> getAll() {
@@ -35,7 +35,7 @@ public class QuizResultController {
 
     // ========== ADMIN: Xem chi tiết kết quả ==========
     @GetMapping("/detail")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
     @Operation(summary = "Lấy chi tiết kết quả quiz", description = "Trả về kết quả quiz theo ID")
     public ResponseEntity<QuizResultResponseDTO> getById(@RequestParam Long id) {
         return ResponseEntity.ok(quizResultService.findById(id));
@@ -53,7 +53,7 @@ public class QuizResultController {
 
     // ========== ADMIN: Xóa kết quả ==========
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     @Operation(summary = "Xóa kết quả quiz", description = "ADMIN có thể xóa kết quả quiz theo ID")
     @ApiResponse(responseCode = "204", description = "Xóa thành công")
     public ResponseEntity<Void> delete(@PathVariable Long id) {

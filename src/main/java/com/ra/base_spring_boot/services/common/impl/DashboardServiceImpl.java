@@ -21,7 +21,6 @@ import com.ra.base_spring_boot.repository.user.IUserCourseRepository;
 import com.ra.base_spring_boot.repository.user.IUserRepository;
 import com.ra.base_spring_boot.services.common.IDashboardService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -313,7 +312,7 @@ public class DashboardServiceImpl implements IDashboardService {
 
                 LocalDateTime since = LocalDateTime.now().minusDays(30);
 
-                List<Exam> exams = examRepository.findRecentExams(since);
+                List<Exam> exams = examRepository.findByCreatedAtAfter(since);
 
                 return exams.stream().map(exam -> {
 

@@ -70,6 +70,22 @@ public class ExamController {
         return ResponseEntity.ok(examService.getAllExams());
     }
 
+    // ======= Lấy danh sách exam theo CLASS (TEACHER + USER) =======
+    @GetMapping("/class/{classId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
+    @Operation(summary = "Danh sách kỳ thi của lớp", description = "Trả về tất cả kỳ thi gắn với lớp học cụ thể")
+    public ResponseEntity<List<ExamResponseDTO>> getExamsByClass(@PathVariable Long classId) {
+        return ResponseEntity.ok(examService.getExamsByClass(classId));
+    }
+
+    // ======= Lấy danh sách exam theo COURSE (TEACHER + USER) =======
+    @GetMapping("/course/{courseId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
+    @Operation(summary = "Danh sách kỳ thi của khóa học", description = "Trả về tất cả kỳ thi gắn với khóa học cụ thể")
+    public ResponseEntity<List<ExamResponseDTO>> getExamsByCourse(@PathVariable Long courseId) {
+        return ResponseEntity.ok(examService.getExamsByCourse(courseId));
+    }
+
     // ======= API thêm câu hỏi vào exam (ADMIN + TEACHER) =======
     @PostMapping("/{id}/questions")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")

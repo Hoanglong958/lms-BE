@@ -1,11 +1,11 @@
 package com.ra.base_spring_boot.dto.UserProgress;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -59,3 +59,4 @@ public class UserLessonProgressResponseDTO {
     @Schema(example = "2025-01-05T08:30:00")
     private LocalDateTime completedAt;
 }
+

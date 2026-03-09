@@ -152,6 +152,13 @@ public class QuestionController {
                 }
         }
 
+        @PostMapping("/bulk")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
+        @Operation(summary = "Tạo nhiều câu hỏi (bulk)", description = "Nhận danh sách câu hỏi dưới dạng JSON và lưu vào DB")
+        public ResponseEntity<List<QuestionResponseDTO>> createBulk(@RequestBody List<QuestionRequestDTO> requests) {
+                return ResponseEntity.status(HttpStatus.CREATED).body(questionService.createBulk(requests));
+        }
+
         // ================== DELETE ==================
         @DeleteMapping("/{id}")
         @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")

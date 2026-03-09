@@ -96,3 +96,8 @@ payment:
     account-name: "NGUYEN THI VAN"      # Tên chủ tài khoản (VIẾT HOA, không dấu)
     name: "Techcombank"           # Tên ngân hàng hiển thị
 
+# ========== OLLAMA AI CONFIG ==========
+ollama:
+  base-url: http://localhost:11434
+  model: qwen3:8b
+

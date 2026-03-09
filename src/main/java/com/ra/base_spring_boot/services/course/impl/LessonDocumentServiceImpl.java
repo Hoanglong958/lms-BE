@@ -110,6 +110,7 @@ public class LessonDocumentServiceImpl implements ILessonDocumentService {
                 .content(doc.getContent())
                 .imageUrl(doc.getImageUrl())
                 .videoUrl(doc.getVideoUrl())
+                .pdfUrl(doc.getPdfUrl())
                 .sortOrder(doc.getSortOrder())
                 .createdAt(doc.getCreatedAt())
                 .updatedAt(doc.getUpdatedAt())

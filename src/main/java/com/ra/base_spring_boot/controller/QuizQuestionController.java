@@ -28,21 +28,21 @@ public class QuizQuestionController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     @Operation(summary = "Thêm một câu hỏi vào quiz")
     public ResponseEntity<QuizQuestionDTO> create(@RequestBody CreateQuizQuestionRequest request) {
         return ResponseEntity.ok(quizQuestionService.create(request));
     }
 
     @PostMapping("/bulk")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     @Operation(summary = "Thêm nhiều câu hỏi vào quiz (bulk)")
     public ResponseEntity<List<QuizQuestionDTO>> createBulk(@RequestBody List<CreateQuizQuestionRequest> requests) {
         return ResponseEntity.ok(quizQuestionService.createBulk(requests));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     @Operation(summary = "Xóa một câu hỏi khỏi quiz")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         quizQuestionService.delete(id);

@@ -9,6 +9,10 @@ import com.ra.base_spring_boot.repository.exam.IQuestionRepository;
 import com.ra.base_spring_boot.services.exam.IExamService;
 import com.ra.base_spring_boot.dto.questions.QuestionResponseDTO;
 import lombok.RequiredArgsConstructor;
+import com.ra.base_spring_boot.repository.user.IUserRepository;
+import com.ra.base_spring_boot.model.constants.RoleName;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,11 +30,17 @@ public class ExamServiceImpl implements IExamService {
 
         private final IExamRepository examRepository;
         private final IQuestionRepository questionRepository;
+        private final IUserRepository userRepository;
 
         // ======= Tạo kỳ thi (ADMIN) =======
         @Override
         @Transactional
         public ExamResponseDTO createExam(ExamRequestDTO dto) {
+                User creator = null;
+                if (dto.getCreatorId() != null) {
+                        creator = userRepository.findById(dto.getCreatorId()).orElse(null);
+                }
+
                 Exam exam = Exam.builder()
                                 .title(dto.getTitle())
                                 .description(dto.getDescription())
@@ -39,6 +49,9 @@ public class ExamServiceImpl implements IExamService {
                                 .durationMinutes(dto.getDurationMinutes())
                                 .startTime(dto.getStartTime())
                                 .endTime(dto.getEndTime())
+                                .courseId(dto.getCourseId())
+                                .classId(dto.getClassId())
+                                .creator(creator)
                                 .status(ExamStatus.UPCOMING)
                                 .createdAt(LocalDateTime.now())
                                 .examQuestions(new ArrayList<>())
@@ -92,6 +105,8 @@ public class ExamServiceImpl implements IExamService {
                 exam.setDurationMinutes(dto.getDurationMinutes());
                 exam.setStartTime(dto.getStartTime());
                 exam.setEndTime(dto.getEndTime());
+                exam.setCourseId(dto.getCourseId());
+                exam.setClassId(dto.getClassId());
                 exam.setUpdatedAt(LocalDateTime.now());
 
                 examRepository.save(exam);
@@ -134,6 +149,8 @@ public class ExamServiceImpl implements IExamService {
         @Override
         @Transactional(readOnly = true)
         public List<ExamResponseDTO> getAllExams() {
+                // Get current user and role from SecurityContext if needed
+                // For now, let's assume we want to support basic filtering
                 return examRepository.findAll()
                                 .stream()
                                 .map(this::mapToResponse)
@@ -200,6 +217,25 @@ public class ExamServiceImpl implements IExamService {
                                 .questions(questions)
                                 .createdAt(exam.getCreatedAt())
                                 .updatedAt(exam.getUpdatedAt())
+                                .courseId(exam.getCourseId())
+                                .classId(exam.getClassId())
+                                .creatorName(exam.getCreator() != null ? exam.getCreator().getFullName() : "Admin")
                                 .build();
+        }
+
+        @Override
+        public List<ExamResponseDTO> getExamsByClass(Long classId) {
+                return examRepository.findByClassId(classId)
+                                .stream()
+                                .map(this::mapToResponse)
+                                .collect(Collectors.toList());
+        }
+
+        @Override
+        public List<ExamResponseDTO> getExamsByCourse(Long courseId) {
+                return examRepository.findByCourseId(courseId)
+                                .stream()
+                                .map(this::mapToResponse)
+                                .collect(Collectors.toList());
         }
 }

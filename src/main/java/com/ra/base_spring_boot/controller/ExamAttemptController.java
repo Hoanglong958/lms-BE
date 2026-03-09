@@ -34,7 +34,7 @@ public class ExamAttemptController {
 
     // USER: Bắt đầu lượt làm
     @PostMapping("/start")
-    @PreAuthorize("hasAnyAuthority('ROLE_USER','ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_TEACHER', 'ROLE_ADMIN')")
     @Operation(summary = "Bắt đầu lượt làm bài thi")
     public ResponseEntity<ExamAttemptResponseDTO> start(@RequestBody StartAttemptRequestDTO req) {
         return ResponseEntity.ok(attemptService.startAttempt(req.getExamId(), req.getUserId()));
@@ -42,23 +42,11 @@ public class ExamAttemptController {
 
     // USER: Nộp bài
     @PostMapping("/{id}/submit")
-    @PreAuthorize("hasAnyAuthority('ROLE_USER','ROLE_ADMIN')")
-    @Operation(
-            summary = "Nộp bài thi",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    required = false,
-                    description = "Danh sách câu trả lời thí sinh chọn",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = SubmitAttemptRequestDTO.class),
-                            examples = @ExampleObject(value = "{\n  \"answers\": [\n    { \"questionId\": 1, \"answer\": \"A\" },\n    { \"questionId\": 2, \"answer\": \"C\" },\n    { \"questionId\": 3, \"answer\": \"B\" }\n  ]\n}")
-                    )
-            )
-    )
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_TEACHER', 'ROLE_ADMIN')")
+    @Operation(summary = "Nộp bài thi", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = false, description = "Danh sách câu trả lời thí sinh chọn", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SubmitAttemptRequestDTO.class), examples = @ExampleObject(value = "{\n  \"answers\": [\n    { \"questionId\": 1, \"answer\": \"A\" },\n    { \"questionId\": 2, \"answer\": \"C\" },\n    { \"questionId\": 3, \"answer\": \"B\" }\n  ]\n}"))))
     public ResponseEntity<ExamAttemptResponseDTO> submit(
             @PathVariable Long id,
-            @RequestBody(required = false) SubmitAttemptRequestDTO body
-    ) {
+            @RequestBody(required = false) SubmitAttemptRequestDTO body) {
         if (body != null && body.getAnswers() != null) {
             java.util.Map<Long, String> answersMap = new java.util.HashMap<>();
             for (SubmitAttemptRequestDTO.AnswerItem a : body.getAnswers()) {
@@ -77,14 +65,15 @@ public class ExamAttemptController {
      * ADMIN: Chấm điểm lượt làm
      */
     @PostMapping("/{id}/grade")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     @Operation(summary = "Chấm điểm lượt làm (Admin)")
     public ResponseEntity<ExamAttemptResponseDTO> grade(@PathVariable Long id) {
         return ResponseEntity.ok(attemptService.gradeAttempt(id));
     }
+
     // ADMIN: Danh sách toàn bộ
     @GetMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     public ResponseEntity<List<ExamAttemptResponseDTO>> getAll() {
         return ResponseEntity.ok(attemptService.getAll());
     }
@@ -96,10 +85,10 @@ public class ExamAttemptController {
         try {
             ExamAttemptResponseDTO dto = attemptService.getById(id);
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            boolean isAdmin = auth != null && auth.getAuthorities() != null && auth.getAuthorities().stream()
+            boolean isAdminOrTeacher = auth != null && auth.getAuthorities() != null && auth.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
-                    .anyMatch("ROLE_ADMIN"::equals);
-            if (!isAdmin) {
+                    .anyMatch(a -> a.equals("ROLE_ADMIN") || a.equals("ROLE_TEACHER"));
+            if (!isAdminOrTeacher) {
                 String gmail = auth != null ? auth.getName() : null;
                 if (gmail == null || gmail.isBlank()) {
                     throw new HttpForbiden("Access denied");
@@ -117,14 +106,15 @@ public class ExamAttemptController {
     }
 
     // ADMIN: Theo exam (qua query param examId)
-    @GetMapping(params = {"examId", "!userId"})
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping(params = { "examId", "!userId" })
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     public ResponseEntity<List<ExamAttemptResponseDTO>> getByExam(@RequestParam Long examId) {
         return ResponseEntity.ok(attemptService.getByExam(examId));
     }
 
-    // ADMIN hoặc USER: Theo user (qua query param userId) - USER chỉ xem được chính mình
-    @GetMapping(params = {"userId", "!examId"})
+    // ADMIN hoặc USER: Theo user (qua query param userId) - USER chỉ xem được chính
+    // mình
+    @GetMapping(params = { "userId", "!examId" })
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
     public ResponseEntity<List<ExamAttemptResponseDTO>> getByUser(@RequestParam Long userId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -145,12 +135,13 @@ public class ExamAttemptController {
         return ResponseEntity.ok(attemptService.getByUser(effectiveUserId));
     }
 
-    // ADMIN hoặc USER: Khi truyền cả examId và userId → trả về danh sách theo user và lọc theo examId
+    // ADMIN hoặc USER: Khi truyền cả examId và userId → trả về danh sách theo user
+    // và lọc theo examId
     // USER chỉ xem được chính mình, nếu khác sẽ tự động thay bằng user hiện tại
-    @GetMapping(params = {"examId", "userId"})
+    @GetMapping(params = { "examId", "userId" })
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
     public ResponseEntity<List<ExamAttemptResponseDTO>> getByUserAndExam(@RequestParam Long examId,
-                                                                         @RequestParam Long userId) {
+            @RequestParam Long userId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean isAdmin = auth != null && auth.getAuthorities() != null && auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)

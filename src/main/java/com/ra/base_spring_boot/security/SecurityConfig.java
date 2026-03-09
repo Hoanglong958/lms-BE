@@ -92,7 +92,8 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/v1/admin/**")
                                                 .hasAuthority(RoleName.ROLE_ADMIN.name())
                                                 .requestMatchers("/api/v1/questions/**")
-                                                .hasAnyAuthority(RoleName.ROLE_ADMIN.name(), RoleName.ROLE_USER.name())
+                                                .hasAnyAuthority(RoleName.ROLE_ADMIN.name(), RoleName.ROLE_USER.name(),
+                                                                RoleName.ROLE_TEACHER.name())
                                                 // Các endpoint quản lý user: chỉ ADMIN
                                                 .requestMatchers("/api/v1/posts/**")
                                                 .hasAnyAuthority(RoleName.ROLE_ADMIN.name(), RoleName.ROLE_USER.name(),
@@ -101,6 +102,22 @@ public class SecurityConfig {
                                                                 RoleName.ROLE_ADMIN.name(),
                                                                 RoleName.ROLE_TEACHER.name(),
                                                                 RoleName.ROLE_USER.name())
+                                                .requestMatchers("/api/v1/ai/**").hasAnyAuthority(
+                                                                RoleName.ROLE_ADMIN.name(),
+                                                                RoleName.ROLE_TEACHER.name(),
+                                                                RoleName.ROLE_USER.name())
+                                                .requestMatchers(
+                                                                "/api/v1/quiz-questions/**",
+                                                                "/api/v1/exam-questions/**",
+                                                                "/api/v1/exams/**",
+                                                                "/api/v1/exam-attempts/**",
+                                                                "/api/v1/exam-answers/**",
+                                                                "/api/v1/quiz-attempts/**",
+                                                                "/api/v1/quiz-results/**",
+                                                                "/api/v1/lesson-quizzes/**")
+                                                .hasAnyAuthority(
+                                                                RoleName.ROLE_ADMIN.name(),
+                                                                RoleName.ROLE_TEACHER.name())
                                                 .anyRequest().authenticated())
                                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .exceptionHandling(ex -> ex

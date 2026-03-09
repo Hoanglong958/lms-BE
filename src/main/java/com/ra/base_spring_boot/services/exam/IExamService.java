@@ -18,4 +18,8 @@ public interface IExamService {
 
     void addQuestionsToExam(Long examId, List<Long> questionIds);
 
+    List<ExamResponseDTO> getExamsByClass(Long classId);
+
+    List<ExamResponseDTO> getExamsByCourse(Long courseId);
+
 }

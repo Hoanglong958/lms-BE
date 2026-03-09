@@ -21,26 +21,24 @@ public class ExamQuestionController {
     private final IExamQuestionService examQuestionService;
 
     @GetMapping("/by-exam/{examId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
     @Operation(summary = "Danh sách câu hỏi của một kỳ thi")
     public ResponseEntity<List<ExamQuestionDTO>> getByExam(@PathVariable Long examId) {
         return ResponseEntity.ok(examQuestionService.getByExam(examId));
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     @Operation(summary = "Thêm một câu hỏi vào kỳ thi")
     public ResponseEntity<ExamQuestionDTO> create(@RequestBody CreateExamQuestionRequest request) {
         return ResponseEntity.ok(examQuestionService.create(request));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     @Operation(summary = "Xóa một câu hỏi khỏi kỳ thi")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         examQuestionService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }
-
-

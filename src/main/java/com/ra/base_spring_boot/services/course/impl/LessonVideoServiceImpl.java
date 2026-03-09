@@ -135,6 +135,7 @@ public class LessonVideoServiceImpl implements ILessonVideoService {
 
             // Gọi Admin API để lấy thông tin chi tiết (bao gồm duration)
             // Lưu ý: api_key và api_secret phải được cấu hình đúng
+            @SuppressWarnings("unchecked")
             Map<String, Object> details = (Map<String, Object>) cloudinary.api().resource(publicId,
                     com.cloudinary.utils.ObjectUtils.asMap("resource_type", "video"));
 
