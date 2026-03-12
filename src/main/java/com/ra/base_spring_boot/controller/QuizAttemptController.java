@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,12 +33,14 @@ public class QuizAttemptController {
 
     @Operation(summary = "Danh sách tất cả lượt làm quiz")
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     public ResponseEntity<List<QuizAttemptResponse>> findAll() {
         return ResponseEntity.ok(attemptService.findAll());
     }
 
     @Operation(summary = "Danh sách tất cả lượt làm quiz (phân trang)")
     @GetMapping("/paging")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
     public ResponseEntity<Page<QuizAttemptResponse>> findAllPaging(
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
@@ -56,12 +59,14 @@ public class QuizAttemptController {
 
     @Operation(summary = "Bắt đầu lượt làm quiz")
     @PostMapping("/start")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
     public ResponseEntity<QuizAttemptResponse> start(@RequestBody StartAttemptRequest req) {
         return ResponseEntity.ok(attemptService.start(req));
     }
 
     @Operation(summary = "Nộp bài/ghi điểm lượt làm quiz")
     @PostMapping("/{attemptId}/submit")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
     public ResponseEntity<QuizAttemptResponse> submit(@PathVariable Long attemptId,
             @RequestBody SubmitAttemptRequest req) {
         return ResponseEntity.ok(attemptService.submit(attemptId, req));
@@ -69,24 +74,28 @@ public class QuizAttemptController {
 
     @Operation(summary = "Chi tiết lượt làm")
     @GetMapping("/{attemptId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
     public ResponseEntity<QuizAttemptResponse> get(@PathVariable Long attemptId) {
         return ResponseEntity.ok(attemptService.get(attemptId));
     }
 
     @Operation(summary = "Danh sách lượt làm của user")
     @GetMapping("/by-user/{userId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
     public ResponseEntity<List<QuizAttemptResponse>> byUser(@PathVariable Long userId) {
         return ResponseEntity.ok(attemptService.byUser(userId));
     }
 
     @Operation(summary = "Danh sách lượt làm của quiz")
     @GetMapping("/by-quiz/{quizId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
     public ResponseEntity<List<QuizAttemptResponse>> byQuiz(@PathVariable Long quizId) {
         return ResponseEntity.ok(attemptService.byQuiz(quizId));
     }
 
     @Operation(summary = "Danh sách lượt làm của user trong 1 quiz cụ thể")
     @GetMapping("/by-user/{userId}/quiz/{quizId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
     public ResponseEntity<List<QuizAttemptResponse>> byUserAndQuiz(@PathVariable Long userId,
             @PathVariable Long quizId) {
         return ResponseEntity.ok(attemptService.byUserAndQuiz(userId, quizId));
@@ -95,6 +104,7 @@ public class QuizAttemptController {
     // ===== Upload đính kèm (tùy chọn sử dụng cho dạng tự luận) =====
     @Operation(summary = "Upload file đính kèm cho lượt làm", description = "Kiểm tra file và lưu local, trả URL công khai")
     @PostMapping(value = "/{attemptId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_USER')")
     public ResponseEntity<String> upload(@PathVariable Long attemptId,
             @RequestParam("file") MultipartFile file) {
         fileValidator.validate(file);

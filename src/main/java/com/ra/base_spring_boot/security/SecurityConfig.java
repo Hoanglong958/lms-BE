@@ -114,10 +114,12 @@ public class SecurityConfig {
                                                                 "/api/v1/exam-answers/**",
                                                                 "/api/v1/quiz-attempts/**",
                                                                 "/api/v1/quiz-results/**",
-                                                                "/api/v1/lesson-quizzes/**")
+                                                                "/api/v1/lesson-quizzes/**",
+                                                                "/api/exam-action/**")
                                                 .hasAnyAuthority(
                                                                 RoleName.ROLE_ADMIN.name(),
-                                                                RoleName.ROLE_TEACHER.name())
+                                                                RoleName.ROLE_TEACHER.name(),
+                                                                RoleName.ROLE_USER.name())
                                                 .anyRequest().authenticated())
                                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .exceptionHandling(ex -> ex
