@@ -23,7 +23,7 @@ public class OllamaService {
     @Value("${ollama.base-url:http://localhost:11434}")
     private String ollamaBaseUrl;
 
-    @Value("${ollama.model:qwen3:8b}")
+    @Value("${ollama.model:qwen2.5:3b}")
     private String ollamaModel;
 
     private final HttpClient httpClient = HttpClient.newBuilder()
