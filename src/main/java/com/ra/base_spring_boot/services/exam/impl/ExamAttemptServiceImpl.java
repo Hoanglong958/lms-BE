@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.ra.base_spring_boot.exception.HttpForbiden;
+import com.ra.base_spring_boot.model.constants.RoleName;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,6 +43,18 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getRole() == RoleName.ROLE_USER) {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime start = exam.getStartTime();
+            LocalDateTime end = exam.getEndTime();
+            if (start != null && now.isBefore(start)) {
+                throw new HttpForbiden("Bài kiểm tra chưa đến thời gian làm.");
+            }
+            if (end != null && now.isAfter(end)) {
+                throw new HttpForbiden("Bài kiểm tra đã kết thúc.");
+            }
+        }
 
         // 🔥 Nếu đã có attempt đang làm thì trả về luôn
         Optional<ExamAttempt> existingAttempt = attemptRepository.findTopByExam_IdAndUser_IdAndStatus(
@@ -95,6 +109,14 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
                 .orElseThrow(() -> new RuntimeException("Attempt not found"));
 
         Exam exam = attempt.getExam();
+        User user = attempt.getUser();
+        if (user != null && user.getRole() == RoleName.ROLE_USER) {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime end = exam.getEndTime();
+            if (end != null && now.isAfter(end)) {
+                throw new HttpForbiden("Bài kiểm tra đã kết thúc.");
+            }
+        }
 
         // Tính điểm mỗi câu
         int totalQuestions = exam.getExamQuestions().size();

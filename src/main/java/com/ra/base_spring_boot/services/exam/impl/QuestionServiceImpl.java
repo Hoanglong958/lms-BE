@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.services.exam.impl;
 
 import com.ra.base_spring_boot.dto.questions.QuestionRequestDTO;
 import com.ra.base_spring_boot.dto.questions.QuestionResponseDTO;
+import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.model.Question;
 import com.ra.base_spring_boot.repository.exam.IQuestionRepository;
@@ -123,10 +124,12 @@ public class QuestionServiceImpl implements IQuestionService {
                 Question question = questionRepository.findById(id)
                                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy câu hỏi với id = " + id));
 
+                NormalizedQuestionInput normalized = normalizeAndValidate(request);
+
                 question.setCategory(request.getCategory());
                 question.setQuestionText(request.getQuestionText());
-                question.setOptions(request.getOptions());
-                question.setCorrectAnswer(request.getCorrectAnswer());
+                question.setOptions(normalized.options);
+                question.setCorrectAnswer(normalized.correctAnswer);
                 question.setExplanation(request.getExplanation());
                 question.setUpdatedAt(LocalDateTime.now());
 
@@ -155,17 +158,45 @@ public class QuestionServiceImpl implements IQuestionService {
         // ===================== HELPER =====================
 
         private Question mapRequestToEntity(QuestionRequestDTO request) {
+                NormalizedQuestionInput normalized = normalizeAndValidate(request);
                 return Question.builder()
                                 .category(request.getCategory())
                                 .questionText(request.getQuestionText())
-                                .options(
-                                                request.getOptions() != null
-                                                                ? request.getOptions()
-                                                                : List.of())
-                                .correctAnswer(request.getCorrectAnswer())
+                                .options(normalized.options)
+                                .correctAnswer(normalized.correctAnswer)
                                 .explanation(request.getExplanation())
                                 .createdAt(LocalDateTime.now())
                                 .build();
+        }
+
+        private NormalizedQuestionInput normalizeAndValidate(QuestionRequestDTO request) {
+                List<String> options = request.getOptions() != null
+                                ? request.getOptions().stream()
+                                                .filter(x -> x != null && !x.trim().isEmpty())
+                                                .map(String::trim)
+                                                .collect(Collectors.toList())
+                                : List.of();
+
+                String answer = request.getCorrectAnswer() != null
+                                ? request.getCorrectAnswer().trim()
+                                : "";
+
+                if (!options.isEmpty()) {
+                        if (options.size() < 2) {
+                                throw new HttpBadRequest("Cần ít nhất 2 lựa chọn đáp án");
+                        }
+                        if (answer.isEmpty()) {
+                                throw new HttpBadRequest("Đáp án đúng không được để trống");
+                        }
+                        if (!options.contains(answer)) {
+                                throw new HttpBadRequest("Đáp án đúng phải nằm trong danh sách lựa chọn");
+                        }
+                } else {
+                        // Tự luận: không yêu cầu đáp án đúng
+                        answer = "";
+                }
+
+                return new NormalizedQuestionInput(options, answer);
         }
 
         private QuestionResponseDTO toResponse(Question question) {
@@ -180,5 +211,15 @@ public class QuestionServiceImpl implements IQuestionService {
                                 .updatedAt(question.getUpdatedAt())
                                 .score(null)
                                 .build();
+        }
+
+        private static class NormalizedQuestionInput {
+                private final List<String> options;
+                private final String correctAnswer;
+
+                private NormalizedQuestionInput(List<String> options, String correctAnswer) {
+                        this.options = options;
+                        this.correctAnswer = correctAnswer;
+                }
         }
 }
