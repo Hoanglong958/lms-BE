@@ -11,10 +11,17 @@ import com.ra.base_spring_boot.dto.questions.QuestionResponseDTO;
 import lombok.RequiredArgsConstructor;
 import com.ra.base_spring_boot.repository.user.IUserRepository;
 import com.ra.base_spring_boot.model.constants.RoleName;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.ra.base_spring_boot.security.principle.MyUserDetails;
+import com.ra.base_spring_boot.repository.registration.IRegistrationRepository;
+import com.ra.base_spring_boot.repository.classroom.IClassStudentRepository;
+import com.ra.base_spring_boot.model.constants.PaymentStatus;
+import com.ra.base_spring_boot.exception.HttpBadRequest;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -31,6 +38,45 @@ public class ExamServiceImpl implements IExamService {
         private final IExamRepository examRepository;
         private final IQuestionRepository questionRepository;
         private final IUserRepository userRepository;
+        private final IRegistrationRepository registrationRepository;
+        private final IClassStudentRepository classStudentRepository;
+
+        private User getCurrentUser() {
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                if (authentication != null && authentication.getPrincipal() instanceof MyUserDetails) {
+                        return ((MyUserDetails) authentication.getPrincipal()).getUser();
+                }
+                throw new HttpBadRequest("Không xác định được người dùng hiện tại");
+        }
+
+        private boolean hasAccessToExam(Exam exam, User user) {
+                if (user.getRole() == RoleName.ROLE_ADMIN || user.getRole() == RoleName.ROLE_TEACHER) {
+                        return true;
+                }
+                
+                // For student, check enrollments
+                boolean hasCourseAccess = false;
+                if (exam.getCourseId() != null) {
+                        var registrations = registrationRepository.findByStudent_Id(user.getId());
+                        hasCourseAccess = registrations.stream()
+                                .anyMatch(r -> r.getCourse().getId().equals(exam.getCourseId()) && r.getPaymentStatus() == PaymentStatus.PAID);
+                }
+                
+                boolean hasClassAccess = false;
+                if (exam.getClassId() != null) {
+                        hasClassAccess = classStudentRepository.existsByClassroomIdAndStudentId(exam.getClassId(), user.getId());
+                }
+                
+                // Allow if they have access through EITHER the course OR the class
+                // (e.g., an exam might only be assigned to a course, or only to a class)
+                // If it's assigned to neither (both null), perhaps it's a public exam? 
+                // Let's assume if both are null, it's not accessible.
+                if (exam.getCourseId() == null && exam.getClassId() == null) {
+                        return false; 
+                }
+
+                return hasCourseAccess || hasClassAccess;
+        }
 
         // ======= Tạo kỳ thi (ADMIN) =======
         @Override
@@ -142,6 +188,12 @@ public class ExamServiceImpl implements IExamService {
         public ExamResponseDTO getExam(Long examId) {
                 Exam exam = examRepository.findById(examId)
                                 .orElseThrow(() -> new RuntimeException("Exam not found"));
+                                
+                User currentUser = getCurrentUser();
+                if (!hasAccessToExam(exam, currentUser)) {
+                        throw new HttpBadRequest("Bạn không có quyền truy cập kỳ thi này vì chưa đăng ký khóa học/lớp học tương ứng.");
+                }
+                
                 return mapToResponse(exam);
         }
 
@@ -149,10 +201,11 @@ public class ExamServiceImpl implements IExamService {
         @Override
         @Transactional(readOnly = true)
         public List<ExamResponseDTO> getAllExams() {
-                // Get current user and role from SecurityContext if needed
-                // For now, let's assume we want to support basic filtering
+                User currentUser = getCurrentUser();
+                
                 return examRepository.findAll()
                                 .stream()
+                                .filter(exam -> hasAccessToExam(exam, currentUser))
                                 .map(this::mapToResponse)
                                 .collect(Collectors.toList());
         }
@@ -225,6 +278,13 @@ public class ExamServiceImpl implements IExamService {
 
         @Override
         public List<ExamResponseDTO> getExamsByClass(Long classId) {
+                User currentUser = getCurrentUser();
+                if (currentUser.getRole() == RoleName.ROLE_USER) {
+                       if (!classStudentRepository.existsByClassroomIdAndStudentId(classId, currentUser.getId())) {
+                           throw new HttpBadRequest("Bạn không có quyền truy cập vì không thuộc lớp học này.");
+                       }
+                }
+                
                 return examRepository.findByClassId(classId)
                                 .stream()
                                 .map(this::mapToResponse)
@@ -233,6 +293,16 @@ public class ExamServiceImpl implements IExamService {
 
         @Override
         public List<ExamResponseDTO> getExamsByCourse(Long courseId) {
+                User currentUser = getCurrentUser();
+                if (currentUser.getRole() == RoleName.ROLE_USER) {
+                        var registrations = registrationRepository.findByStudent_Id(currentUser.getId());
+                        boolean enrolledInCourse = registrations.stream()
+                                .anyMatch(r -> r.getCourse().getId().equals(courseId) && r.getPaymentStatus() == PaymentStatus.PAID);
+                        if (!enrolledInCourse) {
+                                throw new HttpBadRequest("Bạn chưa đăng ký khóa học này.");
+                        }
+                }
+                
                 return examRepository.findByCourseId(courseId)
                                 .stream()
                                 .map(this::mapToResponse)
