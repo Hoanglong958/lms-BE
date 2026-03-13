@@ -166,6 +166,15 @@ public class ClassServiceImpl implements IClassService {
     }
 
     @Override
+    public List<ClassStudentResponseDTO> findClassesByStudent(Long studentId) {
+        return classStudentRepository
+                .findByStudentIdWithRelations(Objects.requireNonNull(studentId, "studentId must not be null"))
+                .stream()
+                .map(this::toStudentDto)
+                .toList();
+    }
+
+    @Override
     @Transactional
     public ClassTeacherResponseDTO assignTeacher(ClassTeacherRequestDTO dto) {
         Class aClass = getClassroom(dto.getClassId());

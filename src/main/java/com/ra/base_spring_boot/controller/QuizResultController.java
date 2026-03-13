@@ -2,6 +2,9 @@ package com.ra.base_spring_boot.controller;
 
 import com.ra.base_spring_boot.dto.QuizResult.QuizResultResponseDTO;
 import com.ra.base_spring_boot.dto.QuizResult.QuizSubmissionRequestDTO;
+import com.ra.base_spring_boot.exception.HttpForbiden;
+import com.ra.base_spring_boot.model.User;
+import com.ra.base_spring_boot.repository.user.IUserRepository;
 import com.ra.base_spring_boot.services.quiz.IQuizResultService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -12,6 +15,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +29,7 @@ import java.util.List;
 public class QuizResultController {
 
     private final IQuizResultService quizResultService;
+    private final IUserRepository userRepository;
 
     // ========== ADMIN: Xem tất cả kết quả ==========
     @GetMapping
@@ -30,7 +37,22 @@ public class QuizResultController {
     @Operation(summary = "Lấy danh sách kết quả quiz", description = "Chỉ ADMIN được xem toàn bộ kết quả")
     @ApiResponse(responseCode = "200", description = "Thành công", content = @Content(schema = @Schema(implementation = QuizResultResponseDTO.class)))
     public ResponseEntity<List<QuizResultResponseDTO>> getAll() {
-        return ResponseEntity.ok(quizResultService.findAll());
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdminOrTeacher = auth != null && auth.getAuthorities() != null && auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(a -> a.equals("ROLE_ADMIN") || a.equals("ROLE_TEACHER"));
+
+        if (isAdminOrTeacher) {
+            return ResponseEntity.ok(quizResultService.findAll());
+        }
+
+        String gmail = auth != null ? auth.getName() : null;
+        if (gmail == null || gmail.isBlank()) {
+            throw new HttpForbiden("Access denied");
+        }
+        User current = userRepository.findByGmailIgnoreCase(gmail)
+                .orElseThrow(() -> new HttpForbiden("Access denied"));
+        return ResponseEntity.ok(quizResultService.findByUser(current.getId()));
     }
 
     // ========== ADMIN: Xem chi tiết kết quả ==========

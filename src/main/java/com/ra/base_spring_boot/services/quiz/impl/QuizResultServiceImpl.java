@@ -39,6 +39,14 @@ public class QuizResultServiceImpl implements IQuizResultService {
     }
 
     @Override
+    public List<QuizResultResponseDTO> findByUser(Long userId) {
+        return quizResultRepository.findByUser_IdAndDeletedFalse(java.util.Objects.requireNonNull(userId, "userId must not be null"))
+                .stream()
+                .map(this::toDTO)
+                .toList();
+    }
+
+    @Override
     public QuizResultResponseDTO findById(Long id) {
         QuizResult result = quizResultRepository
                 .findByIdAndDeletedFalse(java.util.Objects.requireNonNull(id, "id must not be null"))

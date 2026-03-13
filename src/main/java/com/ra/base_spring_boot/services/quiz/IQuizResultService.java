@@ -17,6 +17,7 @@ public interface IQuizResultService {
      * Chỉ trả về kết quả chưa bị xóa mềm.
      */
     List<QuizResultResponseDTO> findAll();
+    List<QuizResultResponseDTO> findByUser(Long userId);
 
     /**
      * Tìm kết quả quiz theo ID.

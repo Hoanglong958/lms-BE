@@ -27,6 +27,7 @@ public interface IClassService {
     void removeStudent(Long classId, Long studentId);
 
     List<ClassStudentResponseDTO> findStudents(Long classId);
+    List<ClassStudentResponseDTO> findClassesByStudent(Long studentId);
 
     ClassTeacherResponseDTO assignTeacher(ClassTeacherRequestDTO dto);
 
