@@ -54,33 +54,36 @@ public class ExamServiceImpl implements IExamService {
                 if (user.getRole() == RoleName.ROLE_ADMIN || user.getRole() == RoleName.ROLE_TEACHER) {
                         return true;
                 }
-                
+
                 // For student, check enrollments
                 boolean hasCourseAccess = false;
                 if (exam.getCourseId() != null) {
                         var registrations = registrationRepository.findByStudent_Id(user.getId());
                         hasCourseAccess = registrations.stream()
-                                .anyMatch(r -> r.getCourse().getId().equals(exam.getCourseId()) && r.getPaymentStatus() == PaymentStatus.PAID);
+                                        .anyMatch(r -> r.getCourse().getId().equals(exam.getCourseId())
+                                                        && r.getPaymentStatus() == PaymentStatus.PAID);
                 }
-                
+
                 boolean hasClassAccess = false;
                 if (exam.getClassId() != null) {
-                        hasClassAccess = classStudentRepository.existsByClassroomIdAndStudentId(exam.getClassId(), user.getId());
+                        hasClassAccess = classStudentRepository.existsByClassroomIdAndStudentId(exam.getClassId(),
+                                        user.getId());
                 }
-                
+
                 // Allow if they have access through EITHER the course OR the class
                 // (e.g., an exam might only be assigned to a course, or only to a class)
-                // If it's assigned to neither (both null), perhaps it's a public exam? 
+                // If it's assigned to neither (both null), perhaps it's a public exam?
                 // Let's assume if both are null, it's not accessible.
                 if (exam.getCourseId() == null && exam.getClassId() == null) {
-                        return false; 
+                        return false;
                 }
 
                 return hasCourseAccess || hasClassAccess;
         }
 
         private void enforceExamTimeForStudent(Exam exam, User user) {
-                if (user.getRole() != RoleName.ROLE_USER) return;
+                if (user.getRole() != RoleName.ROLE_USER)
+                        return;
                 LocalDateTime now = LocalDateTime.now();
                 LocalDateTime start = exam.getStartTime();
                 LocalDateTime end = exam.getEndTime();
@@ -202,13 +205,14 @@ public class ExamServiceImpl implements IExamService {
         public ExamResponseDTO getExam(Long examId) {
                 Exam exam = examRepository.findById(examId)
                                 .orElseThrow(() -> new RuntimeException("Exam not found"));
-                                
+
                 User currentUser = getCurrentUser();
                 if (!hasAccessToExam(exam, currentUser)) {
-                        throw new HttpBadRequest("Bạn không có quyền truy cập kỳ thi này vì chưa đăng ký khóa học/lớp học tương ứng.");
+                        throw new HttpBadRequest(
+                                        "Bạn không có quyền truy cập kỳ thi này vì chưa đăng ký khóa học/lớp học tương ứng.");
                 }
                 enforceExamTimeForStudent(exam, currentUser);
-                
+
                 return mapToResponse(exam);
         }
 
@@ -217,17 +221,20 @@ public class ExamServiceImpl implements IExamService {
         @Transactional(readOnly = true)
         public List<ExamResponseDTO> getAllExams() {
                 User currentUser = getCurrentUser();
-                
+
                 return examRepository.findAll()
                                 .stream()
                                 .filter(exam -> hasAccessToExam(exam, currentUser))
                                 .filter(exam -> {
-                                        if (currentUser.getRole() != RoleName.ROLE_USER) return true;
+                                        if (currentUser.getRole() != RoleName.ROLE_USER)
+                                                return true;
                                         LocalDateTime now = LocalDateTime.now();
                                         LocalDateTime start = exam.getStartTime();
                                         LocalDateTime end = exam.getEndTime();
-                                        if (start != null && now.isBefore(start)) return false;
-                                        if (end != null && now.isAfter(end)) return false;
+                                        if (start != null && now.isBefore(start))
+                                                return false;
+                                        if (end != null && now.isAfter(end))
+                                                return false;
                                         return true;
                                 })
                                 .map(this::mapToResponse)
@@ -304,20 +311,23 @@ public class ExamServiceImpl implements IExamService {
         public List<ExamResponseDTO> getExamsByClass(Long classId) {
                 User currentUser = getCurrentUser();
                 if (currentUser.getRole() == RoleName.ROLE_USER) {
-                       if (!classStudentRepository.existsByClassroomIdAndStudentId(classId, currentUser.getId())) {
-                           throw new HttpBadRequest("Bạn không có quyền truy cập vì không thuộc lớp học này.");
-                       }
+                        if (!classStudentRepository.existsByClassroomIdAndStudentId(classId, currentUser.getId())) {
+                                throw new HttpBadRequest("Bạn không có quyền truy cập vì không thuộc lớp học này.");
+                        }
                 }
-                
+
                 return examRepository.findByClassId(classId)
                                 .stream()
                                 .filter(exam -> {
-                                        if (currentUser.getRole() != RoleName.ROLE_USER) return true;
+                                        if (currentUser.getRole() != RoleName.ROLE_USER)
+                                                return true;
                                         LocalDateTime now = LocalDateTime.now();
                                         LocalDateTime start = exam.getStartTime();
                                         LocalDateTime end = exam.getEndTime();
-                                        if (start != null && now.isBefore(start)) return false;
-                                        if (end != null && now.isAfter(end)) return false;
+                                        if (start != null && now.isBefore(start))
+                                                return false;
+                                        if (end != null && now.isAfter(end))
+                                                return false;
                                         return true;
                                 })
                                 .map(this::mapToResponse)
@@ -330,21 +340,25 @@ public class ExamServiceImpl implements IExamService {
                 if (currentUser.getRole() == RoleName.ROLE_USER) {
                         var registrations = registrationRepository.findByStudent_Id(currentUser.getId());
                         boolean enrolledInCourse = registrations.stream()
-                                .anyMatch(r -> r.getCourse().getId().equals(courseId) && r.getPaymentStatus() == PaymentStatus.PAID);
+                                        .anyMatch(r -> r.getCourse().getId().equals(courseId)
+                                                        && r.getPaymentStatus() == PaymentStatus.PAID);
                         if (!enrolledInCourse) {
                                 throw new HttpBadRequest("Bạn chưa đăng ký khóa học này.");
                         }
                 }
-                
+
                 return examRepository.findByCourseId(courseId)
                                 .stream()
                                 .filter(exam -> {
-                                        if (currentUser.getRole() != RoleName.ROLE_USER) return true;
+                                        if (currentUser.getRole() != RoleName.ROLE_USER)
+                                                return true;
                                         LocalDateTime now = LocalDateTime.now();
                                         LocalDateTime start = exam.getStartTime();
                                         LocalDateTime end = exam.getEndTime();
-                                        if (start != null && now.isBefore(start)) return false;
-                                        if (end != null && now.isAfter(end)) return false;
+                                        if (start != null && now.isBefore(start))
+                                                return false;
+                                        if (end != null && now.isAfter(end))
+                                                return false;
                                         return true;
                                 })
                                 .map(this::mapToResponse)

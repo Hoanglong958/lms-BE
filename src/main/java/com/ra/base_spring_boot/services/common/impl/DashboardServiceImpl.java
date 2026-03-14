@@ -86,8 +86,8 @@ public class DashboardServiceImpl implements IDashboardService {
                 double classGrowth = calcGrowth(totalClasses, prevMonthClasses);
 
                 // --- Exam attempts and avg score (QuizResult / ExamAttempt) ---
-                long totalExamAttempts = quizResultRepo.countAllAttempts();
-                long prevMonthExamAttempts = quizResultRepo.countAttemptsSince(sinceMonth);
+                long totalExamAttempts = examAttemptRepository.countCompletedExams();
+                long prevMonthExamAttempts = Optional.ofNullable(examAttemptRepository.countCompletedExamsSince(sinceMonth)).orElse(0L);
                 double examAttemptGrowth = calcGrowth(totalExamAttempts, prevMonthExamAttempts);
 
                 Double avgScore = Optional.ofNullable(
@@ -154,14 +154,12 @@ public class DashboardServiceImpl implements IDashboardService {
                                 .totalExams(new DashboardStatsDTO.GrowthItem(totalExamAttempts, examAttemptGrowth))
                                 .averageExamScore(
                                                 new DashboardStatsDTO.GrowthItem(
-                                                                (long) (Math.round(avgScore * 10) / 10.0), // ví dụ 7.8
+                                                                (double) (Math.round(avgScore * 10) / 10.0), // ví dụ 7.8
                                                                 avgScoreGrowth))
 
                                 .courseCompletionRate(
                                                 new DashboardStatsDTO.GrowthItem(
-                                                                (long) (Math.round(completionRate * 10) / 10.0), // ví
-                                                                                                                 // dụ
-                                                                                                                 // 63.4%
+                                                                (double) (Math.round(completionRate * 10) / 10.0), // ví dụ 63.4%
                                                                 completionGrowth))
 
                                 .totalClasses(new DashboardStatsDTO.GrowthItem(totalClasses, classGrowth))

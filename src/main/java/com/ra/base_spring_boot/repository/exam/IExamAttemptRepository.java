@@ -11,51 +11,57 @@ import java.util.Optional;
 
 public interface IExamAttemptRepository extends JpaRepository<ExamAttempt, Long> {
     List<ExamAttempt> findByExam_Id(Long examId);
+
     List<ExamAttempt> findByUser_Id(Long userId);
+
     Optional<ExamAttempt> findTopByExam_IdAndUser_IdOrderByAttemptNumberDesc(Long examId, Long userId);
-    Optional<ExamAttempt> findTopByExam_IdAndUser_IdAndStatus(Long examId, Long userId, ExamAttempt.AttemptStatus status);
+
+    Optional<ExamAttempt> findTopByExam_IdAndUser_IdAndStatus(Long examId, Long userId,
+            ExamAttempt.AttemptStatus status);
+
     @Query("""
-    SELECT COUNT(ea)
-    FROM ExamAttempt ea
-    WHERE ea.endTime IS NOT NULL
-""")
+                SELECT COUNT(ea)
+                FROM ExamAttempt ea
+                WHERE ea.endTime IS NOT NULL
+            """)
     Long countCompletedExams();
 
+    @Query("""
+                SELECT COUNT(ea)
+                FROM ExamAttempt ea
+                WHERE ea.endTime IS NOT NULL
+                  AND ea.endTime >= :since
+            """)
+    Long countCompletedExamsSince(@Param("since") LocalDateTime since);
 
     @Query("""
-    SELECT COUNT(ea)
-    FROM ExamAttempt ea
-    WHERE ea.exam.id = :examId
-""")
+                SELECT COUNT(ea)
+                FROM ExamAttempt ea
+                WHERE ea.exam.id = :examId
+            """)
     Long countAttemptByExam(@Param("examId") Long examId);
 
     @Query("""
-    SELECT COUNT(ea)
-    FROM ExamAttempt ea
-    WHERE ea.exam.id = :examId
-      AND ea.score >= ea.exam.passingScore
-""")
+                SELECT COUNT(ea)
+                FROM ExamAttempt ea
+                WHERE ea.exam.id = :examId
+                  AND ea.score >= ea.exam.passingScore
+            """)
     Long countPassByExam(@Param("examId") Long examId);
 
-
     @Query("""
-    SELECT AVG( (ea.score * 10.0) / ea.exam.maxScore )
-    FROM ExamAttempt ea
-    WHERE ea.score IS NOT NULL
-""")
+                SELECT AVG( (ea.score * 10.0) / ea.exam.maxScore )
+                FROM ExamAttempt ea
+                WHERE ea.score IS NOT NULL
+            """)
     Double avgExamScoreOnTen();
 
-
     @Query("""
-    SELECT AVG((ea.score * 10.0) / ea.exam.maxScore)
-    FROM ExamAttempt ea
-    WHERE ea.score IS NOT NULL
-      AND ea.startTime >= :since
-""")
+                SELECT AVG((ea.score * 10.0) / ea.exam.maxScore)
+                FROM ExamAttempt ea
+                WHERE ea.score IS NOT NULL
+                  AND ea.startTime >= :since
+            """)
     Double avgExamScoreOnTenSince(@Param("since") LocalDateTime since);
-
-
-
-
 
 }
