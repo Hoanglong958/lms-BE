@@ -55,6 +55,25 @@ public class Exam {
 
     private LocalDateTime updatedAt;
 
+    public ExamStatus getStatus() {
+        if (this.status == ExamStatus.CANCELLED) {
+            return ExamStatus.CANCELLED;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (startTime != null && now.isBefore(startTime)) {
+            return ExamStatus.UPCOMING;
+        }
+        if (endTime != null && now.isAfter(endTime)) {
+            return ExamStatus.COMPLETED;
+        }
+        if (startTime != null) {
+            return ExamStatus.ONGOING;
+        }
+
+        return this.status;
+    }
+
     // ================== EXAM QUESTIONS ==================
     @Builder.Default
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

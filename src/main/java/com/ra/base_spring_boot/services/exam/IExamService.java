@@ -3,7 +3,9 @@ package com.ra.base_spring_boot.services.exam;
 import com.ra.base_spring_boot.dto.Exam.ExamResponseDTO;
 import com.ra.base_spring_boot.dto.Exam.ExamRequestDTO;
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 public interface IExamService {
 
     ExamResponseDTO createExam(ExamRequestDTO dto);

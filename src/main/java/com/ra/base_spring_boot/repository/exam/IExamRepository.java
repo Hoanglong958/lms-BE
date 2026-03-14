@@ -30,4 +30,6 @@ public interface IExamRepository extends JpaRepository<Exam, Long> {
     @EntityGraph(attributePaths = "examQuestions")
     List<Exam> findByCourseId(Long courseId);
 
+    @EntityGraph(attributePaths = "examQuestions")
+    List<Exam> findByCourseIdIn(List<Long> courseIds);
 }

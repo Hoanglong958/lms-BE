@@ -13,7 +13,6 @@ import com.ra.base_spring_boot.repository.user.IUserRepository;
 import com.ra.base_spring_boot.model.constants.RoleName;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,10 +23,8 @@ import com.ra.base_spring_boot.model.constants.PaymentStatus;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.exception.HttpForbiden;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -41,6 +38,7 @@ public class ExamServiceImpl implements IExamService {
         private final IUserRepository userRepository;
         private final IRegistrationRepository registrationRepository;
         private final IClassStudentRepository classStudentRepository;
+        private final com.ra.base_spring_boot.repository.course.IClassCourseRepository classCourseRepository;
 
         private User getCurrentUser() {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -308,6 +306,7 @@ public class ExamServiceImpl implements IExamService {
         }
 
         @Override
+        @Transactional(readOnly = true)
         public List<ExamResponseDTO> getExamsByClass(Long classId) {
                 User currentUser = getCurrentUser();
                 if (currentUser.getRole() == RoleName.ROLE_USER) {
@@ -316,8 +315,21 @@ public class ExamServiceImpl implements IExamService {
                         }
                 }
 
-                return examRepository.findByClassId(classId)
-                                .stream()
+                // Get all courses assigned to this class to fetch related exams
+                var classCourses = classCourseRepository.findByClazzId(classId);
+                List<Long> courseIds = classCourses.stream()
+                                .map(cc -> cc.getCourse().getId())
+                                .collect(Collectors.toList());
+
+                // Find exams directly linked to class OR linked to any course assigned to this class
+                List<Exam> exams = new ArrayList<>(examRepository.findByClassId(classId));
+                if (courseIds != null && !courseIds.isEmpty()) {
+                        exams.addAll(examRepository.findByCourseIdIn(courseIds));
+                }
+
+                // Deduplicate by ID
+                return exams.stream()
+                                .filter(distinctByKey(Exam::getId))
                                 .filter(exam -> {
                                         if (currentUser.getRole() != RoleName.ROLE_USER)
                                                 return true;
@@ -334,7 +346,13 @@ public class ExamServiceImpl implements IExamService {
                                 .collect(Collectors.toList());
         }
 
+        private static <T> java.util.function.Predicate<T> distinctByKey(java.util.function.Function<? super T, ?> keyExtractor) {
+                java.util.Map<Object, Boolean> seen = new java.util.concurrent.ConcurrentHashMap<>();
+                return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
+        }
+
         @Override
+        @Transactional(readOnly = true)
         public List<ExamResponseDTO> getExamsByCourse(Long courseId) {
                 User currentUser = getCurrentUser();
                 if (currentUser.getRole() == RoleName.ROLE_USER) {
