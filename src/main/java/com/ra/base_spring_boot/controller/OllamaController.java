@@ -67,13 +67,35 @@ public class OllamaController {
                     context = ollamaContextService.buildQAContext(request.getLessonId());
                     defaultQuestion = question;
                 }
+                case "SCHEDULE" -> {
+                    context = ollamaContextService.buildScheduleContext();
+                    defaultQuestion = question.isBlank()
+                            ? "Thời khóa biểu của tôi như thế nào?"
+                            : question;
+                }
+                case "CLASS" -> {
+                    context = ollamaContextService.buildClassContext();
+                    defaultQuestion = question.isBlank()
+                            ? "Tôi đang học những lớp nào?"
+                            : question;
+                }
+                case "TEACHER" -> {
+                    context = ollamaContextService.buildTeacherContext();
+                    defaultQuestion = question.isBlank()
+                            ? "Giảng viên đang dạy tôi là ai?"
+                            : question;
+                }
                 default -> {
                     context = "";
                     defaultQuestion = question;
                 }
             }
 
-            log.info("[AI] type={} | question={}", type, defaultQuestion);
+            log.info("[AI] Type: {} | Context Length: {}", type, context != null ? context.length() : 0);
+            if (context != null && !context.isBlank()) {
+                log.debug("[AI] Context: {}", context);
+            }
+            log.info("[AI] Final Question: {}", defaultQuestion);
             String answer = ollamaService.chat(context, defaultQuestion);
 
             return ResponseEntity.ok(AIChatResponse.ok(answer, type));
