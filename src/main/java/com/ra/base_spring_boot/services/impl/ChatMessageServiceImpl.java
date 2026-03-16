@@ -7,13 +7,16 @@ import com.ra.base_spring_boot.repository.chatv2.ChatMessageRepository;
 import com.ra.base_spring_boot.repository.chatv2.ChatRoomMemberRepository;
 import com.ra.base_spring_boot.repository.chatv2.ChatRoomRepository;
 import com.ra.base_spring_boot.services.IChatMessageService;
+import com.ra.base_spring_boot.services.notification.IUserNotificationService;
+import com.ra.base_spring_boot.model.constants.NotificationType;
+import com.ra.base_spring_boot.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -26,6 +29,8 @@ public class ChatMessageServiceImpl implements IChatMessageService {
     private final ChatMessageReadRepository readRepo;
     private final ChatRoomRepository roomRepo;
     private final ChatRoomMemberRepository memberRepo;
+    private final IUserNotificationService userNotificationService;
+    private final com.ra.base_spring_boot.repository.user.IUserRepository userRepository;
 
     private void requireMember(UUID roomId, Long userId) {
         if (!memberRepo.existsByRoom_IdAndUserId(roomId, userId)) {
@@ -49,7 +54,33 @@ public class ChatMessageServiceImpl implements IChatMessageService {
                 .type(req.getType() == null ? ChatMessageType.TEXT : req.getType())
                 .fileUrl(req.getFileUrl())
                 .build();
-        return messageRepo.save(msg);
+        ChatMessage saved = messageRepo.save(msg);
+
+        // Send Notifications to other members
+        User sender = userRepository.findById(req.getSenderId()).orElse(null);
+        String senderName = (sender != null) ? sender.getFullName() : "Ai đó";
+        
+        List<ChatRoomMember> members = memberRepo.findByRoom_Id(room.getId());
+        for (ChatRoomMember member : members) {
+            if (!Objects.equals(member.getUserId(), req.getSenderId())) {
+                String title = "Tin nhắn mới";
+                String content = senderName + ": " + (msg.getContent().length() > 50 ? msg.getContent().substring(0, 47) + "..." : msg.getContent());
+                
+                if (room.getType() == ChatRoomType.GROUP && room.getName() != null) {
+                    title = "Tin nhắn mới từ " + room.getName();
+                }
+
+                userNotificationService.sendNotification(
+                    member.getUser(),
+                    title,
+                    content,
+                    NotificationType.CHAT,
+                    "/chat?room=" + room.getId()
+                );
+            }
+        }
+        
+        return saved;
     }
 
     @Override
@@ -69,10 +100,15 @@ public class ChatMessageServiceImpl implements IChatMessageService {
 
     @Override
     public void markReadAll(UUID roomId, Long userId) {
-        // Đơn giản: load 50 tin đầu và đánh dấu
-        Page<ChatMessage> page = messageRepo.findByRoom_IdOrderByCreatedAtDesc(roomId, PageRequest.of(0, 50));
-        for (ChatMessage m : page.getContent()) {
-            markRead(m.getId(), userId);
+        // Tìm tất cả tin nhắn trong phòng NOT do userId gửi VÀ chưa có record trong ChatMessageRead
+        // Để đơn giản và tránh n+1, ta có thể dùng một query JPQL insert hoặc xử lý danh sách ID
+        List<ChatMessage> unreadMessages = messageRepo.findUnreadMessagesInRoom(roomId, userId);
+        for (ChatMessage m : unreadMessages) {
+            readRepo.findByMessage_IdAndUserId(m.getId(), userId)
+                    .orElseGet(() -> readRepo.save(ChatMessageRead.builder()
+                            .message(m)
+                            .userId(userId)
+                            .build()));
         }
     }
 
@@ -102,9 +138,12 @@ public class ChatMessageServiceImpl implements IChatMessageService {
     @Override
     @Transactional(readOnly = true)
     public long unreadCount(UUID roomId, Long userId) {
-        // Đếm đơn giản: tổng số message - số read-by-user (tối thiểu)
-        long total = messageRepo.findByRoom_IdOrderByCreatedAtDesc(roomId).size();
-        long reads = readRepo.findAll().stream().filter(r -> r.getMessage().getRoom().getId().equals(roomId) && Objects.equals(r.getUserId(), userId)).count();
-        return Math.max(0, total - reads);
+        return messageRepo.countUnreadByRoomAndUser(roomId, userId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long totalUnreadCount(Long userId) {
+        return messageRepo.countTotalUnreadByUser(userId);
     }
 }

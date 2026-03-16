@@ -15,6 +15,7 @@ import com.ra.base_spring_boot.repository.user.IUserRepository;
 import com.ra.base_spring_boot.services.classroom.IClassService;
 import com.ra.base_spring_boot.services.common.impl.GmailService;
 import com.ra.base_spring_boot.repository.registration.IRegistrationRepository;
+import com.ra.base_spring_boot.services.notification.IUserNotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +42,7 @@ public class ClassServiceImpl implements IClassService {
     private final ICourseRepository courseRepository;
     private final IRegistrationRepository registrationRepository;
     private final GmailService gmailService;
+    private final IUserNotificationService userNotificationService;
 
     @Override
     public ClassroomResponseDTO create(ClassroomRequestDTO dto) {
@@ -144,6 +146,15 @@ public class ClassServiceImpl implements IClassService {
                         "username", student.getFullName(),
                         "className", aClass.getClassName())));
 
+        // In-app notification
+        userNotificationService.sendNotification(
+            student,
+            "Bạn đã được thêm vào lớp mới",
+            "Bạn đã được quản trị viên thêm vào lớp " + aClass.getClassName() + ".",
+            NotificationType.ACADEMIC,
+            "/student/classes"
+        );
+
         return toStudentDto(enrollment);
     }
 
@@ -195,6 +206,16 @@ public class ClassServiceImpl implements IClassService {
                 .note(dto.getNote())
                 .build();
         classTeacherRepository.save(java.util.Objects.requireNonNull(assignment, "assignment must not be null"));
+
+        // In-app notification for teacher
+        userNotificationService.sendNotification(
+            teacher,
+            "Phân công giảng dạy mới",
+            "Bạn đã được phân công giảng dạy cho lớp " + aClass.getClassName() + ".",
+            NotificationType.ACADEMIC,
+            "/teacher/dashboard"
+        );
+
         return toTeacherDto(assignment);
     }
 
@@ -258,6 +279,15 @@ public class ClassServiceImpl implements IClassService {
                         Map.of(
                                 "username", student.getFullName(),
                                 "className", aClass.getClassName())));
+
+                // In-app notification for new students
+                userNotificationService.sendNotification(
+                    student,
+                    "Bạn đã được thêm vào lớp học",
+                    "Bạn đã được hệ thống tự động thêm vào lớp " + aClass.getClassName() + " sau khi thanh toán thành công khóa học " + course.getTitle() + ".",
+                    NotificationType.ACADEMIC,
+                    "/student/classes"
+                );
             }
         }
 
@@ -276,6 +306,15 @@ public class ClassServiceImpl implements IClassService {
                             "username", student.getFullName(),
                             "className", aClass.getClassName(),
                             "courseName", course.getTitle())));
+
+            // In-app notification for existing students
+            userNotificationService.sendNotification(
+                student,
+                "Khóa học mới trong lớp của bạn",
+                "Lớp " + aClass.getClassName() + " của bạn có khóa học mới: " + course.getTitle() + ".",
+                NotificationType.ACADEMIC,
+                "/student/courses"
+            );
         }
 
         return toCourseDto(classCourse);

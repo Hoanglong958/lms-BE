@@ -17,4 +17,5 @@ public interface IChatMessageService {
     void deleteForAll(UUID messageId, Long operatorUserId);
     Page<ChatMessage> search(UUID roomId, String keyword, Pageable pageable);
     long unreadCount(UUID roomId, Long userId);
+    long totalUnreadCount(Long userId);
 }

@@ -1,11 +1,6 @@
 package com.ra.base_spring_boot.controller;
 
-import com.ra.base_spring_boot.dto.chatv2.AddMembersRequest;
-import com.ra.base_spring_boot.dto.chatv2.GroupCreateRequest;
-import com.ra.base_spring_boot.dto.chatv2.RenameRequest;
-import com.ra.base_spring_boot.dto.chatv2.AvatarRequest;
-import com.ra.base_spring_boot.dto.chatv2.OneToOneRoomRequest;
-import com.ra.base_spring_boot.model.chatv2.ChatRoom;
+import com.ra.base_spring_boot.dto.chatv2.*;
 import com.ra.base_spring_boot.model.chatv2.ChatRoomMember;
 import com.ra.base_spring_boot.services.IChatService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,13 +22,13 @@ public class ChatRoomControllerV2 {
 
     @Operation(summary = "Tạo hoặc lấy room 1-1")
     @PostMapping("/one-to-one")
-    public ResponseEntity<ChatRoom> oneToOne(@RequestBody OneToOneRoomRequest req) {
+    public ResponseEntity<ChatRoomResponse> oneToOne(@RequestBody OneToOneRoomRequest req) {
         return ResponseEntity.ok(chatService.getOrCreateOneToOne(req.getUserId1(), req.getUserId2()));
     }
 
     @Operation(summary = "Tạo phòng nhóm")
     @PostMapping("/group")
-    public ResponseEntity<ChatRoom> createGroup(@RequestBody GroupCreateRequest req) {
+    public ResponseEntity<ChatRoomResponse> createGroup(@RequestBody GroupCreateRequest req) {
         return ResponseEntity.ok(chatService.createGroup(req));
     }
 
@@ -79,7 +74,7 @@ public class ChatRoomControllerV2 {
 
     @Operation(summary = "Lấy danh sách phòng của user")
     @GetMapping("/me")
-    public ResponseEntity<List<ChatRoom>> myRooms(@RequestParam Long userId) {
+    public ResponseEntity<List<ChatRoomResponse>> myRooms(@RequestParam Long userId) {
         return ResponseEntity.ok(chatService.myRooms(userId));
     }
 
@@ -91,7 +86,7 @@ public class ChatRoomControllerV2 {
 
     @Operation(summary = "Lấy thông tin phòng (tối giản)")
     @GetMapping("/{roomId}")
-    public ResponseEntity<ChatRoom> getRoom(@PathVariable UUID roomId) {
+    public ResponseEntity<ChatRoomResponse> getRoom(@PathVariable UUID roomId) {
         return ResponseEntity.ok(chatService.getRoom(roomId));
     }
 }

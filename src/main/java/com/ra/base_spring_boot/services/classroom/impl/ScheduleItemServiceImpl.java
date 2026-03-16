@@ -4,12 +4,16 @@ import com.ra.base_spring_boot.dto.ScheduleItem.*;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.model.Class;
+import com.ra.base_spring_boot.model.constants.NotificationType;
 import com.ra.base_spring_boot.repository.classroom.IClassRepository;
+import com.ra.base_spring_boot.repository.classroom.IClassStudentRepository;
+import com.ra.base_spring_boot.repository.classroom.IClassTeacherRepository;
 import com.ra.base_spring_boot.repository.classroom.IPeriodRepository;
 import com.ra.base_spring_boot.repository.classroom.IScheduleItemRepository;
 import com.ra.base_spring_boot.repository.course.IClassCourseRepository;
 import com.ra.base_spring_boot.repository.course.ICourseRepository;
 import com.ra.base_spring_boot.services.classroom.IScheduleItemService;
+import com.ra.base_spring_boot.services.notification.IUserNotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +33,9 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
         private final IClassRepository classRepository;
         private final IPeriodRepository periodRepository;
         private final IClassCourseRepository classCourseRepository;
+        private final IClassStudentRepository classStudentRepository;
+        private final IClassTeacherRepository classTeacherRepository;
+        private final IUserNotificationService userNotificationService;
 
         // =========================================================
         // 1. AUTO GENERATE
@@ -91,8 +98,13 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                         weekIndex++;
                 }
 
-                return scheduleItemRepository.saveAll(result)
-                                .stream().map(this::toDto).toList();
+                scheduleItemRepository.saveAll(result);
+
+                // Notify all students and teachers in the class
+                notifyScheduleChange(clazz.getId(), "Lịch học mới cho khóa " + course.getTitle(),
+                    "Thời khóa biểu cho khóa học " + course.getTitle() + " lớp " + clazz.getClassName() + " đã được tạo.");
+
+                return result.stream().map(this::toDto).toList();
         }
 
         // =========================================================
@@ -138,8 +150,13 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                         week++;
                 }
 
-                return scheduleItemRepository.saveAll(result)
-                                .stream().map(this::toDto).toList();
+                scheduleItemRepository.saveAll(result);
+
+                // Notify all students and teachers in the class
+                notifyScheduleChange(clazz.getId(), "Lịch học mới cho khóa " + course.getTitle(),
+                    "Thời khóa biểu thủ công cho khóa học " + course.getTitle() + " lớp " + clazz.getClassName() + " đã được thiết lập.");
+
+                return result.stream().map(this::toDto).toList();
         }
 
         // =========================================================
@@ -197,7 +214,15 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                 }
 
                 item.setUpdatedAt(LocalDateTime.now());
-                return toDto(scheduleItemRepository.save(item));
+                ScheduleItem saved = scheduleItemRepository.save(item);
+
+                // Notify about single item update
+                Class clazz = saved.getClassCourse().getClazz();
+                Course course = saved.getClassCourse().getCourse();
+                notifyScheduleChange(clazz.getId(), "Cập nhật lịch học: " + course.getTitle(),
+                    "Một buổi học của lớp " + clazz.getClassName() + " vào ngày " + saved.getDate() + " đã được Admin điều chỉnh.");
+
+                return toDto(saved);
         }
 
         @Override
@@ -323,9 +348,15 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                 List<ScheduleItem> savedItems = scheduleItemRepository.saveAll(itemsToSave);
 
                 // Return updated schedule for the week
-                return savedItems.stream()
+                List<ScheduleItemResponseDTO> response = savedItems.stream()
                                 .map(this::toDto)
                                 .toList();
+
+                // Notify about week schedule change
+                notifyScheduleChange(classCourse.getClazz().getId(), "Cập nhật thời khóa biểu tuần học",
+                    "Thời khóa biểu tuần học từ " + req.getWeekStartDate() + " đến " + req.getWeekEndDate() + " của lớp " + classCourse.getClazz().getClassName() + " đã có thay đổi mới.");
+
+                return response;
         }
 
         // =========================================================
@@ -370,5 +401,29 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
         @Transactional(readOnly = true)
         public List<java.time.LocalDate> getScheduledDatesForClass(Long classId, int year, int month) {
                 return scheduleItemRepository.findScheduledDatesByClassAndMonth(classId, year, month);
+        }
+
+        private void notifyScheduleChange(Long classId, String title, String message) {
+                // Students
+                classStudentRepository.findByClassroomId(classId).forEach(enrollment -> {
+                        userNotificationService.sendNotification(
+                                enrollment.getStudent(),
+                                title,
+                                message,
+                                NotificationType.SCHEDULE,
+                                "/student/schedule"
+                        );
+                });
+
+                // Teachers
+                classTeacherRepository.findByClazzId(classId).forEach(assignment -> {
+                        userNotificationService.sendNotification(
+                                assignment.getTeacher(),
+                                title,
+                                message,
+                                NotificationType.SCHEDULE,
+                                "/teacher/schedule"
+                        );
+                });
         }
 }

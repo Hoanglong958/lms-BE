@@ -80,7 +80,7 @@ public class ExamAttemptController {
 
     // ADMIN: Chi tiết theo id
     @GetMapping("/detail")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER','ROLE_USER')")
     public ResponseEntity<ExamAttemptResponseDTO> getById(@RequestParam Long id) {
         try {
             ExamAttemptResponseDTO dto = attemptService.getById(id);
@@ -115,7 +115,7 @@ public class ExamAttemptController {
     // ADMIN hoặc USER: Theo user (qua query param userId) - USER chỉ xem được chính
     // mình
     @GetMapping(params = { "userId", "!examId" })
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER','ROLE_USER')")
     public ResponseEntity<List<ExamAttemptResponseDTO>> getByUser(@RequestParam Long userId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean isAdmin = auth != null && auth.getAuthorities() != null && auth.getAuthorities().stream()
@@ -139,7 +139,7 @@ public class ExamAttemptController {
     // và lọc theo examId
     // USER chỉ xem được chính mình, nếu khác sẽ tự động thay bằng user hiện tại
     @GetMapping(params = { "examId", "userId" })
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER','ROLE_USER')")
     public ResponseEntity<List<ExamAttemptResponseDTO>> getByUserAndExam(@RequestParam Long examId,
             @RequestParam Long userId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

@@ -66,10 +66,16 @@ public class ChatMessageControllerV2 {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "Đếm tin nhắn chưa đọc")
+    @Operation(summary = "Đếm tin nhắn chưa đọc trong phòng")
     @GetMapping("/rooms/{roomId}/unread-count")
     public ResponseEntity<Long> unread(@PathVariable UUID roomId, @RequestParam Long userId) {
         return ResponseEntity.ok(chatMessageService.unreadCount(roomId, userId));
+    }
+
+    @Operation(summary = "Đếm tổng tin nhắn chưa đọc của user")
+    @GetMapping("/unread-count-total")
+    public ResponseEntity<Long> totalUnread(@RequestParam Long userId) {
+        return ResponseEntity.ok(chatMessageService.totalUnreadCount(userId));
     }
 
     @Operation(summary = "Tìm kiếm tin nhắn trong phòng")

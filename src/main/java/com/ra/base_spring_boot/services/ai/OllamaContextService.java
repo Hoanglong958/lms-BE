@@ -329,7 +329,9 @@ public class OllamaContextService {
             } else {
                 for (ClassTeacher ct : teachers) {
                     User teacher = ct.getTeacher();
-                    sb.append(String.format("  + %s (Vai trò: %s)\n", teacher.getFullName() != null ? teacher.getFullName() : teacher.getGmail(), ct.getRole() != null ? ct.getRole().name() : "Không rõ"));
+                    sb.append(String.format("  + Giảng viên: %s | Chức vụ: %s\n", 
+                        teacher.getFullName() != null ? teacher.getFullName() : teacher.getGmail(), 
+                        ct.getRole() != null ? ct.getRole().name() : "Không rõ"));
                 }
             }
         }

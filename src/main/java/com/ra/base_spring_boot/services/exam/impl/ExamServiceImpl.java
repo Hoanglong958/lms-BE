@@ -22,6 +22,8 @@ import com.ra.base_spring_boot.repository.classroom.IClassStudentRepository;
 import com.ra.base_spring_boot.model.constants.PaymentStatus;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.exception.HttpForbiden;
+import com.ra.base_spring_boot.model.constants.NotificationType;
+import com.ra.base_spring_boot.services.notification.IUserNotificationService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -39,6 +41,7 @@ public class ExamServiceImpl implements IExamService {
         private final IRegistrationRepository registrationRepository;
         private final IClassStudentRepository classStudentRepository;
         private final com.ra.base_spring_boot.repository.course.IClassCourseRepository classCourseRepository;
+        private final IUserNotificationService userNotificationService;
 
         private User getCurrentUser() {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -148,6 +151,23 @@ public class ExamServiceImpl implements IExamService {
                 exam.setTotalQuestions(exam.getExamQuestions().size());
 
                 examRepository.save(exam);
+
+                // Notify students
+                NotificationType type = NotificationType.ACADEMIC;
+                String title = "Có bài kiểm tra mới: " + exam.getTitle();
+                String message = "Bạn có một bài kiểm tra mới được gán cho " + 
+                                (exam.getClassId() != null ? "lớp học" : "khóa học") + " của bạn.";
+                String refUrl = "/student/exams";
+
+                if (exam.getClassId() != null) {
+                        classStudentRepository.findByClassroomId(exam.getClassId()).forEach(enrollment -> {
+                                userNotificationService.sendNotification(enrollment.getStudent(), title, message, type, refUrl);
+                        });
+                } else if (exam.getCourseId() != null) {
+                        registrationRepository.findByCourse_IdAndPaymentStatus(exam.getCourseId(), PaymentStatus.PAID).forEach(reg -> {
+                                userNotificationService.sendNotification(reg.getStudent(), title, message, type, refUrl);
+                        });
+                }
 
                 return mapToResponse(exam);
         }

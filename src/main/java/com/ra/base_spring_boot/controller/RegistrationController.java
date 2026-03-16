@@ -72,8 +72,8 @@ public class RegistrationController {
         }
 
         @GetMapping("/all")
-        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-        @Operation(summary = "Admin xem tất cả đăng ký", description = "Danh sách toàn bộ lượt đăng ký trong hệ thống")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_TEACHER')")
+        @Operation(summary = "Admin/Teacher xem tất cả đăng ký", description = "Danh sách toàn bộ lượt đăng ký trong hệ thống")
         public ResponseEntity<?> getAllRegistrations() {
                 List<RegistrationResponseDTO> response = registrationService.getAllRegistrations();
                 return ResponseEntity.ok(

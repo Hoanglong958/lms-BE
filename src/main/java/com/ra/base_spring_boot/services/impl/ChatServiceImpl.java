@@ -3,11 +3,14 @@ package com.ra.base_spring_boot.services.impl;
 import com.ra.base_spring_boot.dto.chatv2.AddMembersRequest;
 import com.ra.base_spring_boot.dto.chatv2.GroupCreateRequest;
 import com.ra.base_spring_boot.dto.chatv2.RenameRequest;
+import com.ra.base_spring_boot.dto.chatv2.ChatRoomResponse;
 import com.ra.base_spring_boot.model.chatv2.*;
+import com.ra.base_spring_boot.repository.chatv2.ChatMessageRepository;
 import com.ra.base_spring_boot.repository.chatv2.ChatRoomMemberRepository;
 import com.ra.base_spring_boot.repository.chatv2.ChatRoomRepository;
 import com.ra.base_spring_boot.services.IChatService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,28 +24,30 @@ public class ChatServiceImpl implements IChatService {
 
     private final ChatRoomRepository roomRepo;
     private final ChatRoomMemberRepository memberRepo;
+    private final ChatMessageRepository messageRepo;
 
     @Override
-    public ChatRoom getOrCreateOneToOne(Long userId1, Long userId2) {
+    public ChatRoomResponse getOrCreateOneToOne(Long userId1, Long userId2) {
         Long uid1 = Objects.requireNonNull(userId1, "userId1 must not be null");
         Long uid2 = Objects.requireNonNull(userId2, "userId2 must not be null");
         if (Objects.equals(uid1, uid2)) {
             throw new IllegalArgumentException("userId1 must be different from userId2");
         }
-        return roomRepo.findOneToOneRoom(uid1, uid2).orElseGet(() -> {
-            ChatRoom room = ChatRoom.builder()
+        ChatRoom room = roomRepo.findOneToOneRoom(uid1, uid2).orElseGet(() -> {
+            ChatRoom newRoom = ChatRoom.builder()
                     .type(ChatRoomType.ONE_TO_ONE)
                     .build();
-            room = roomRepo.save(Objects.requireNonNull(room, "room must not be null"));
-            ChatRoom finalRoom = room;
+            newRoom = roomRepo.save(Objects.requireNonNull(newRoom, "room must not be null"));
+            ChatRoom finalRoom = newRoom;
             memberRepo.save(Objects.requireNonNull(ChatRoomMember.builder().room(finalRoom).userId(uid1).role(ChatMemberRole.USER).build(), "member must not be null"));
             memberRepo.save(Objects.requireNonNull(ChatRoomMember.builder().room(finalRoom).userId(uid2).role(ChatMemberRole.TEACHER).build(), "member must not be null"));
             return finalRoom;
         });
+        return toResponse(room, uid1);
     }
 
     @Override
-    public ChatRoom createGroup(GroupCreateRequest req) {
+    public ChatRoomResponse createGroup(GroupCreateRequest req) {
         Objects.requireNonNull(req, "request must not be null");
         if (req.getCreatedBy() == null) throw new IllegalArgumentException("createdBy is required");
         ChatRoom room = ChatRoom.builder()
@@ -59,7 +64,7 @@ public class ChatServiceImpl implements IChatService {
             ChatMemberRole role = Objects.equals(uid, req.getCreatedBy()) ? ChatMemberRole.TEACHER : ChatMemberRole.USER;
             memberRepo.save(Objects.requireNonNull(ChatRoomMember.builder().room(room).userId(uid).role(role).build(), "member must not be null"));
         }
-        return room;
+        return toResponse(room, req.getCreatedBy());
     }
 
     private void requireTeacher(UUID roomId, Long operatorUserId) {
@@ -110,8 +115,9 @@ public class ChatServiceImpl implements IChatService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ChatRoom> myRooms(Long userId) {
-        return roomRepo.findByMember(Objects.requireNonNull(userId, "userId must not be null"));
+    public List<ChatRoomResponse> myRooms(Long userId) {
+        List<ChatRoom> rooms = roomRepo.findByMember(Objects.requireNonNull(userId, "userId must not be null"));
+        return rooms.stream().map(r -> toResponse(r, userId)).toList();
     }
 
     @Override
@@ -122,7 +128,37 @@ public class ChatServiceImpl implements IChatService {
 
     @Override
     @Transactional(readOnly = true)
-    public ChatRoom getRoom(UUID roomId) {
-        return roomRepo.findById(Objects.requireNonNull(roomId, "roomId must not be null")).orElseThrow();
+    public ChatRoomResponse getRoom(UUID roomId) {
+        ChatRoom room = roomRepo.findById(Objects.requireNonNull(roomId, "roomId must not be null")).orElseThrow();
+        // Since we don't have the current user here easily without SecurityContext, 
+        // and unread count is mostly for lists, we return a response with 0 unread for single room view if needed.
+        // Usually frontend would call unreadCount separately or we get user from security context.
+        return toResponse(room, null); 
+    }
+
+    private ChatRoomResponse toResponse(ChatRoom room, Long userId) {
+        ChatRoomResponse resp = ChatRoomResponse.builder()
+                .id(room.getId())
+                .name(room.getName())
+                .avatar(room.getAvatar())
+                .type(room.getType())
+                .createdBy(room.getCreatedBy())
+                .createdAt(room.getCreatedAt())
+                .members(room.getMembers())
+                .build();
+        
+        if (userId != null) {
+            resp.setUnreadCount(messageRepo.countUnreadByRoomAndUser(room.getId(), userId));
+        }
+        
+        // Get last message - using findByRoom_IdOrderByCreatedAtDesc from ChatMessageRepository
+        List<ChatMessage> lastMsgs = messageRepo.findByRoom_IdOrderByCreatedAtDesc(room.getId(), PageRequest.of(0, 1)).getContent();
+        if (!lastMsgs.isEmpty()) {
+            ChatMessage last = lastMsgs.get(0);
+            resp.setLastMessage(last.getContent());
+            resp.setLastMessageAt(last.getCreatedAt());
+        }
+        
+        return resp;
     }
 }

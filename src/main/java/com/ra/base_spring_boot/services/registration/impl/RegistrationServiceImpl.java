@@ -11,10 +11,12 @@ import com.ra.base_spring_boot.dto.Registration.RegistrationResponseDTO;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.model.constants.PaymentStatus;
+import com.ra.base_spring_boot.model.constants.NotificationType;
 import com.ra.base_spring_boot.repository.classroom.IClassStudentRepository;
 import com.ra.base_spring_boot.repository.course.IClassCourseRepository;
 import com.ra.base_spring_boot.repository.course.ICourseRepository;
 import com.ra.base_spring_boot.repository.registration.IRegistrationRepository;
+import com.ra.base_spring_boot.services.notification.IUserNotificationService;
 import com.ra.base_spring_boot.services.registration.IRegistrationService;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
@@ -46,6 +48,7 @@ public class RegistrationServiceImpl implements IRegistrationService {
     private final ICourseRepository courseRepository;
     private final IClassCourseRepository classCourseRepository;
     private final IClassStudentRepository classStudentRepository;
+    private final IUserNotificationService userNotificationService;
 
     @Override
     @Transactional
@@ -69,6 +72,15 @@ public class RegistrationServiceImpl implements IRegistrationService {
         // Generate unique transfer reference after we have the ID
         registration.setTransferRef("TUITION" + registration.getId());
         registration = registrationRepository.save(registration);
+
+        // Send Notification
+        userNotificationService.sendNotification(
+            student,
+            "Đăng ký khóa học thành công",
+            "Bạn đã đăng ký khóa học " + course.getTitle() + ". Vui lòng thực hiện thanh toán để hoàn tất quá trình vào lớp.",
+            NotificationType.COURSE_REGISTRATION,
+            "/student/registrations"
+        );
 
         return toDto(registration);
     }
@@ -103,6 +115,15 @@ public class RegistrationServiceImpl implements IRegistrationService {
         registration.setPaymentDate(LocalDateTime.now());
         registrationRepository.save(registration);
 
+        // Send Payment Success Notification
+        userNotificationService.sendNotification(
+            registration.getStudent(),
+            "Thanh toán thành công",
+            "Cảm ơn bạn đã thanh toán cho khóa học " + registration.getCourse().getTitle() + ".",
+            NotificationType.PAYMENT,
+            "/student/registrations"
+        );
+
         // Tự động thêm vào lớp học (lấy lớp học đầu tiên được gán cho khóa học này)
         String enrolledClassName = null;
         List<ClassCourse> classCourses = classCourseRepository.findByCourse_Id(registration.getCourse().getId());
@@ -123,6 +144,15 @@ public class RegistrationServiceImpl implements IRegistrationService {
                         .build();
                 classStudentRepository.save(enrollment);
                 enrolledClassName = aClass.getClassName(); // Lưu tên lớp đã thêm
+
+                // Send Class Enrollment Notification
+                userNotificationService.sendNotification(
+                    registration.getStudent(),
+                    "Chào mừng bạn đã vào lớp",
+                    "Bạn đã được thêm vào lớp " + enrolledClassName + " cho khóa học " + registration.getCourse().getTitle() + ".",
+                    NotificationType.ACADEMIC,
+                    "/student/classes"
+                );
             }
         }
 
