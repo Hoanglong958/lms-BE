@@ -148,12 +148,11 @@ public class ClassServiceImpl implements IClassService {
 
         // In-app notification
         userNotificationService.sendNotification(
-            student,
-            "Bạn đã được thêm vào lớp mới",
-            "Bạn đã được quản trị viên thêm vào lớp " + aClass.getClassName() + ".",
-            NotificationType.ACADEMIC,
-            "/student/classes"
-        );
+                student,
+                "Bạn đã được thêm vào lớp mới",
+                "Bạn đã được quản trị viên thêm vào lớp " + aClass.getClassName() + ".",
+                NotificationType.ACADEMIC,
+                "/student/classes");
 
         return toStudentDto(enrollment);
     }
@@ -209,12 +208,11 @@ public class ClassServiceImpl implements IClassService {
 
         // In-app notification for teacher
         userNotificationService.sendNotification(
-            teacher,
-            "Phân công giảng dạy mới",
-            "Bạn đã được phân công giảng dạy cho lớp " + aClass.getClassName() + ".",
-            NotificationType.ACADEMIC,
-            "/teacher/dashboard"
-        );
+                teacher,
+                "Phân công giảng dạy mới",
+                "Bạn đã được phân công giảng dạy cho lớp " + aClass.getClassName() + ".",
+                NotificationType.ACADEMIC,
+                "/teacher/dashboard");
 
         return toTeacherDto(assignment);
     }
@@ -282,12 +280,12 @@ public class ClassServiceImpl implements IClassService {
 
                 // In-app notification for new students
                 userNotificationService.sendNotification(
-                    student,
-                    "Bạn đã được thêm vào lớp học",
-                    "Bạn đã được hệ thống tự động thêm vào lớp " + aClass.getClassName() + " sau khi thanh toán thành công khóa học " + course.getTitle() + ".",
-                    NotificationType.ACADEMIC,
-                    "/student/classes"
-                );
+                        student,
+                        "Bạn đã được thêm vào lớp học",
+                        "Bạn đã được hệ thống tự động thêm vào lớp " + aClass.getClassName()
+                                + " sau khi thanh toán thành công khóa học " + course.getTitle() + ".",
+                        NotificationType.ACADEMIC,
+                        "/student/classes");
             }
         }
 
@@ -309,12 +307,11 @@ public class ClassServiceImpl implements IClassService {
 
             // In-app notification for existing students
             userNotificationService.sendNotification(
-                student,
-                "Khóa học mới trong lớp của bạn",
-                "Lớp " + aClass.getClassName() + " của bạn có khóa học mới: " + course.getTitle() + ".",
-                NotificationType.ACADEMIC,
-                "/student/courses"
-            );
+                    student,
+                    "Khóa học mới trong lớp của bạn",
+                    "Lớp " + aClass.getClassName() + " của bạn có khóa học mới: " + course.getTitle() + ".",
+                    NotificationType.ACADEMIC,
+                    "/student/courses");
         }
 
         return toCourseDto(classCourse);

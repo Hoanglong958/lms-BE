@@ -44,6 +44,10 @@ public class Course {
     @Builder.Default
     private CourseLevel level = CourseLevel.BEGINNER;
 
+    @Column(name = "is_active", columnDefinition = "boolean default true")
+    @Builder.Default
+    private Boolean isActive = true;
+
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

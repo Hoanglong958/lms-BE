@@ -36,6 +36,10 @@ public class Class {
     @Column(name = "schedule_info", length = 255)
     private String scheduleInfo;
 
+    @Column(name = "is_active", columnDefinition = "boolean default true")
+    @Builder.Default
+    private Boolean isActive = true;
+
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
