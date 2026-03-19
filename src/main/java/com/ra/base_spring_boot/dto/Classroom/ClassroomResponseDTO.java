@@ -50,4 +50,7 @@ public class ClassroomResponseDTO {
 
     @Schema(example = "3")
     private Long totalCourses;
+
+    @Schema(example = "true")
+    private Boolean isActive;
 }

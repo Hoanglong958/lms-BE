@@ -11,6 +11,7 @@ public interface ICourseService {
     CourseResponseDTO create(CourseRequestDTO dto);
     CourseResponseDTO update(Long id, CourseRequestDTO dto);
     void delete(Long id);
+    void toggleActive(Long id);
     CourseResponseDTO findById(Long id);
     List<CourseResponseDTO> findAll();
     Page<CourseResponseDTO> findAll(Pageable pageable);

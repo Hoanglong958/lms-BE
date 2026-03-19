@@ -11,6 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -65,20 +68,36 @@ public class CourseServiceImpl implements ICourseService {
     public void delete(Long id) {
         Course course = courseRepository.findById(Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học với id = " + id));
-        courseRepository.delete(java.util.Objects.requireNonNull(course, "course must not be null"));
+        course.setIsActive(false);
+        courseRepository.save(java.util.Objects.requireNonNull(course, "course must not be null"));
+    }
+
+    @Override
+    public void toggleActive(Long id) {
+        Course course = courseRepository.findById(Objects.requireNonNull(id, "id must not be null"))
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học với id = " + id));
+        boolean current = Boolean.TRUE.equals(course.getIsActive());
+        course.setIsActive(!current);
+        courseRepository.save(java.util.Objects.requireNonNull(course, "course must not be null"));
     }
 
     @Override
     public CourseResponseDTO findById(Long id) {
         Course course = courseRepository.findById(Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học với id = " + id));
+        if (!isAdmin() && Boolean.FALSE.equals(course.getIsActive())) {
+            throw new HttpBadRequest("Không tìm thấy khóa học với id = " + id);
+        }
 
         return toDto(course);
     }
 
     @Override
     public List<CourseResponseDTO> findAll() {
-        return courseRepository.findAll()
+        List<Course> courses = isAdmin()
+                ? courseRepository.findAll()
+                : courseRepository.findByIsActive(true);
+        return courses
                 .stream()
                 .map(this::toDto)
                 .toList();
@@ -86,17 +105,20 @@ public class CourseServiceImpl implements ICourseService {
 
     @Override
     public Page<CourseResponseDTO> findAll(Pageable pageable) {
-        return courseRepository.findAll(pageable)
+        Page<Course> page = isAdmin()
+                ? courseRepository.findAll(pageable)
+                : courseRepository.findByIsActive(true, pageable);
+        return page
                 .map(this::toDto);
     }
 
     @Override
     public Page<CourseResponseDTO> search(String keyword, Pageable pageable) {
         String kw = keyword == null ? "" : keyword.trim();
-
-        return courseRepository
-                .findByTitleContainingIgnoreCase(kw, pageable)
-                .map(this::toDto);
+        Page<Course> page = isAdmin()
+                ? courseRepository.findByTitleContainingIgnoreCase(kw, pageable)
+                : courseRepository.findByTitleContainingIgnoreCaseAndIsActive(kw, true, pageable);
+        return page.map(this::toDto);
     }
 
     // =========================== HELPER METHODS ===============================
@@ -112,7 +134,15 @@ public class CourseServiceImpl implements ICourseService {
                 .tuitionFee(course.getTuitionFee())
                 .createdAt(course.getCreatedAt())
                 .updatedAt(course.getUpdatedAt())
+                .isActive(Boolean.TRUE.equals(course.getIsActive()))
                 .build();
+    }
+
+    private boolean isAdmin() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getAuthorities() != null && auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
     }
 
     private CourseLevel parseLevel(String rawLevel) {

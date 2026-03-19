@@ -9,6 +9,9 @@ import java.time.LocalDateTime;
 
 public interface IClassRepository extends JpaRepository<Class, Long> {
     Page<Class> findByClassNameContainingIgnoreCase(String keyword, Pageable pageable);
+    Page<Class> findByClassNameContainingIgnoreCaseAndIsActive(String keyword, boolean isActive, Pageable pageable);
+    Page<Class> findByIsActive(boolean isActive, Pageable pageable);
+    java.util.List<Class> findByIsActive(boolean isActive);
     long countByCreatedAtAfter(LocalDateTime sinceMonth);
 }
 

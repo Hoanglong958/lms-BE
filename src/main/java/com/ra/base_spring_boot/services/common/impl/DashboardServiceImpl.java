@@ -131,6 +131,7 @@ public class DashboardServiceImpl implements IDashboardService {
                                                 .description(c.getDescription())
                                                 .level(c.getLevel().name()) // convert enum -> String
                                                 .createdAt(c.getCreatedAt())
+                                                .isActive(Boolean.TRUE.equals(c.getIsActive()))
                                                 .build())
                                 .toList();
 
@@ -261,6 +262,7 @@ public class DashboardServiceImpl implements IDashboardService {
                                                 .description(c.getDescription())
                                                 .level(c.getLevel().name()) // chuyển enum sang String
                                                 .createdAt(c.getCreatedAt())
+                                                .isActive(Boolean.TRUE.equals(c.getIsActive()))
                                                 .build())
                                 .toList();
         }

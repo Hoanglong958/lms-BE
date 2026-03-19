@@ -37,4 +37,7 @@ public class CourseResponseDTO {
 
     @Schema(example = "1000000.00")
     private BigDecimal tuitionFee;
+
+    @Schema(example = "true")
+    private Boolean isActive;
 }

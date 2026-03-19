@@ -13,6 +13,7 @@ public interface IClassService {
     ClassroomResponseDTO update(Long id, ClassroomRequestDTO dto);
 
     void delete(Long id);
+    void toggleActive(Long id);
 
     ClassroomResponseDTO findById(Long id);
 

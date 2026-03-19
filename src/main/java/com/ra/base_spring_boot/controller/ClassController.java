@@ -54,6 +54,14 @@ public class ClassController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/{id}/toggle-active")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Ẩn/hiện lớp học")
+    public ResponseEntity<Void> toggleActive(@PathVariable Long id) {
+        classroomService.toggleActive(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/detail")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER','ROLE_USER')")
     @Operation(summary = "Chi tiết lớp học")

@@ -80,6 +80,14 @@ public class CourseController {
                 return ResponseEntity.noContent().build();
         }
 
+        @PatchMapping("/{id}/toggle-active")
+        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+        @Operation(summary = "Ẩn/hiện khóa học", description = "ADMIN được phép ẩn/hiện khóa học")
+        public ResponseEntity<Void> toggleActive(@Parameter(description = "Mã khóa học") @PathVariable Long id) {
+                courseService.toggleActive(id);
+                return ResponseEntity.noContent().build();
+        }
+
         @GetMapping("/detail")
         @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER', 'ROLE_TEACHER')")
         @Operation(summary = "Lấy chi tiết khóa học", description = "Trả về thông tin khóa học theo ID")

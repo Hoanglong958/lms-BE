@@ -19,6 +19,9 @@ import com.ra.base_spring_boot.services.notification.IUserNotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,33 +79,55 @@ public class ClassServiceImpl implements IClassService {
     @Override
     public void delete(Long id) {
         Class aClass = getClassroom(Objects.requireNonNull(id, "id must not be null"));
-        classroomRepository.delete(Objects.requireNonNull(aClass, "class must not be null"));
+        aClass.setIsActive(false);
+        classroomRepository.save(Objects.requireNonNull(aClass, "class must not be null"));
+    }
+
+    @Override
+    public void toggleActive(Long id) {
+        Class aClass = getClassroom(Objects.requireNonNull(id, "id must not be null"));
+        boolean current = Boolean.TRUE.equals(aClass.getIsActive());
+        aClass.setIsActive(!current);
+        classroomRepository.save(Objects.requireNonNull(aClass, "class must not be null"));
     }
 
     @Override
     public ClassroomResponseDTO findById(Long id) {
-        return toClassroomDto(getClassroom(Objects.requireNonNull(id, "id must not be null")));
+        Class aClass = getClassroom(Objects.requireNonNull(id, "id must not be null"));
+        if (!isAdmin() && Boolean.FALSE.equals(aClass.getIsActive())) {
+            throw new HttpBadRequest("Không tìm thấy lớp học với id = " + id);
+        }
+        return toClassroomDto(aClass);
     }
 
     @Override
     public List<ClassroomResponseDTO> findAll() {
-        return classroomRepository.findAll().stream()
+        List<Class> classes = isAdmin()
+                ? classroomRepository.findAll()
+                : classroomRepository.findByIsActive(true);
+        return classes.stream()
                 .map(this::toClassroomDto)
                 .toList();
     }
 
     @Override
     public Page<ClassroomResponseDTO> findAll(Pageable pageable) {
-        return classroomRepository.findAll(Objects.requireNonNull(pageable, "pageable must not be null"))
+        Pageable safePageable = Objects.requireNonNull(pageable, "pageable must not be null");
+        Page<Class> page = isAdmin()
+                ? classroomRepository.findAll(safePageable)
+                : classroomRepository.findByIsActive(true, safePageable);
+        return page
                 .map(this::toClassroomDto);
     }
 
     @Override
     public Page<ClassroomResponseDTO> search(String keyword, Pageable pageable) {
         String kw = keyword == null ? "" : keyword.trim();
-        return classroomRepository
-                .findByClassNameContainingIgnoreCase(kw, Objects.requireNonNull(pageable, "pageable must not be null"))
-                .map(this::toClassroomDto);
+        Pageable safePageable = Objects.requireNonNull(pageable, "pageable must not be null");
+        Page<Class> page = isAdmin()
+                ? classroomRepository.findByClassNameContainingIgnoreCase(kw, safePageable)
+                : classroomRepository.findByClassNameContainingIgnoreCaseAndIsActive(kw, true, safePageable);
+        return page.map(this::toClassroomDto);
     }
 
     @Override
@@ -180,6 +205,7 @@ public class ClassServiceImpl implements IClassService {
         return classStudentRepository
                 .findByStudentIdWithRelations(Objects.requireNonNull(studentId, "studentId must not be null"))
                 .stream()
+                .filter(cs -> Boolean.TRUE.equals(cs.getClassroom().getIsActive()))
                 .map(this::toStudentDto)
                 .toList();
     }
@@ -375,7 +401,9 @@ public class ClassServiceImpl implements IClassService {
     public List<ClassroomResponseDTO> findClassesByTeacher(Long teacherId) {
         List<ClassTeacher> assignments = classTeacherRepository.findByTeacherId(teacherId);
         return assignments.stream()
-                .map(ct -> toClassroomDto(ct.getClazz()))
+                .map(ClassTeacher::getClazz)
+                .filter(c -> Boolean.TRUE.equals(c.getIsActive()))
+                .map(this::toClassroomDto)
                 .toList();
     }
 
@@ -406,7 +434,15 @@ public class ClassServiceImpl implements IClassService {
                 .totalStudents(studentCount)
                 .totalTeachers(teacherCount)
                 .totalCourses(courseCount)
+                .isActive(Boolean.TRUE.equals(aClass.getIsActive()))
                 .build();
+    }
+
+    private boolean isAdmin() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getAuthorities() != null && auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
     }
 
     private ClassStatus calculateStatus(Class aClass) {
