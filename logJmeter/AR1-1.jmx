@@ -95,3 +95,5 @@ timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success
 1773864597947,46,Get All Registrations,200,,Admin - Registration Management 1-1,text,true,,1743,368,1,1,http://localhost:3900/api/v1/registrations/all,46,0,1
 1773864622092,37,Get All Registrations,200,,Admin - Registration Management 9-1,text,true,,1743,368,1,14,http://localhost:3900/api/v1/registrations/all,37,0,1
 1773865032480,9,Get All Registrations,200,,Admin - Registration Management 9-1,text,true,,1743,368,1,14,http://localhost:3900/api/v1/registrations/all,9,0,0
+1773909052613,511,Get All Registrations,401,,Admin - Registration Management 9-1,text,false,,630,198,1,29,http://localhost:3900/api/v1/registrations/all,469,0,31
+1773909141468,28,Get All Registrations,200,,Admin - Registration Management 9-1,text,true,,1743,368,1,12,http://localhost:3900/api/v1/registrations/all,27,0,1

@@ -53,3 +53,15 @@ timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success
 1773865034140,382,Create Question,201,,Admin - Question Management 12-2,text,true,,694,604,2,33,http://localhost:3900/api/v1/questions,382,0,0
 1773865034539,105,Create Question,201,,Admin - Question Management 12-3,text,true,,695,604,1,30,http://localhost:3900/api/v1/questions,105,0,0
 1773865035104,223,Create Question,201,,Admin - Question Management 12-3,text,true,,694,604,1,27,http://localhost:3900/api/v1/questions,222,0,0
+1773909053164,67,Create Question,401,,Admin - Question Management 12-1,text,false,,622,434,1,27,http://localhost:3900/api/v1/questions,67,0,0
+1773909053271,29,Create Question,401,,Admin - Question Management 12-1,text,false,,622,434,1,19,http://localhost:3900/api/v1/questions,28,0,0
+1773909053378,7,Create Question,401,,Admin - Question Management 12-2,text,false,,622,434,1,10,http://localhost:3900/api/v1/questions,7,0,0
+1773909053391,6,Create Question,401,,Admin - Question Management 12-2,text,false,,622,434,1,10,http://localhost:3900/api/v1/questions,6,0,0
+1773909054369,2,Create Question,401,,Admin - Question Management 12-3,text,false,,622,434,1,12,http://localhost:3900/api/v1/questions,2,0,0
+1773909054374,2,Create Question,401,,Admin - Question Management 12-3,text,false,,622,434,1,12,http://localhost:3900/api/v1/questions,2,0,0
+1773909141693,44,Create Question,201,,Admin - Question Management 12-1,text,true,,695,604,1,15,http://localhost:3900/api/v1/questions,44,0,0
+1773909141782,23,Create Question,201,,Admin - Question Management 12-1,text,true,,695,604,1,16,http://localhost:3900/api/v1/questions,23,0,0
+1773909145737,4327,Create Question,201,,Admin - Question Management 12-3,text,true,,695,604,2,68,http://localhost:3900/api/v1/questions,4327,0,0
+1773909146256,5420,Create Question,201,,Admin - Question Management 12-2,text,true,,695,604,2,70,http://localhost:3900/api/v1/questions,5420,0,0
+1773909155083,6181,Create Question,201,,Admin - Question Management 12-3,text,true,,695,604,2,86,http://localhost:3900/api/v1/questions,6181,0,0
+1773909155161,10019,Create Question,201,,Admin - Question Management 12-2,text,true,,695,604,1,90,http://localhost:3900/api/v1/questions,10019,0,0
