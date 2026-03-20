@@ -8,6 +8,7 @@ public class ExamAttemptResponseDTO {
     private Long id;
     private Long examId;
     private Long userId;
+    private String examTitle;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private Double score;

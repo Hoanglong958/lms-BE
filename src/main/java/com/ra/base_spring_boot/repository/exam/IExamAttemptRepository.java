@@ -14,6 +14,10 @@ public interface IExamAttemptRepository extends JpaRepository<ExamAttempt, Long>
 
     List<ExamAttempt> findByUser_Id(Long userId);
 
+    List<ExamAttempt> findTop20ByUser_IdOrderByStartTimeDesc(Long userId);
+
+    List<ExamAttempt> findTop20ByUser_IdAndExam_TitleContainingIgnoreCaseOrderByStartTimeDesc(Long userId, String title);
+
     Optional<ExamAttempt> findTopByExam_IdAndUser_IdOrderByAttemptNumberDesc(Long examId, Long userId);
 
     Optional<ExamAttempt> findTopByExam_IdAndUser_IdAndStatus(Long examId, Long userId,

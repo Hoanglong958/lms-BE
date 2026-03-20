@@ -164,4 +164,29 @@ public class ExamAttemptController {
                 .toList();
         return ResponseEntity.ok(list);
     }
+
+    @GetMapping("/search")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER','ROLE_USER')")
+    public ResponseEntity<List<ExamAttemptResponseDTO>> search(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Long userId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = auth != null && auth.getAuthorities() != null && auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
+
+        Long effectiveUserId = userId;
+
+        if (!isAdmin || effectiveUserId == null) {
+            String gmail = auth != null ? auth.getName() : null;
+            if (gmail == null || gmail.isBlank()) {
+                return ResponseEntity.status(403).build();
+            }
+            User current = userRepository.findByGmailIgnoreCase(gmail)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng hiện tại"));
+            effectiveUserId = current.getId();
+        }
+
+        return ResponseEntity.ok(attemptService.search(effectiveUserId, q));
+    }
 }

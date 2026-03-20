@@ -32,6 +32,9 @@ public interface IExamAttemptService {
     // Get theo user
     List<ExamAttemptResponseDTO> getByUser(Long userId);
 
+    // Tìm kiếm lịch sử theo từ khóa (tên kỳ thi)
+    List<ExamAttemptResponseDTO> search(Long userId, String keyword);
+
     // Xóa attempt
     void delete(Long id);
 

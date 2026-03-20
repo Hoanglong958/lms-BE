@@ -2,10 +2,12 @@ package com.ra.base_spring_boot.services.ai;
 
 import com.ra.base_spring_boot.model.Assignment;
 import com.ra.base_spring_boot.model.Exam;
+import com.ra.base_spring_boot.model.ExamAttempt;
 import com.ra.base_spring_boot.model.LessonDocument;
 import com.ra.base_spring_boot.model.constants.ExamStatus;
 import com.ra.base_spring_boot.repository.common.IAssignmentRepository;
 import com.ra.base_spring_boot.repository.course.ILessonDocumentRepository;
+import com.ra.base_spring_boot.repository.exam.IExamAttemptRepository;
 import com.ra.base_spring_boot.repository.exam.IExamRepository;
 import com.ra.base_spring_boot.repository.classroom.IClassStudentRepository;
 import com.ra.base_spring_boot.repository.classroom.IClassTeacherRepository;
@@ -40,6 +42,7 @@ public class OllamaContextService {
 
     private final IAssignmentRepository assignmentRepository;
     private final IExamRepository examRepository;
+    private final IExamAttemptRepository examAttemptRepository;
     private final ILessonDocumentRepository lessonDocumentRepository;
     private final IClassStudentRepository classStudentRepository;
     private final IClassTeacherRepository classTeacherRepository;
@@ -189,9 +192,54 @@ public class OllamaContextService {
             }
         }
 
+        String attemptContext = buildExamAttemptContext(user);
+
         if (count == 0) {
             String roleStr = (user != null && user.getRole() == RoleName.ROLE_TEACHER) ? "giảng dạy" : "theo học";
-            return String.format("Hiện tại hệ thống không thấy kỳ thi nào sắp diễn ra (trong 30 ngày tới) cho các lớp bạn %s.", roleStr);
+            String baseMessage = String.format("Hiện tại hệ thống không thấy kỳ thi nào sắp diễn ra (trong 30 ngày tới) cho các lớp bạn %s.", roleStr);
+            if (!attemptContext.isBlank()) {
+                return baseMessage + "\n\n" + attemptContext;
+            }
+            return baseMessage;
+        }
+
+        if (!attemptContext.isBlank()) {
+            sb.append("\n").append(attemptContext);
+        }
+
+        return sb.toString();
+    }
+
+    private String buildExamAttemptContext(User user) {
+        if (user == null) {
+            return "";
+        }
+
+        List<ExamAttempt> recentAttempts = examAttemptRepository.findTop5ByUser_IdOrderByStartTimeDesc(user.getId());
+        if (recentAttempts.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("LỊCH SỬ CÁC KỲ THI/BÀI KIỂM TRA BẠN ĐÃ THAM GIA:\n");
+
+        for (ExamAttempt attempt : recentAttempts) {
+            Exam exam = attempt.getExam();
+            String examTitle = exam != null && exam.getTitle() != null ? exam.getTitle() : "Không rõ";
+            int attemptNumber = attempt.getAttemptNumber() != null ? attempt.getAttemptNumber() : 1;
+            String status = attempt.getStatus() != null ? attempt.getStatus().name() : "Chưa rõ";
+            String scoreDisplay = attempt.getScore() != null ? String.format("%.1f", attempt.getScore()) : "Chưa chấm";
+            String maxScore = exam != null && exam.getMaxScore() != null ? exam.getMaxScore().toString() : "100";
+            String startTime = attempt.getStartTime() != null ? attempt.getStartTime().format(VIET_DATE_FORMAT) : "Chưa xác định";
+
+            sb.append(String.format(
+                    "- \"%s\" | Lượt: %d | Trạng thái: %s | Điểm: %s/%s | Bắt đầu: %s\n",
+                    examTitle,
+                    attemptNumber,
+                    status,
+                    scoreDisplay,
+                    maxScore,
+                    startTime));
         }
 
         return sb.toString();

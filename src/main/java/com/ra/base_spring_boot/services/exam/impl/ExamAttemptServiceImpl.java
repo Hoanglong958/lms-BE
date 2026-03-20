@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import com.ra.base_spring_boot.exception.HttpForbiden;
 import com.ra.base_spring_boot.model.constants.RoleName;
 
@@ -33,6 +34,7 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
     private final IExamAnswerRepository examAnswerRepository;
     private final ModelMapper modelMapper;
 
+    private static final int SEARCH_LIMIT = 20;
     // =====================================================================
     @Override
     @Transactional
@@ -212,36 +214,40 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
     // =====================================================================
     @Override
     public List<ExamAttemptResponseDTO> getAll() {
-        return attemptRepository.findAll()
-                .stream()
-                .map(this::toDTO)
-                .toList();
+        return mapToDTO(attemptRepository.findAll());
     }
 
     // =====================================================================
     @Override
     public List<ExamAttemptResponseDTO> getByExam(Long examId) {
-        // Thay thế: Kiểm tra null thủ công
         if (examId == null) {
             throw new IllegalArgumentException("examId must not be null");
         }
-        return attemptRepository.findByExam_Id(examId)
-                .stream()
-                .map(this::toDTO)
-                .toList();
+        return mapToDTO(attemptRepository.findByExam_Id(examId));
     }
 
     // =====================================================================
     @Override
     public List<ExamAttemptResponseDTO> getByUser(Long userId) {
-        // Thay thế: Kiểm tra null thủ công
         if (userId == null) {
             throw new IllegalArgumentException("userId must not be null");
         }
-        return attemptRepository.findByUser_Id(userId)
-                .stream()
-                .map(this::toDTO)
-                .toList();
+        return mapToDTO(attemptRepository.findByUser_Id(userId));
+    }
+
+    @Override
+    public List<ExamAttemptResponseDTO> search(Long userId, String keyword) {
+        if (userId == null) {
+            throw new IllegalArgumentException("userId must not be null");
+        }
+        String term = keyword != null ? keyword.trim() : "";
+        List<ExamAttempt> attempts;
+        if (StringUtils.hasText(term)) {
+            attempts = attemptRepository.findTop20ByUser_IdAndExam_TitleContainingIgnoreCaseOrderByStartTimeDesc(userId, term);
+        } else {
+            attempts = attemptRepository.findTop20ByUser_IdOrderByStartTimeDesc(userId);
+        }
+        return mapToDTO(attempts);
     }
 
     // =====================================================================
@@ -272,9 +278,18 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
     // =====================================================================
     private ExamAttemptResponseDTO toDTO(ExamAttempt entity) {
         ExamAttemptResponseDTO dto = modelMapper.map(entity, ExamAttemptResponseDTO.class);
-        dto.setExamId(entity.getExam().getId());
-        dto.setUserId(entity.getUser().getId());
+        if (entity.getExam() != null) {
+            dto.setExamId(entity.getExam().getId());
+            dto.setExamTitle(entity.getExam().getTitle());
+        }
+        if (entity.getUser() != null) {
+            dto.setUserId(entity.getUser().getId());
+        }
         dto.setStatus(entity.getStatus().name());
         return dto;
+    }
+
+    private List<ExamAttemptResponseDTO> mapToDTO(List<ExamAttempt> attempts) {
+        return attempts.stream().map(this::toDTO).toList();
     }
 }
