@@ -60,7 +60,7 @@ public class ScheduleItemController {
         // 3) Lấy toàn bộ lịch của khóa học (ADMIN / REPORT)
         // ===================================================================
         @GetMapping("/course/{courseId}")
-        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER','ROLE_TEACHER')")
         @Operation(summary = "Lấy thời khóa biểu theo course", description = "Dùng cho admin / thống kê")
         public ResponseEntity<List<ScheduleItemResponseDTO>> getScheduleByCourse(
                         @Parameter(description = "Mã khóa học") @PathVariable Long courseId) {
@@ -84,7 +84,7 @@ public class ScheduleItemController {
         // 4) LẤY LỊCH THEO CLASS_COURSE (API CHUẨN CHO FE)
         // ===================================================================
         @GetMapping("/class-course/{classCourseId}/schedule")
-        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER','ROLE_TEACHER')")
         @Operation(summary = "Lấy thời khóa biểu theo class_course", description = "API chuẩn: 1 lớp + 1 khóa học")
         public ResponseEntity<ClassScheduleResponseDTO> getScheduleByClassCourse(
                         @Parameter(description = "Mã class_course") @PathVariable Long classCourseId) {

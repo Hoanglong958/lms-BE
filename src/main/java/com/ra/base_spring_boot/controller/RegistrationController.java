@@ -97,6 +97,34 @@ public class RegistrationController {
                                                 .build());
         }
 
+        @PatchMapping("/{id}/cancel")
+        @PreAuthorize("hasAuthority('ROLE_USER')")
+        @Operation(summary = "Sinh viên hủy đăng ký", description = "Chuyển trạng thái sang CANCELLED nếu đang ở PENDING")
+        public ResponseEntity<?> cancelRegistration(
+                        @AuthenticationPrincipal MyUserDetails userDetails,
+                        @PathVariable Long id) {
+                RegistrationResponseDTO response = registrationService.cancelRegistration(id, userDetails.getUser());
+                return ResponseEntity.ok(
+                                ResponseWrapper.builder()
+                                                .status(HttpStatus.OK)
+                                                .code(200)
+                                                .data(response)
+                                                .build());
+        }
+
+        @PatchMapping("/bulk-confirm")
+        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+        @Operation(summary = "Admin xác nhận thanh toán hàng loạt", description = "Chuyển trạng thái sang PAID cho nhiều bản ghi")
+        public ResponseEntity<?> confirmBulkPayment(@RequestBody List<Long> ids) {
+                List<RegistrationResponseDTO> response = registrationService.confirmBulkPayment(ids);
+                return ResponseEntity.ok(
+                                ResponseWrapper.builder()
+                                                .status(HttpStatus.OK)
+                                                .code(200)
+                                                .data(response)
+                                                .build());
+        }
+
         @GetMapping("/bank-info")
         @PreAuthorize("isAuthenticated()")
         @Operation(summary = "Lấy thông tin ngân hàng để thanh toán")

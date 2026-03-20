@@ -97,3 +97,5 @@ timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success
 1773865032489,8,Confirm Registration,400,,Admin - Registration Management 9-1,text,false,,504,403,1,14,http://localhost:3900/api/v1/registrations/3/confirm-payment,7,0,0
 1773909053164,45,Confirm Registration,401,,Admin - Registration Management 9-1,text,false,,644,233,1,29,http://localhost:3900/api/v1/registrations/3/confirm-payment,45,0,0
 1773909141496,20,Confirm Registration,400,,Admin - Registration Management 9-1,text,false,,504,403,1,13,http://localhost:3900/api/v1/registrations/3/confirm-payment,19,0,0
+1773977715959,33,Confirm Registration,401,,Admin - Registration Management 9-1,text,false,,644,233,1,20,http://localhost:3900/api/v1/registrations/3/confirm-payment,33,0,0
+1773977791487,19,Confirm Registration,400,,Admin - Registration Management 9-1,text,false,,504,403,1,14,http://localhost:3900/api/v1/registrations/3/confirm-payment,19,0,0

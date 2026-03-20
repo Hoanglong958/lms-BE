@@ -56,7 +56,8 @@ public class RegistrationServiceImpl implements IRegistrationService {
         Course course = courseRepository.findById(dto.getCourseId())
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học!"));
 
-        if (registrationRepository.findByStudent_IdAndCourse_Id(student.getId(), course.getId()).isPresent()) {
+        if (registrationRepository.findByStudent_IdAndCourse_Id(student.getId(), course.getId()).stream()
+                .anyMatch(r -> r.getPaymentStatus() != PaymentStatus.CANCELLED)) {
             throw new HttpBadRequest("Bạn đã đăng ký khóa học này rồi!");
         }
 
@@ -157,6 +158,43 @@ public class RegistrationServiceImpl implements IRegistrationService {
         }
 
         return toDto(registration, enrolledClassName);
+    }
+
+    @Override
+    @Transactional
+    public RegistrationResponseDTO cancelRegistration(Long registrationId, User student) {
+        Registration registration = registrationRepository.findById(registrationId)
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy bản ghi đăng ký!"));
+
+        if (!registration.getStudent().getId().equals(student.getId())) {
+            throw new HttpBadRequest("Bạn không có quyền hủy đăng ký này!");
+        }
+
+        if (registration.getPaymentStatus() != PaymentStatus.PENDING) {
+            throw new HttpBadRequest("Chỉ có thể hủy đăng ký khi đang ở trạng thái chờ thanh toán!");
+        }
+
+        registration.setPaymentStatus(PaymentStatus.CANCELLED);
+        registrationRepository.save(registration);
+
+        // Send Cancellation Notification
+        userNotificationService.sendNotification(
+            student,
+            "Hủy đăng ký thành công",
+            "Bạn đã hủy đăng ký khóa học " + registration.getCourse().getTitle() + ".",
+            NotificationType.COURSE_REGISTRATION,
+            "/student/registrations"
+        );
+
+        return toDto(registration);
+    }
+
+    @Override
+    @Transactional
+    public List<RegistrationResponseDTO> confirmBulkPayment(List<Long> registrationIds) {
+        return registrationIds.stream()
+                .map(this::confirmPayment)
+                .collect(Collectors.toList());
     }
 
     @Override

@@ -14,6 +14,10 @@ public interface IRegistrationService {
     List<RegistrationResponseDTO> getAllRegistrations();
 
     RegistrationResponseDTO confirmPayment(Long registrationId);
+    
+    RegistrationResponseDTO cancelRegistration(Long registrationId, User student);
+    
+    List<RegistrationResponseDTO> confirmBulkPayment(List<Long> registrationIds);
 
     byte[] exportToExcel();
 
