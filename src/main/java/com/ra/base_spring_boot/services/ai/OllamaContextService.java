@@ -1,37 +1,39 @@
 package com.ra.base_spring_boot.services.ai;
 
-import com.ra.base_spring_boot.model.Assignment;
-import com.ra.base_spring_boot.model.Exam;
-import com.ra.base_spring_boot.model.ExamAttempt;
-import com.ra.base_spring_boot.model.LessonDocument;
-import com.ra.base_spring_boot.model.constants.ExamStatus;
-import com.ra.base_spring_boot.repository.common.IAssignmentRepository;
-import com.ra.base_spring_boot.repository.course.ILessonDocumentRepository;
-import com.ra.base_spring_boot.repository.exam.IExamAttemptRepository;
-import com.ra.base_spring_boot.repository.exam.IExamRepository;
-import com.ra.base_spring_boot.repository.classroom.IClassStudentRepository;
-import com.ra.base_spring_boot.repository.classroom.IClassTeacherRepository;
-import com.ra.base_spring_boot.repository.classroom.IClassRepository;
-import com.ra.base_spring_boot.repository.course.IClassCourseRepository;
-import com.ra.base_spring_boot.repository.course.ISessionRepository;
-import com.ra.base_spring_boot.model.ClassStudent;
-import com.ra.base_spring_boot.model.ClassTeacher;
-import com.ra.base_spring_boot.model.ClassCourse;
-import com.ra.base_spring_boot.model.Session;
-import com.ra.base_spring_boot.model.User;
-import com.ra.base_spring_boot.model.constants.RoleName;
-import com.ra.base_spring_boot.security.principle.MyUserDetails;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.stream.Collectors;
+import com.ra.base_spring_boot.model.Assignment;
+import com.ra.base_spring_boot.model.ClassCourse;
+import com.ra.base_spring_boot.model.ClassStudent;
+import com.ra.base_spring_boot.model.ClassTeacher;
+import com.ra.base_spring_boot.model.Exam;
+import com.ra.base_spring_boot.model.ExamAttempt;
+import com.ra.base_spring_boot.model.LessonDocument;
+import com.ra.base_spring_boot.model.Session;
+import com.ra.base_spring_boot.model.User;
+import com.ra.base_spring_boot.model.constants.ExamStatus;
+import com.ra.base_spring_boot.model.constants.RoleName;
+import com.ra.base_spring_boot.repository.classroom.IClassRepository;
+import com.ra.base_spring_boot.repository.classroom.IClassStudentRepository;
+import com.ra.base_spring_boot.repository.classroom.IClassTeacherRepository;
+import com.ra.base_spring_boot.repository.common.IAssignmentRepository;
+import com.ra.base_spring_boot.repository.course.IClassCourseRepository;
+import com.ra.base_spring_boot.repository.course.ILessonDocumentRepository;
+import com.ra.base_spring_boot.repository.course.ISessionRepository;
+import com.ra.base_spring_boot.repository.exam.IExamAttemptRepository;
+import com.ra.base_spring_boot.repository.exam.IExamRepository;
+import com.ra.base_spring_boot.security.principle.MyUserDetails;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * Service lấy context dữ liệu từ DB để cung cấp cho Ollama AI.
@@ -215,7 +217,10 @@ public class OllamaContextService {
             return "";
         }
 
-        List<ExamAttempt> recentAttempts = examAttemptRepository.findTop5ByUser_IdOrderByStartTimeDesc(user.getId());
+        // Fetch top 20 attempts and limit to 5 in the logic
+        List<ExamAttempt> recentAttempts = examAttemptRepository.findTop20ByUser_IdOrderByStartTimeDesc(user.getId());
+        recentAttempts = recentAttempts.stream().limit(5).collect(Collectors.toList());
+
         if (recentAttempts.isEmpty()) {
             return "";
         }
