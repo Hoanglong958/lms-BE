@@ -102,7 +102,8 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
 
                 // Notify all students and teachers in the class
                 notifyScheduleChange(clazz.getId(), "Lịch học mới cho khóa " + course.getTitle(),
-                    "Thời khóa biểu cho khóa học " + course.getTitle() + " lớp " + clazz.getClassName() + " đã được tạo.");
+                    "Thời khóa biểu cho khóa học " + course.getTitle() + " lớp " + clazz.getClassName() + " đã được tạo.", 
+                    clazz.getStartDate());
 
                 return result.stream().map(this::toDto).toList();
         }
@@ -154,7 +155,8 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
 
                 // Notify all students and teachers in the class
                 notifyScheduleChange(clazz.getId(), "Lịch học mới cho khóa " + course.getTitle(),
-                    "Thời khóa biểu thủ công cho khóa học " + course.getTitle() + " lớp " + clazz.getClassName() + " đã được thiết lập.");
+                    "Thời khóa biểu thủ công cho khóa học " + course.getTitle() + " lớp " + clazz.getClassName() + " đã được thiết lập.",
+                    clazz.getStartDate());
 
                 return result.stream().map(this::toDto).toList();
         }
@@ -220,7 +222,8 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                 Class clazz = saved.getClassCourse().getClazz();
                 Course course = saved.getClassCourse().getCourse();
                 notifyScheduleChange(clazz.getId(), "Cập nhật lịch học: " + course.getTitle(),
-                    "Một buổi học của lớp " + clazz.getClassName() + " vào ngày " + saved.getDate() + " đã được Admin điều chỉnh.");
+                    "Một buổi học của lớp " + clazz.getClassName() + " vào ngày " + saved.getDate() + " đã được Admin điều chỉnh.",
+                    saved.getDate());
 
                 return toDto(saved);
         }
@@ -270,9 +273,9 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                                 .findByClassCourse_IdOrderBySessionNumber(req.getClassCourseId())
                                 .stream()
                                 .filter(item -> {
-                                        LocalDate itemDate = item.getDate();
-                                        return !itemDate.isBefore(req.getWeekStartDate())
-                                                        && !itemDate.isAfter(req.getWeekEndDate());
+                                         LocalDate itemDate = item.getDate();
+                                         return !itemDate.isBefore(req.getWeekStartDate())
+                                                         && !itemDate.isAfter(req.getWeekEndDate());
                                 })
                                 .toList();
 
@@ -354,7 +357,8 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
 
                 // Notify about week schedule change
                 notifyScheduleChange(classCourse.getClazz().getId(), "Cập nhật thời khóa biểu tuần học",
-                    "Thời khóa biểu tuần học từ " + req.getWeekStartDate() + " đến " + req.getWeekEndDate() + " của lớp " + classCourse.getClazz().getClassName() + " đã có thay đổi mới.");
+                    "Thời khóa biểu tuần học từ " + req.getWeekStartDate() + " đến " + req.getWeekEndDate() + " của lớp " + classCourse.getClazz().getClassName() + " đã có thay đổi mới.",
+                    req.getWeekStartDate());
 
                 return response;
         }
@@ -403,7 +407,19 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                 return scheduleItemRepository.findScheduledDatesByClassAndMonth(classId, year, month);
         }
 
-        private void notifyScheduleChange(Long classId, String title, String message) {
+        private void notifyScheduleChange(Long classId, String title, String message, java.time.LocalDate date) {
+                if (classId == null) {
+                        return;
+                }
+                String studentRef = "/classes/" + classId + "/calendar";
+                if (date != null) {
+                        studentRef += "?date=" + date.toString();
+                }
+                String teacherRef = "/teacher/classes/" + classId;
+                
+                final String finalStudentRef = studentRef;
+                final String finalTeacherRef = teacherRef;
+
                 // Students
                 classStudentRepository.findByClassroomId(classId).forEach(enrollment -> {
                         userNotificationService.sendNotification(
@@ -411,7 +427,7 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                                 title,
                                 message,
                                 NotificationType.SCHEDULE,
-                                "/student/schedule"
+                                finalStudentRef
                         );
                 });
 
@@ -422,7 +438,7 @@ public class ScheduleItemServiceImpl implements IScheduleItemService {
                                 title,
                                 message,
                                 NotificationType.SCHEDULE,
-                                "/teacher/schedule"
+                                finalTeacherRef
                         );
                 });
         }

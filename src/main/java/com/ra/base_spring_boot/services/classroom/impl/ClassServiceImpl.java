@@ -177,7 +177,7 @@ public class ClassServiceImpl implements IClassService {
                 "Bạn đã được thêm vào lớp mới",
                 "Bạn đã được quản trị viên thêm vào lớp " + aClass.getClassName() + ".",
                 NotificationType.ACADEMIC,
-                "/student/classes");
+                "/classes/" + aClass.getId());
 
         return toStudentDto(enrollment);
     }
@@ -238,7 +238,7 @@ public class ClassServiceImpl implements IClassService {
                 "Phân công giảng dạy mới",
                 "Bạn đã được phân công giảng dạy cho lớp " + aClass.getClassName() + ".",
                 NotificationType.ACADEMIC,
-                "/teacher/dashboard");
+                "/teacher/classes/" + aClass.getId());
 
         return toTeacherDto(assignment);
     }
@@ -311,7 +311,7 @@ public class ClassServiceImpl implements IClassService {
                         "Bạn đã được hệ thống tự động thêm vào lớp " + aClass.getClassName()
                                 + " sau khi thanh toán thành công khóa học " + course.getTitle() + ".",
                         NotificationType.ACADEMIC,
-                        "/student/classes");
+                        "/classes/" + aClass.getId());
             }
         }
 
@@ -337,7 +337,7 @@ public class ClassServiceImpl implements IClassService {
                     "Khóa học mới trong lớp của bạn",
                     "Lớp " + aClass.getClassName() + " của bạn có khóa học mới: " + course.getTitle() + ".",
                     NotificationType.ACADEMIC,
-                    "/student/courses");
+                    "/classes/" + aClass.getId());
         }
 
         return toCourseDto(classCourse);

@@ -80,7 +80,7 @@ public class RegistrationServiceImpl implements IRegistrationService {
             "Đăng ký khóa học thành công",
             "Bạn đã đăng ký khóa học " + course.getTitle() + ". Vui lòng thực hiện thanh toán để hoàn tất quá trình vào lớp.",
             NotificationType.COURSE_REGISTRATION,
-            "/student/registrations"
+            "/registrations?courseId=" + course.getId() + "&payment=true"
         );
 
         return toDto(registration);
@@ -122,7 +122,7 @@ public class RegistrationServiceImpl implements IRegistrationService {
             "Thanh toán thành công",
             "Cảm ơn bạn đã thanh toán cho khóa học " + registration.getCourse().getTitle() + ".",
             NotificationType.PAYMENT,
-            "/student/registrations"
+            "/registrations?courseId=" + registration.getCourse().getId()
         );
 
         // Tự động thêm vào lớp học (lấy lớp học đầu tiên được gán cho khóa học này)
@@ -152,7 +152,7 @@ public class RegistrationServiceImpl implements IRegistrationService {
                     "Chào mừng bạn đã vào lớp",
                     "Bạn đã được thêm vào lớp " + enrolledClassName + " cho khóa học " + registration.getCourse().getTitle() + ".",
                     NotificationType.ACADEMIC,
-                    "/student/classes"
+                    "/classes/" + aClass.getId()
                 );
             }
         }
@@ -183,7 +183,7 @@ public class RegistrationServiceImpl implements IRegistrationService {
             "Hủy đăng ký thành công",
             "Bạn đã hủy đăng ký khóa học " + registration.getCourse().getTitle() + ".",
             NotificationType.COURSE_REGISTRATION,
-            "/student/registrations"
+            "/registrations?courseId=" + registration.getCourse().getId()
         );
 
         return toDto(registration);

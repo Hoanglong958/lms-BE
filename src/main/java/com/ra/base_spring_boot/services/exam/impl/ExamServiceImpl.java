@@ -157,7 +157,7 @@ public class ExamServiceImpl implements IExamService {
                 String title = "Có bài kiểm tra mới: " + exam.getTitle();
                 String message = "Bạn có một bài kiểm tra mới được gán cho " + 
                                 (exam.getClassId() != null ? "lớp học" : "khóa học") + " của bạn.";
-                String refUrl = "/student/exams";
+                String refUrl = "/exam/" + exam.getId();
 
                 if (exam.getClassId() != null) {
                         classStudentRepository.findByClassroomId(exam.getClassId()).forEach(enrollment -> {

@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.services.exam.impl;
 
 import com.ra.base_spring_boot.dto.ExamAttempt.ExamAttemptResponseDTO;
 import com.ra.base_spring_boot.model.*;
+import com.ra.base_spring_boot.repository.classroom.IClassTeacherRepository;
 import com.ra.base_spring_boot.repository.exam.IExamAnswerRepository;
 import com.ra.base_spring_boot.repository.exam.IExamAttemptRepository;
 import com.ra.base_spring_boot.repository.exam.IExamParticipantRepository;
@@ -9,6 +10,8 @@ import com.ra.base_spring_boot.repository.exam.IExamRepository;
 import com.ra.base_spring_boot.repository.exam.IQuestionRepository;
 import com.ra.base_spring_boot.repository.user.IUserRepository;
 import com.ra.base_spring_boot.services.exam.IExamAttemptService;
+import com.ra.base_spring_boot.services.notification.IUserNotificationService;
+import com.ra.base_spring_boot.model.constants.NotificationType;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -32,6 +35,8 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
     private final IExamParticipantRepository participantRepository;
     private final IQuestionRepository questionRepository;
     private final IExamAnswerRepository examAnswerRepository;
+    private final IClassTeacherRepository classTeacherRepository;
+    private final IUserNotificationService userNotificationService;
     private final ModelMapper modelMapper;
 
     private static final int SEARCH_LIMIT = 20;
@@ -169,6 +174,9 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
         participant.setSubmitted(true);
         participantRepository.save(participant);
 
+        // Notify Teacher(s) about new submission
+        notifyTeachersOfSubmission(attempt);
+
         return toDTO(attempt);
     }
 
@@ -185,8 +193,12 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
 
         attempt.setEndTime(LocalDateTime.now());
         attempt.setStatus(ExamAttempt.AttemptStatus.GRADED);
+        ExamAttempt saved = attemptRepository.save(attempt);
+        
+        // Notify Student about result
+        notifyStudentOfResult(saved);
 
-        return toDTO(attemptRepository.save(attempt));
+        return toDTO(saved);
     }
 
     // =====================================================================
@@ -201,7 +213,12 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
                 .orElseThrow(() -> new RuntimeException("Attempt not found"));
 
         attempt.setStatus(ExamAttempt.AttemptStatus.GRADED);
-        return toDTO(attemptRepository.save(attempt));
+        ExamAttempt saved = attemptRepository.save(attempt);
+        
+        // Notify Student about result
+        notifyStudentOfResult(saved);
+        
+        return toDTO(saved);
     }
 
     // =====================================================================
@@ -271,8 +288,16 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
             throw new IllegalArgumentException("status must not be null");
         ExamAttempt attempt = attemptRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Attempt not found"));
+        
+        ExamAttempt.AttemptStatus oldStatus = attempt.getStatus();
         attempt.setStatus(status);
-        return toDTO(attemptRepository.save(attempt));
+        ExamAttempt saved = attemptRepository.save(attempt);
+        
+        if (status == ExamAttempt.AttemptStatus.GRADED && oldStatus != ExamAttempt.AttemptStatus.GRADED) {
+            notifyStudentOfResult(saved);
+        }
+        
+        return toDTO(saved);
     }
 
     // =====================================================================
@@ -291,5 +316,42 @@ public class ExamAttemptServiceImpl implements IExamAttemptService {
 
     private List<ExamAttemptResponseDTO> mapToDTO(List<ExamAttempt> attempts) {
         return attempts.stream().map(this::toDTO).toList();
+    }
+
+    private void notifyTeachersOfSubmission(ExamAttempt attempt) {
+        try {
+            Exam exam = attempt.getExam();
+            User student = attempt.getUser();
+            Long classId = exam.getClassId();
+            if (classId != null) {
+                classTeacherRepository.findByClazzId(classId).forEach(assignment -> {
+                    userNotificationService.sendNotification(
+                        assignment.getTeacher(),
+                        "Bài thi mới được nộp",
+                        "Học viên " + student.getFullName() + " đã nộp bài thi: " + exam.getTitle(),
+                        NotificationType.ACADEMIC,
+                        "/teacher/classes/" + classId
+                    );
+                });
+            }
+        } catch (Exception e) {
+            // Log error
+        }
+    }
+
+    private void notifyStudentOfResult(ExamAttempt attempt) {
+        try {
+            Exam exam = attempt.getExam();
+            User student = attempt.getUser();
+            userNotificationService.sendNotification(
+                student,
+                "Kết quả bài thi",
+                "Bài thi '" + exam.getTitle() + "' của bạn đã được chấm điểm. Điểm số: " + attempt.getScore(),
+                NotificationType.ACADEMIC,
+                "/exam/" + exam.getId()
+            );
+        } catch (Exception e) {
+            // Log error
+        }
     }
 }
