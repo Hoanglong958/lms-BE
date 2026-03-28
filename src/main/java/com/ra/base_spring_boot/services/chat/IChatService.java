@@ -1,4 +1,4 @@
-package com.ra.base_spring_boot.services;
+package com.ra.base_spring_boot.services.chat;
 
 import com.ra.base_spring_boot.dto.chatv2.AddMembersRequest;
 import com.ra.base_spring_boot.dto.chatv2.ChatRoomResponse;

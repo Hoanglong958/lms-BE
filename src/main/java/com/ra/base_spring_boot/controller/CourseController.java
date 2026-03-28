@@ -4,6 +4,7 @@ import com.ra.base_spring_boot.dto.Course.CourseResponseDTO;
 import com.ra.base_spring_boot.dto.Course.CourseRequestDTO;
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.services.course.ICourseService;
+import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -144,7 +145,8 @@ public class CourseController {
                         @Parameter(description = "Từ khóa tìm kiếm theo title ") @RequestParam(value = "q", required = false) String q,
                         @Parameter(description = "Trang bắt đầu từ 0") @RequestParam(value = "page", defaultValue = "0") int page,
                         @Parameter(description = "Kích thước trang") @RequestParam(value = "size", defaultValue = "10") int size,
-                        @Parameter(description = "Sắp xếp, ví dụ: createdAt,desc hoặc title,asc") @RequestParam(value = "sort", defaultValue = "createdAt,desc") String sort) {
+                        @Parameter(description = "Sắp xếp, ví dụ: createdAt,desc hoặc title,asc") @RequestParam(value = "sort", defaultValue = "createdAt,desc") String sort,
+                        @Parameter(description = "Lọc theo trạng thái đăng ký (ALL, NONE, PENDING, PAID, CANCELLED)") @RequestParam(value = "regStatus", defaultValue = "ALL") String regStatus) {
 
                 Sort sortObj;
                 String[] sortParts = sort.split(",");
@@ -155,9 +157,16 @@ public class CourseController {
                 }
                 Pageable pageable = PageRequest.of(page, size, sortObj);
 
-                Page<CourseResponseDTO> result = (q != null && !q.trim().isEmpty())
-                                ? courseService.search(q, pageable)
-                                : courseService.findAll(pageable);
+                Long studentId = getCurrentUserId();
+                Page<CourseResponseDTO> result;
+
+                if (studentId != null && regStatus != null && !regStatus.equalsIgnoreCase("ALL")) {
+                        result = courseService.findByStatus(studentId, q, regStatus, pageable);
+                } else if (q != null && !q.trim().isEmpty()) {
+                        result = courseService.search(q, pageable);
+                } else {
+                        result = courseService.findAll(pageable);
+                }
 
                 return ResponseEntity.ok(
                                 ResponseWrapper.builder()
@@ -165,5 +174,14 @@ public class CourseController {
                                                 .code(200)
                                                 .data(result)
                                                 .build());
+        }
+
+        private Long getCurrentUserId() {
+                org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
+                                .getContext().getAuthentication();
+                if (auth != null && auth.getPrincipal() instanceof MyUserDetails) {
+                        return ((MyUserDetails) auth.getPrincipal()).getUser().getId();
+                }
+                return null;
         }
 }

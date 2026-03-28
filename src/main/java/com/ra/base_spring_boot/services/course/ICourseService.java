@@ -16,4 +16,5 @@ public interface ICourseService {
     List<CourseResponseDTO> findAll();
     Page<CourseResponseDTO> findAll(Pageable pageable);
     Page<CourseResponseDTO> search(String keyword, Pageable pageable);
+    Page<CourseResponseDTO> findByStatus(Long studentId, String keyword, String status, Pageable pageable);
 }

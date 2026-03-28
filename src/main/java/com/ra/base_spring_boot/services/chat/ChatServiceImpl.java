@@ -1,4 +1,4 @@
-package com.ra.base_spring_boot.services.impl;
+package com.ra.base_spring_boot.services.chat;
 
 import com.ra.base_spring_boot.dto.chatv2.AddMembersRequest;
 import com.ra.base_spring_boot.dto.chatv2.GroupCreateRequest;
@@ -8,7 +8,6 @@ import com.ra.base_spring_boot.model.chatv2.*;
 import com.ra.base_spring_boot.repository.chatv2.ChatMessageRepository;
 import com.ra.base_spring_boot.repository.chatv2.ChatRoomMemberRepository;
 import com.ra.base_spring_boot.repository.chatv2.ChatRoomRepository;
-import com.ra.base_spring_boot.services.IChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;

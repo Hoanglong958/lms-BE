@@ -121,6 +121,26 @@ public class CourseServiceImpl implements ICourseService {
         return page.map(this::toDto);
     }
 
+    @Override
+    public Page<CourseResponseDTO> findByStatus(Long studentId, String keyword, String status, Pageable pageable) {
+        String kw = (keyword == null || keyword.trim().isEmpty()) ? null : keyword.trim();
+        String st = (status == null || status.equalsIgnoreCase("ALL")) ? null : status.toUpperCase();
+        
+        com.ra.base_spring_boot.model.constants.PaymentStatus statusEnum = null;
+        if (st != null && !st.equals("NONE")) {
+            try {
+                statusEnum = com.ra.base_spring_boot.model.constants.PaymentStatus.valueOf(st);
+            } catch (IllegalArgumentException e) {
+                // Ignore invalid status
+            }
+        }
+        
+        Boolean isActive = isAdmin() ? null : true;
+
+        Page<Course> page = courseRepository.findWithRegistrationStatus(studentId, kw, st, statusEnum, isActive, pageable);
+        return page.map(this::toDto);
+    }
+
     // =========================== HELPER METHODS ===============================
 
     private CourseResponseDTO toDto(Course course) {

@@ -1,4 +1,4 @@
-package com.ra.base_spring_boot.services.impl;
+package com.ra.base_spring_boot.services.chat;
 
 import com.ra.base_spring_boot.dto.chatv2.SendMessageRequest;
 import com.ra.base_spring_boot.model.chatv2.*;
@@ -6,7 +6,6 @@ import com.ra.base_spring_boot.repository.chatv2.ChatMessageReadRepository;
 import com.ra.base_spring_boot.repository.chatv2.ChatMessageRepository;
 import com.ra.base_spring_boot.repository.chatv2.ChatRoomMemberRepository;
 import com.ra.base_spring_boot.repository.chatv2.ChatRoomRepository;
-import com.ra.base_spring_boot.services.IChatMessageService;
 import com.ra.base_spring_boot.services.notification.IUserNotificationService;
 import com.ra.base_spring_boot.model.constants.NotificationType;
 import com.ra.base_spring_boot.model.User;

@@ -2,7 +2,7 @@ package com.ra.base_spring_boot.controller;
 
 import com.ra.base_spring_boot.dto.chatv2.SendMessageRequest;
 import com.ra.base_spring_boot.model.chatv2.ChatMessage;
-import com.ra.base_spring_boot.services.IChatMessageService;
+import com.ra.base_spring_boot.services.chat.IChatMessageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

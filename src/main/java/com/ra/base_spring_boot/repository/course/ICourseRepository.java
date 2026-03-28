@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -28,4 +29,20 @@ public interface ICourseRepository extends JpaRepository<Course, Long> {
     Page<Course> findByTitleContainingIgnoreCaseAndIsActive(String title, boolean isActive, Pageable pageable);
     Page<Course> findByIsActive(boolean isActive, Pageable pageable);
     List<Course> findByIsActive(boolean isActive);
+
+    @Query("SELECT c FROM Course c LEFT JOIN Registration r " +
+           "ON c.id = r.course.id AND r.student.id = :studentId " +
+           "WHERE (:keyword IS NULL OR LOWER(c.title) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "AND (r.paymentStatus IS NULL OR r.paymentStatus != com.ra.base_spring_boot.model.constants.PaymentStatus.CANCELLED) " +
+           "AND (:statusStr IS NULL OR " +
+           "    (:statusStr = 'NONE' AND r.id IS NULL) OR " +
+           "    (:statusStr != 'NONE' AND r.paymentStatus = :statusEnum)) " +
+           "AND (:isActive IS NULL OR c.isActive = :isActive)")
+    Page<Course> findWithRegistrationStatus(
+            @Param("studentId") Long studentId,
+            @Param("keyword") String keyword,
+            @Param("statusStr") String statusStr,
+            @Param("statusEnum") com.ra.base_spring_boot.model.constants.PaymentStatus statusEnum,
+            @Param("isActive") Boolean isActive,
+            Pageable pageable);
 }
