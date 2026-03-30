@@ -13,9 +13,6 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
 
-/**
- * Service gọi Ollama REST API để generate phản hồi AI bằng tiếng Việt.
- */
 @Service
 @Slf4j
 public class OllamaService {

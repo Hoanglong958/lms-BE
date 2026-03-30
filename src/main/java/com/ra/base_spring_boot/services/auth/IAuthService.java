@@ -8,7 +8,7 @@ public interface IAuthService {
 
     void register(FormRegister formRegister);
 
-    JwtResponse login(FormLogin formLogin);
+    JwtResponse login(FormLogin formLogin, jakarta.servlet.http.HttpServletRequest request);
 
     void changePassword(String username, ChangePasswordRequest request);
 

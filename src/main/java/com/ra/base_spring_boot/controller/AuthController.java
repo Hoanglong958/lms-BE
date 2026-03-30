@@ -11,6 +11,7 @@ import com.ra.base_spring_boot.dto.req.VerifyOtpRequest;
 import com.ra.base_spring_boot.services.auth.IAuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -36,12 +37,12 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "Đăng nhập", description = "Nhận JWT khi đăng nhập thành công")
     @ApiResponse(responseCode = "200", description = "Đăng nhập thành công")
-    public ResponseEntity<?> handleLogin(@Valid @RequestBody FormLogin formLogin) {
+    public ResponseEntity<?> handleLogin(@Valid @RequestBody FormLogin formLogin, HttpServletRequest request) {
         return ResponseEntity.ok(
                 ResponseWrapper.builder()
                         .status(HttpStatus.OK)
                         .code(200)
-                        .data(authService.login(formLogin))
+                        .data(authService.login(formLogin, request))
                         .build());
     }
 

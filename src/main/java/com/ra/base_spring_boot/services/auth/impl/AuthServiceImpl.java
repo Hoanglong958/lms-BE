@@ -15,6 +15,7 @@ import com.ra.base_spring_boot.model.PasswordResetToken;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.auth.IAuthService;
+import com.ra.base_spring_boot.services.auth.ILoginAuditService;
 import com.ra.base_spring_boot.services.auth.IPasswordResetTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ra.base_spring_boot.services.common.impl.GmailService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Random;
@@ -42,6 +44,7 @@ public class AuthServiceImpl implements IAuthService {
     private final IPasswordResetTokenService passwordResetTokenService;
     private final IPasswordResetOtpRepository passwordResetOtpRepository;
     private final GmailService gmailService;
+    private final ILoginAuditService loginAuditService;
 
     // ======================= Đăng ký =========================
     @Override
@@ -126,7 +129,7 @@ public class AuthServiceImpl implements IAuthService {
 
     // ======================= Đăng nhập =========================
     @Override
-    public JwtResponse login(FormLogin formLogin) {
+    public JwtResponse login(FormLogin formLogin, HttpServletRequest request) {
         Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(
@@ -142,6 +145,9 @@ public class AuthServiceImpl implements IAuthService {
         if (!userDetails.getUser().getIsActive()) {
             throw new HttpBadRequest("Tài khoản đã bị khóa!");
         }
+
+        // Ghi nhận thông tin đăng nhập (IP, OS, thiết bị)
+        loginAuditService.record(userDetails.getUser(), request, formLogin.getDeviceId());
 
         return JwtResponse.builder()
                 .accessToken(jwtProvider.generateToken(userDetails))

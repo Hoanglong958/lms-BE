@@ -13,4 +13,9 @@ public class FormLogin
 {
     private String gmail;
     private String password;
+    /**
+     * Mã thiết bị (điện thoại / trình duyệt) gửi lên để truy vết đăng nhập.
+     * Optional, nhưng nên truyền từ client.
+     */
+    private String deviceId;
 }
