@@ -6,6 +6,7 @@ import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.Course;
 import com.ra.base_spring_boot.model.constants.CourseLevel;
 import com.ra.base_spring_boot.repository.course.ICourseRepository;
+import com.ra.base_spring_boot.repository.course.IClassCourseRepository;
 import com.ra.base_spring_boot.services.course.ICourseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import java.util.Objects;
 public class CourseServiceImpl implements ICourseService {
 
     private final ICourseRepository courseRepository;
+    private final IClassCourseRepository classCourseRepository;
 
     @Override
     public CourseResponseDTO create(CourseRequestDTO dto) {
@@ -88,6 +90,9 @@ public class CourseServiceImpl implements ICourseService {
         if (!isAdmin() && Boolean.FALSE.equals(course.getIsActive())) {
             throw new HttpBadRequest("Không tìm thấy khóa học với id = " + id);
         }
+        if (!isAdmin() && !classCourseRepository.existsByCourse_Id(course.getId())) {
+            throw new HttpBadRequest("Không tìm thấy khóa học với id = " + id);
+        }
 
         return toDto(course);
     }
@@ -96,7 +101,7 @@ public class CourseServiceImpl implements ICourseService {
     public List<CourseResponseDTO> findAll() {
         List<Course> courses = isAdmin()
                 ? courseRepository.findAll()
-                : courseRepository.findByIsActive(true);
+                : courseRepository.findActiveAndAssigned();
         return courses
                 .stream()
                 .map(this::toDto)
@@ -107,7 +112,7 @@ public class CourseServiceImpl implements ICourseService {
     public Page<CourseResponseDTO> findAll(Pageable pageable) {
         Page<Course> page = isAdmin()
                 ? courseRepository.findAll(pageable)
-                : courseRepository.findByIsActive(true, pageable);
+                : courseRepository.findActiveAndAssigned(pageable);
         return page
                 .map(this::toDto);
     }
@@ -117,7 +122,7 @@ public class CourseServiceImpl implements ICourseService {
         String kw = keyword == null ? "" : keyword.trim();
         Page<Course> page = isAdmin()
                 ? courseRepository.findByTitleContainingIgnoreCase(kw, pageable)
-                : courseRepository.findByTitleContainingIgnoreCaseAndIsActive(kw, true, pageable);
+                : courseRepository.searchActiveAssignedByTitle(kw, pageable);
         return page.map(this::toDto);
     }
 
@@ -137,7 +142,8 @@ public class CourseServiceImpl implements ICourseService {
         
         Boolean isActive = isAdmin() ? null : true;
 
-        Page<Course> page = courseRepository.findWithRegistrationStatus(studentId, kw, st, statusEnum, isActive, pageable);
+        boolean requireAssignment = !isAdmin();
+        Page<Course> page = courseRepository.findWithRegistrationStatus(studentId, kw, st, statusEnum, isActive, requireAssignment, pageable);
         return page.map(this::toDto);
     }
 

@@ -19,4 +19,6 @@ public interface IClassCourseRepository extends JpaRepository<ClassCourse, Long>
 
     long countByClazzId(Long classId);
 
+    boolean existsByCourse_Id(Long courseId);
+
 }
