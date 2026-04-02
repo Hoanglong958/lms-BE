@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -44,6 +46,15 @@ public class ChatMessage {
 
     @Builder.Default
     private boolean isDeleted = false;
+
+    @OneToMany(
+            mappedBy = "message",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    @Builder.Default
+    private Set<ChatMessageRead> readReceipts = new HashSet<>();
 
     @PrePersist
     public void prePersist() {

@@ -1,23 +1,36 @@
 package com.ra.base_spring_boot.services.chat;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.hibernate.Hibernate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.ra.base_spring_boot.dto.chatv2.ChatReadReceipt;
 import com.ra.base_spring_boot.dto.chatv2.SendMessageRequest;
-import com.ra.base_spring_boot.model.chatv2.*;
+import com.ra.base_spring_boot.model.User;
+import com.ra.base_spring_boot.model.chatv2.ChatMemberRole;
+import com.ra.base_spring_boot.model.chatv2.ChatMessage;
+import com.ra.base_spring_boot.model.chatv2.ChatMessageRead;
+import com.ra.base_spring_boot.model.chatv2.ChatMessageType;
+import com.ra.base_spring_boot.model.chatv2.ChatRoom;
+import com.ra.base_spring_boot.model.chatv2.ChatRoomMember;
+import com.ra.base_spring_boot.model.chatv2.ChatRoomType;
+import com.ra.base_spring_boot.model.constants.NotificationType;
 import com.ra.base_spring_boot.repository.chatv2.ChatMessageReadRepository;
 import com.ra.base_spring_boot.repository.chatv2.ChatMessageRepository;
 import com.ra.base_spring_boot.repository.chatv2.ChatRoomMemberRepository;
 import com.ra.base_spring_boot.repository.chatv2.ChatRoomRepository;
 import com.ra.base_spring_boot.services.notification.IUserNotificationService;
-import com.ra.base_spring_boot.model.constants.NotificationType;
-import com.ra.base_spring_boot.model.User;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +43,7 @@ public class ChatMessageServiceImpl implements IChatMessageService {
     private final ChatRoomMemberRepository memberRepo;
     private final IUserNotificationService userNotificationService;
     private final com.ra.base_spring_boot.repository.user.IUserRepository userRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     private void requireMember(UUID roomId, Long userId) {
         if (!memberRepo.existsByRoom_IdAndUserId(roomId, userId)) {
@@ -50,7 +64,8 @@ public class ChatMessageServiceImpl implements IChatMessageService {
                 .room(room)
                 .senderId(req.getSenderId())
                 .content(req.getContent())
-                .type(req.getType() == null ? ChatMessageType.TEXT : req.getType())
+                .type(req.getType() != null ? req.getType()
+        : (req.getFileUrl() != null ? ChatMessageType.FILE : ChatMessageType.TEXT))
                 .fileUrl(req.getFileUrl())
                 .build();
         ChatMessage saved = messageRepo.save(msg);
@@ -85,16 +100,37 @@ public class ChatMessageServiceImpl implements IChatMessageService {
     @Override
     @Transactional(readOnly = true)
     public Page<ChatMessage> history(UUID roomId, Pageable pageable) {
-        return messageRepo.findByRoom_IdOrderByCreatedAtDesc(roomId, pageable);
+        Page<ChatMessage> page = messageRepo.findByRoom_IdOrderByCreatedAtDesc(roomId, pageable);
+        // Initialize lazy collections to avoid LazyInitializationException during JSON serialization
+        page.getContent().forEach(msg -> Hibernate.initialize(msg.getReadReceipts()));
+        return page;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ChatMessage> attachments(UUID roomId, ChatMessageType type, Pageable pageable) {
+        System.out.println("[attachments] query roomId=" + roomId + " type=" + type);
+        Page<ChatMessage> page = messageRepo.findByRoom_IdAndTypeOrderByCreatedAtDesc(roomId, type, pageable);
+        System.out.println("[attachments] result count=" + page.getNumberOfElements());
+        page.getContent().forEach(msg -> {
+            System.out.println("[attachments] msg id=" + msg.getId() + " type=" + msg.getType() + " fileUrl=" + msg.getFileUrl());
+        });
+        page.getContent().forEach(msg -> Hibernate.initialize(msg.getReadReceipts()));
+        return page;
     }
 
     @Override
     public void markRead(UUID messageId, Long userId) {
-        readRepo.findByMessage_IdAndUserId(messageId, userId)
-                .orElseGet(() -> readRepo.save(ChatMessageRead.builder()
-                        .message(messageRepo.findById(messageId).orElseThrow())
-                        .userId(userId)
-                        .build()));
+        Optional<ChatMessageRead> existing = readRepo.findByMessage_IdAndUserId(messageId, userId);
+        if (existing.isPresent()) {
+            return;
+        }
+        ChatMessage message = messageRepo.findById(messageId).orElseThrow();
+        readRepo.save(ChatMessageRead.builder()
+                .message(message)
+                .userId(userId)
+                .build());
+        publishReadReceipt(message.getRoom().getId(), userId, List.of(message.getId()));
     }
 
     @Override
@@ -102,13 +138,19 @@ public class ChatMessageServiceImpl implements IChatMessageService {
         // Tìm tất cả tin nhắn trong phòng NOT do userId gửi VÀ chưa có record trong ChatMessageRead
         // Để đơn giản và tránh n+1, ta có thể dùng một query JPQL insert hoặc xử lý danh sách ID
         List<ChatMessage> unreadMessages = messageRepo.findUnreadMessagesInRoom(roomId, userId);
+        List<UUID> newlyReadIds = new ArrayList<>();
         for (ChatMessage m : unreadMessages) {
-            readRepo.findByMessage_IdAndUserId(m.getId(), userId)
-                    .orElseGet(() -> readRepo.save(ChatMessageRead.builder()
-                            .message(m)
-                            .userId(userId)
-                            .build()));
+            Optional<ChatMessageRead> existing = readRepo.findByMessage_IdAndUserId(m.getId(), userId);
+            if (existing.isPresent()) {
+                continue;
+            }
+            ChatMessageRead saved = readRepo.save(ChatMessageRead.builder()
+                    .message(m)
+                    .userId(userId)
+                    .build());
+            newlyReadIds.add(saved.getMessage().getId());
         }
+        publishReadReceipt(roomId, userId, newlyReadIds);
     }
 
     @Override
@@ -118,6 +160,7 @@ public class ChatMessageServiceImpl implements IChatMessageService {
     }
 
     @Override
+    @Transactional
     public void deleteForAll(UUID messageId, Long operatorUserId) {
         ChatMessage msg = messageRepo.findById(messageId).orElseThrow();
         UUID roomId = msg.getRoom().getId();
@@ -125,13 +168,16 @@ public class ChatMessageServiceImpl implements IChatMessageService {
             throw new SecurityException("Only TEACHER or sender can delete for all");
         }
         msg.setDeleted(true);
-        messageRepo.save(msg);
+        ChatMessage saved = messageRepo.save(msg);
+        messagingTemplate.convertAndSend("/topic/rooms/" + roomId, saved);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ChatMessage> search(UUID roomId, String keyword, Pageable pageable) {
-        return messageRepo.findByRoom_IdAndContentContainingIgnoreCaseOrderByCreatedAtDesc(roomId, keyword, pageable);
+        Page<ChatMessage> page = messageRepo.findByRoom_IdAndContentContainingIgnoreCaseOrderByCreatedAtDesc(roomId, keyword, pageable);
+        page.getContent().forEach(msg -> Hibernate.initialize(msg.getReadReceipts()));
+        return page;
     }
 
     @Override
@@ -144,5 +190,17 @@ public class ChatMessageServiceImpl implements IChatMessageService {
     @Transactional(readOnly = true)
     public long totalUnreadCount(Long userId) {
         return messageRepo.countTotalUnreadByUser(userId);
+    }
+
+    private void publishReadReceipt(UUID roomId, Long userId, List<UUID> messageIds) {
+        if (roomId == null || userId == null || messageIds == null || messageIds.isEmpty()) {
+            return;
+        }
+        ChatReadReceipt receipt = ChatReadReceipt.builder()
+                .roomId(roomId)
+                .readerId(userId)
+                .messageIds(messageIds)
+                .build();
+        messagingTemplate.convertAndSend("/topic/rooms/" + roomId + "/read", receipt);
     }
 }

@@ -2,10 +2,12 @@ package com.ra.base_spring_boot.controller;
 
 import com.ra.base_spring_boot.dto.chatv2.SendMessageRequest;
 import com.ra.base_spring_boot.model.chatv2.ChatMessage;
+import com.ra.base_spring_boot.model.chatv2.ChatMessageType;
 import com.ra.base_spring_boot.services.chat.IChatMessageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
@@ -36,6 +39,19 @@ public class ChatMessageControllerV2 {
                                                      @RequestParam(defaultValue = "30") int size) {
         Pageable pageable = PageRequest.of(page, Math.min(Math.max(size, 1), 100));
         return ResponseEntity.ok(chatMessageService.history(roomId, pageable));
+    }
+
+    @Operation(summary = "Lịch sử file/ảnh đã gửi trong phòng")
+    @GetMapping("/messages/attachments")
+    public ResponseEntity<Page<ChatMessage>> attachments(@RequestParam UUID roomId,
+                                                         @RequestParam ChatMessageType type,
+                                                         @RequestParam(defaultValue = "0") int page,
+                                                         @RequestParam(defaultValue = "30") int size) {
+        log.info("[attachments] roomId={}, type={}, page={}, size={}", roomId, type, page, size);
+        Pageable pageable = PageRequest.of(page, Math.min(Math.max(size, 1), 100));
+        Page<ChatMessage> result = chatMessageService.attachments(roomId, type, pageable);
+        log.info("[attachments] returned {} elements for roomId={}, type={}", result.getNumberOfElements(), roomId, type);
+        return ResponseEntity.ok(result);
     }
 
     @Operation(summary = "Đánh dấu đã đọc (seen)")

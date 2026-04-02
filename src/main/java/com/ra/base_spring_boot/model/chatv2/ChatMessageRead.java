@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.model.chatv2;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,6 +21,7 @@ public class ChatMessageRead {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "message_id", nullable = false)
+    @JsonIgnore
     private ChatMessage message;
 
     @Column(name = "user_id", nullable = false)

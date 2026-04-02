@@ -3,6 +3,7 @@ package com.ra.base_spring_boot.services.auth.impl;
 import com.ra.base_spring_boot.dto.Gmail.EmailDTO;
 import com.ra.base_spring_boot.dto.req.*;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
+import com.ra.base_spring_boot.dto.resp.UserResponse;
 import com.ra.base_spring_boot.dto.resp.VerifyOtpResponse;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.PasswordResetOtp;
@@ -311,21 +312,31 @@ public class AuthServiceImpl implements IAuthService {
     }
 
     @Override
-    @Transactional
-    public com.ra.base_spring_boot.dto.resp.UserResponse updateProfile(String username, UpdateProfileRequest request) {
-        User user = userRepository.findByGmail(username)
-                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy người dùng!"));
+@Transactional
+public UserResponse updateProfile(String username, UpdateProfileRequest request) {
+    User user = userRepository.findByGmail(username)
+            .orElseThrow(() -> new HttpBadRequest("Không tìm thấy người dùng!"));
 
-        if (request.getFullName() != null)
-            user.setFullName(request.getFullName());
-        if (request.getPhone() != null)
-            user.setPhone(request.getPhone());
-        if (request.getAvatar() != null)
-            user.setAvatar(request.getAvatar());
+    if (request.getFullName() != null)
+        user.setFullName(request.getFullName());
 
-        userRepository.save(user);
-        return mapToUserResponse(user);
+    if (request.getAvatar() != null)
+        user.setAvatar(request.getAvatar());
+
+    if (request.getPhone() != null && !request.getPhone().equals(user.getPhone())) {
+        // Kiểm tra phone đã tồn tại ở user khác chưa
+        boolean phoneExist = userRepository.existsByPhoneAndGmailNot(
+            request.getPhone(), username
+        );
+        if (phoneExist) {
+            throw new HttpBadRequest("Số điện thoại đã được sử dụng bởi tài khoản khác!");
+        }
+        user.setPhone(request.getPhone());
     }
+
+    userRepository.save(user);
+    return mapToUserResponse(user);
+}
 
     private com.ra.base_spring_boot.dto.resp.UserResponse mapToUserResponse(User user) {
         return com.ra.base_spring_boot.dto.resp.UserResponse.builder()
