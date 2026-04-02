@@ -97,6 +97,20 @@ public class RegistrationController {
                                                 .build());
         }
 
+        @PatchMapping("/{id}/payment-submitted")
+        @PreAuthorize("hasAuthority('ROLE_USER')")
+        @Operation(summary = "Sinh viên báo đã chuyển khoản", description = "Cho phép sinh viên ghi nhận thanh toán trước khi admin xác nhận")
+        public ResponseEntity<?> markPaymentSubmitted(@AuthenticationPrincipal MyUserDetails userDetails,
+                                                      @PathVariable Long id) {
+                RegistrationResponseDTO response = registrationService.markPaymentSubmitted(id, userDetails.getUser());
+                return ResponseEntity.ok(
+                                ResponseWrapper.builder()
+                                                .status(HttpStatus.OK)
+                                                .code(200)
+                                                .data(response)
+                                                .build());
+        }
+
         @PatchMapping("/{id}/cancel")
         @PreAuthorize("hasAuthority('ROLE_USER')")
         @Operation(summary = "Sinh viên hủy đăng ký", description = "Chuyển trạng thái sang CANCELLED nếu đang ở PENDING")

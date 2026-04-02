@@ -112,6 +112,10 @@ public class RegistrationServiceImpl implements IRegistrationService {
             throw new HttpBadRequest("Đăng ký này đã được thanh toán trước đó.");
         }
 
+        if (!Boolean.TRUE.equals(registration.getPaymentSubmitted())) {
+            throw new HttpBadRequest("Sinh viên chưa báo đã chuyển tiền. Vui lòng chờ xác nhận từ học viên.");
+        }
+
         registration.setPaymentStatus(PaymentStatus.PAID);
         registration.setPaymentDate(LocalDateTime.now());
         registrationRepository.save(registration);
@@ -191,6 +195,29 @@ public class RegistrationServiceImpl implements IRegistrationService {
 
     @Override
     @Transactional
+    public RegistrationResponseDTO markPaymentSubmitted(Long registrationId, User student) {
+        Registration registration = registrationRepository.findById(registrationId)
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy bản ghi đăng ký!"));
+
+        if (!registration.getStudent().getId().equals(student.getId())) {
+            throw new HttpBadRequest("Bạn không có quyền cập nhật thanh toán cho đăng ký này!");
+        }
+
+        if (registration.getPaymentStatus() != PaymentStatus.PENDING) {
+            throw new HttpBadRequest("Chỉ đăng ký đang ở trạng thái chờ thanh toán mới có thể thông báo.");
+        }
+
+        if (Boolean.TRUE.equals(registration.getPaymentSubmitted())) {
+            throw new HttpBadRequest("Bạn đã gửi thông báo đã chuyển khoản rồi.");
+        }
+
+        registration.setPaymentSubmitted(true);
+        registrationRepository.save(registration);
+        return toDto(registration);
+    }
+
+    @Override
+    @Transactional
     public List<RegistrationResponseDTO> confirmBulkPayment(List<Long> registrationIds) {
         return registrationIds.stream()
                 .map(this::confirmPayment)
@@ -205,7 +232,7 @@ public class RegistrationServiceImpl implements IRegistrationService {
 
             // Header row
             Row headerRow = sheet.createRow(0);
-            String[] headers = { "ID", "Student Name", "Email", "Phone", "Course", "Amount", "Status", "Date" };
+            String[] headers = { "ID", "Student Name", "Email", "Phone", "Course", "Amount", "Status", "Date", "Sinh viên báo" };
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(headers[i]);
@@ -229,6 +256,7 @@ public class RegistrationServiceImpl implements IRegistrationService {
                 row.createCell(6).setCellValue(reg.getPaymentStatus() != null ? reg.getPaymentStatus().name() : "N/A");
                 row.createCell(7).setCellValue(
                         reg.getRegistrationDate() != null ? reg.getRegistrationDate().format(formatter) : "N/A");
+                row.createCell(8).setCellValue(reg.getPaymentSubmitted() != null && reg.getPaymentSubmitted() ? "Có" : "Chưa");
             }
 
             workbook.write(out);
@@ -290,6 +318,9 @@ public class RegistrationServiceImpl implements IRegistrationService {
 
             addTableCell(table, "Ref / Mã tham chiếu:", boldFont);
             addTableCell(table, reg.getTransferRef() != null ? reg.getTransferRef() : "N/A", normalFont);
+
+            addTableCell(table, "Sinh viên báo:", boldFont);
+            addTableCell(table, Boolean.TRUE.equals(reg.getPaymentSubmitted()) ? "Đã gửi" : "Chưa gửi", normalFont);
 
             document.add(table);
 
@@ -378,6 +409,7 @@ public class RegistrationServiceImpl implements IRegistrationService {
                 .paymentDate(registration.getPaymentDate())
                 .note(registration.getNote())
                 .transferRef(registration.getTransferRef())
+                .paymentSubmitted(registration.getPaymentSubmitted())
                 .enrolledClassName(enrolledClassName)
                 .build();
     }

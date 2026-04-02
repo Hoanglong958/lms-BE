@@ -14,6 +14,8 @@ public interface IRegistrationService {
     List<RegistrationResponseDTO> getAllRegistrations();
 
     RegistrationResponseDTO confirmPayment(Long registrationId);
+
+    RegistrationResponseDTO markPaymentSubmitted(Long registrationId, User student);
     
     RegistrationResponseDTO cancelRegistration(Long registrationId, User student);
     

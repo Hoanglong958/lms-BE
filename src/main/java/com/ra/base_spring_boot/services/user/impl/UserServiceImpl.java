@@ -132,6 +132,15 @@ public class UserServiceImpl implements IUserService {
         if (req.getFullName() != null) {
             user.setFullName(req.getFullName());
         }
+        if (req.getGmail() != null && !req.getGmail().isBlank() && !req.getGmail().equals(user.getGmail())) {
+            if (!req.getGmail().matches("^[A-Za-z0-9._%+-]{6,}@gmail\\.com$")) {
+                throw new HttpBadRequest("Gmail phải là gmail.com và phần username trước @ phải trên 5 ký tự!");
+            }
+            if (userRepository.existsByGmail(req.getGmail())) {
+                throw new HttpBadRequest("Gmail đã tồn tại!");
+            }
+            user.setGmail(req.getGmail());
+        }
         if (req.getAvatar() != null) {
             user.setAvatar(req.getAvatar());
         }
