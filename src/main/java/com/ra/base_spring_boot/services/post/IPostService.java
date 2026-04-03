@@ -31,6 +31,8 @@ public interface IPostService {
     // Tìm kiếm bài viết nâng cao
     Page<PostResponseDTO> searchPostsAdvanced(String q, String tagName, String status, int page, int size, String sort);
 
+    List<PostResponseDTO> getRelatedPosts(Long postId, int size);
+
     // Lấy tất cả các tags
     List<String> getAllTags();
 }

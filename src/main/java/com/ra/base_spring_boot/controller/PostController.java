@@ -1,7 +1,11 @@
 package com.ra.base_spring_boot.controller;
 
+import com.ra.base_spring_boot.dto.Comment.CommentRequestDTO;
+import com.ra.base_spring_boot.dto.Comment.CommentResponseDTO;
 import com.ra.base_spring_boot.dto.Post.PostRequestDTO;
 import com.ra.base_spring_boot.dto.Post.PostResponseDTO;
+import com.ra.base_spring_boot.security.principle.MyUserDetails;
+import com.ra.base_spring_boot.services.comment.ICommentService;
 import com.ra.base_spring_boot.services.post.IPostService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -12,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,6 +25,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -29,6 +35,7 @@ import org.springframework.web.bind.annotation.*;
 public class PostController {
 
     private final IPostService postService;
+    private final ICommentService commentService;
 
     // ================== CREATE POST (ADMIN) ==================
     @PostMapping
@@ -71,6 +78,30 @@ public class PostController {
     public ResponseEntity<PostResponseDTO> getPostById(@Parameter(description = "ID bài viết") @PathVariable Long id) {
         PostResponseDTO response = postService.getPostById(id);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/comments")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<List<CommentResponseDTO>> getComments(@PathVariable Long id) {
+        return ResponseEntity.ok(commentService.getCommentsByPost(id));
+    }
+
+    @PostMapping("/{id}/comments")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<CommentResponseDTO> addComment(
+            @Parameter(description = "ID bài viết") @PathVariable Long id,
+            @Valid @RequestBody CommentRequestDTO dto,
+            @AuthenticationPrincipal MyUserDetails userDetails) {
+        CommentResponseDTO response = commentService.addComment(id, dto, userDetails.getUser());
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/{id}/related")
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<List<PostResponseDTO>> getRelatedPosts(
+            @Parameter(description = "ID bài viết") @PathVariable Long id,
+            @Parameter(description = "Số lượng bài viết cần lấy") @RequestParam(defaultValue = "4") int size) {
+        return ResponseEntity.ok(postService.getRelatedPosts(id, size));
     }
 
     // ================== GET PUBLISHED POSTS (PAGE) ==================

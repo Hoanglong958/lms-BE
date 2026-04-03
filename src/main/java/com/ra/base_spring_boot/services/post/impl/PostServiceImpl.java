@@ -212,6 +212,31 @@ public class PostServiceImpl implements IPostService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<PostResponseDTO> getRelatedPosts(Long postId, int size) {
+        Post post = postRepository.findPostDetailById(postId)
+                .orElseThrow(() -> new HttpBadRequest("Post không tồn tại"));
+
+        int limit = Math.max(1, size);
+        PageRequest pageRequest = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        List<Post> related;
+        Set<Tag> tags = post.getTags();
+        if (tags.isEmpty()) {
+            related = postRepository.findPublishedExclude(PostStatus.PUBLISHED, postId, pageRequest);
+        } else {
+            related = postRepository.findRelatedByTags(PostStatus.PUBLISHED, postId, tags, pageRequest);
+            if (related.isEmpty()) {
+                related = postRepository.findPublishedExclude(PostStatus.PUBLISHED, postId, pageRequest);
+            }
+        }
+
+        return related.stream()
+                .map(this::toPostResponseDTO)
+                .collect(Collectors.toList());
+    }
+
     // ================= TAG HELPER =================
     private Set<Tag> buildTags(List<String> tagNames) {
 
