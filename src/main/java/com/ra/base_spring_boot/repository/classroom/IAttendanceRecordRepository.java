@@ -21,4 +21,7 @@ public interface IAttendanceRecordRepository extends JpaRepository<AttendanceRec
 
     @Query("select ar from AttendanceRecord ar where ar.session.id in (:sessionIds)")
     List<AttendanceRecord> findBySessionIds(List<Long> sessionIds);
+
+    @Query("SELECT ar FROM AttendanceRecord ar WHERE ar.session.classroom.id = :classId")
+    List<AttendanceRecord> findByClassroomId(Long classId);
 }

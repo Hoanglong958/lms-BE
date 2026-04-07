@@ -10,8 +10,8 @@
     </TestPlan>
     <hashTree>
       <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP Request Defaults">
-        <stringProp name="HTTPSampler.domain">localhost</stringProp>
-        <stringProp name="HTTPSampler.port">3900</stringProp>
+        <stringProp name="HTTPSampler.domain">https://w7bjcdnt-3900.asse.devtunnels.ms/</stringProp>
+        <stringProp name="HTTPSampler.port">443</stringProp>
         <stringProp name="HTTPSampler.protocol">http</stringProp>
         <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
           <collectionProp name="Arguments.arguments"/>
@@ -111,7 +111,7 @@
           <stringProp name="filename">C:\Users\ASUS\Downloads\New Folder\login</stringProp>
         </ResultCollector>
         <hashTree/>
-        <BeanShellPostProcessor guiclass="TestBeanGUI" testclass="BeanShellPostProcessor" testname="BeanShell PostProcessor">
+        <BeanShellPostProcessor guiclass="TestBeanGUI" testclass="BeanShellPostProcessor" testname="BeanShell PostProcessor" enabled="true">
           <stringProp name="filename"></stringProp>
           <stringProp name="parameters"></stringProp>
           <boolProp name="resetInterpreter">false</boolProp>
@@ -120,7 +120,7 @@ props.put(&quot;GLOBAL_TOKEN&quot;, token);</stringProp>
         </BeanShellPostProcessor>
         <hashTree/>
       </hashTree>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Kịch bản cơ bản">
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Kịch bản cơ bản" enabled="true">
         <intProp name="ThreadGroup.num_threads">10</intProp>
         <intProp name="ThreadGroup.ramp_time">1</intProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
@@ -192,7 +192,7 @@ props.put(&quot;GLOBAL_TOKEN&quot;, token);</stringProp>
             <stringProp name="filename">C:\Users\ASUS\Downloads\New Folder\GetpostRP</stringProp>
           </ResultCollector>
           <hashTree/>
-          <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree">
+          <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
             <boolProp name="ResultCollector.error_logging">false</boolProp>
             <objProp>
               <name>saveConfig</name>
@@ -231,7 +231,7 @@ props.put(&quot;GLOBAL_TOKEN&quot;, token);</stringProp>
           <hashTree/>
         </hashTree>
       </hashTree>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Kịch bản tải nặng">
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Kịch bản tải nặng" enabled="true">
         <intProp name="ThreadGroup.num_threads">50</intProp>
         <intProp name="ThreadGroup.ramp_time">30</intProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
@@ -242,7 +242,7 @@ props.put(&quot;GLOBAL_TOKEN&quot;, token);</stringProp>
         </elementProp>
       </ThreadGroup>
       <hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Get ID 1">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Get ID 1" enabled="true">
           <stringProp name="HTTPSampler.path">/api/v1/posts/1</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">GET</stringProp>
@@ -253,7 +253,7 @@ props.put(&quot;GLOBAL_TOKEN&quot;, token);</stringProp>
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree>
-          <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager">
+          <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
             <collectionProp name="HeaderManager.headers">
               <elementProp name="" elementType="Header">
                 <stringProp name="Header.name">Authorization</stringProp>
@@ -266,7 +266,7 @@ props.put(&quot;GLOBAL_TOKEN&quot;, token);</stringProp>
             </collectionProp>
           </HeaderManager>
           <hashTree/>
-          <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report">
+          <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report" enabled="true">
             <boolProp name="ResultCollector.error_logging">false</boolProp>
             <objProp>
               <name>saveConfig</name>
@@ -303,7 +303,7 @@ props.put(&quot;GLOBAL_TOKEN&quot;, token);</stringProp>
             <stringProp name="filename">C:\Users\ASUS\Downloads\New Folder\GetIDRP</stringProp>
           </ResultCollector>
           <hashTree/>
-          <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree">
+          <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
             <boolProp name="ResultCollector.error_logging">false</boolProp>
             <objProp>
               <name>saveConfig</name>
@@ -341,7 +341,7 @@ props.put(&quot;GLOBAL_TOKEN&quot;, token);</stringProp>
           </ResultCollector>
           <hashTree/>
         </hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Get All">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Get All" enabled="true">
           <stringProp name="HTTPSampler.path">/api/v1/posts</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">GET</stringProp>
@@ -352,7 +352,7 @@ props.put(&quot;GLOBAL_TOKEN&quot;, token);</stringProp>
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree>
-          <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager">
+          <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
             <collectionProp name="HeaderManager.headers">
               <elementProp name="" elementType="Header">
                 <stringProp name="Header.name">Authorization</stringProp>
@@ -365,7 +365,7 @@ props.put(&quot;GLOBAL_TOKEN&quot;, token);</stringProp>
             </collectionProp>
           </HeaderManager>
           <hashTree/>
-          <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report">
+          <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report" enabled="true">
             <boolProp name="ResultCollector.error_logging">false</boolProp>
             <objProp>
               <name>saveConfig</name>
@@ -402,7 +402,7 @@ props.put(&quot;GLOBAL_TOKEN&quot;, token);</stringProp>
             <stringProp name="filename">C:\Users\ASUS\Downloads\New Folder\GetIAllRP</stringProp>
           </ResultCollector>
           <hashTree/>
-          <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree">
+          <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
             <boolProp name="ResultCollector.error_logging">false</boolProp>
             <objProp>
               <name>saveConfig</name>
@@ -441,15 +441,15 @@ props.put(&quot;GLOBAL_TOKEN&quot;, token);</stringProp>
           <hashTree/>
         </hashTree>
       </hashTree>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Kịch bản tùy chỉnh" enabled="true">
-        <intProp name="ThreadGroup.num_threads">20</intProp>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Kịch bản tùy chỉnh">
+        <intProp name="ThreadGroup.num_threads">100</intProp>
         <intProp name="ThreadGroup.ramp_time">20</intProp>
         <longProp name="ThreadGroup.duration">60</longProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
-          <intProp name="LoopController.loops">-1</intProp>
+          <stringProp name="LoopController.loops">100</stringProp>
           <boolProp name="LoopController.continue_forever">false</boolProp>
         </elementProp>
       </ThreadGroup>
@@ -567,7 +567,7 @@ props.put(&quot;GLOBAL_TOKEN&quot;, token);</stringProp>
           <hashTree/>
         </hashTree>
       </hashTree>
-      <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report">
+      <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report" enabled="true">
         <boolProp name="ResultCollector.error_logging">false</boolProp>
         <objProp>
           <name>saveConfig</name>
@@ -604,7 +604,7 @@ props.put(&quot;GLOBAL_TOKEN&quot;, token);</stringProp>
         <stringProp name="filename">C:\Users\ASUS\Downloads\New Folder\logAllRP</stringProp>
       </ResultCollector>
       <hashTree/>
-      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree">
+      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
         <boolProp name="ResultCollector.error_logging">false</boolProp>
         <objProp>
           <name>saveConfig</name>
