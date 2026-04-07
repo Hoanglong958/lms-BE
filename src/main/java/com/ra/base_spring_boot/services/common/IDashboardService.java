@@ -5,6 +5,8 @@ import com.ra.base_spring_boot.dto.DashBoardStats.CourseProgressDTO;
 import com.ra.base_spring_boot.dto.DashBoardStats.DashboardStatsDTO;
 import com.ra.base_spring_boot.dto.DashBoardStats.QuizReportDTO;
 import com.ra.base_spring_boot.dto.DashBoardStats.UserGrowthPointDTO;
+import com.ra.base_spring_boot.dto.DashBoardStats.RevenueGrowthPointDTO;
+import com.ra.base_spring_boot.dto.DashBoardStats.RecentTransactionDTO;
 import com.ra.base_spring_boot.dto.Exam.RecentExamDTO;
 import com.ra.base_spring_boot.dto.LessonQuizzes.LessonQuizResponseDTO;
 import com.ra.base_spring_boot.dto.resp.UserResponse;
@@ -22,4 +24,6 @@ public interface IDashboardService {
     List<QuizReportDTO> getQuizReports();
     long getCompletedExams();
     List<RecentExamDTO> getRecentExams();
+    List<RevenueGrowthPointDTO> getRevenueGrowthByMonth(int months);
+    List<RecentTransactionDTO> getRecentTransactions(int limit);
 }

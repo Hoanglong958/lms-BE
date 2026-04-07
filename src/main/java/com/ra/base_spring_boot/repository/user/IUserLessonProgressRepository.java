@@ -1,6 +1,7 @@
 package com.ra.base_spring_boot.repository.user;
 
 import com.ra.base_spring_boot.model.UserLessonProgress;
+import com.ra.base_spring_boot.model.constants.LessonType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -13,4 +14,8 @@ public interface IUserLessonProgressRepository extends JpaRepository<UserLessonP
     List<UserLessonProgress> findByUserIdAndSessionId(Long userId, Long sessionId);
 
     List<UserLessonProgress> findByUserIdAndCourseId(Long userId, Long courseId);
+
+    List<UserLessonProgress> findByCourse_Id(Long courseId);
+
+    List<UserLessonProgress> findByCourse_IdAndLesson_Type(Long courseId, LessonType type);
 }

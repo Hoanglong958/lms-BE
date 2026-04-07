@@ -11,6 +11,8 @@ public interface IUserCourseProgressRepository extends JpaRepository<UserCourseP
     Optional<UserCourseProgress> findByUserIdAndCourseId(Long userId, Long courseId);
 
     List<UserCourseProgress> findByUserId(Long userId);
+
+    List<UserCourseProgress> findByCourse_Id(Long courseId);
 }
 
 

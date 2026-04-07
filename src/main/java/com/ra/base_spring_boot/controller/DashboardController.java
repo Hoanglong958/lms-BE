@@ -7,6 +7,8 @@ import com.ra.base_spring_boot.dto.resp.UserResponse;
 import com.ra.base_spring_boot.dto.Course.CourseResponseDTO;
 import com.ra.base_spring_boot.dto.LessonQuizzes.LessonQuizResponseDTO;
 import com.ra.base_spring_boot.dto.DashBoardStats.QuizReportDTO;
+import com.ra.base_spring_boot.dto.DashBoardStats.RevenueGrowthPointDTO;
+import com.ra.base_spring_boot.dto.DashBoardStats.RecentTransactionDTO;
 import com.ra.base_spring_boot.services.common.IDashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -99,6 +101,24 @@ public class DashboardController {
     public ResponseEntity<List<UserGrowthPointDTO>> getUserGrowthByWeek(
             @RequestParam(defaultValue = "4") int weeks) {
         return ResponseEntity.ok(dashboardService.getUserGrowthByWeek(weeks));
+    }
+
+    // ======= Doanh thu học phí theo tháng =======
+    @GetMapping("/revenue-growth/month")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Doanh thu theo tháng", description = "Trả về tổng doanh thu theo từng tháng")
+    public ResponseEntity<List<RevenueGrowthPointDTO>> getRevenueGrowthByMonth(
+            @RequestParam(defaultValue = "12") int months) {
+        return ResponseEntity.ok(dashboardService.getRevenueGrowthByMonth(months));
+    }
+
+    // ======= Giao dịch gần đây =======
+    @GetMapping("/recent-transactions")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Giao dịch gần đây", description = "Trả về các giao dịch (thanh toán) mới nhất")
+    public ResponseEntity<List<RecentTransactionDTO>> getRecentTransactions(
+            @RequestParam(defaultValue = "10") int limit) {
+        return ResponseEntity.ok(dashboardService.getRecentTransactions(limit));
     }
 
 

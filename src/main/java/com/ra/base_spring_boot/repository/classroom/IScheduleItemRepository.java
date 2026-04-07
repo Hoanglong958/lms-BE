@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface IScheduleItemRepository extends JpaRepository<ScheduleItem, Long> {
@@ -64,4 +65,16 @@ public interface IScheduleItemRepository extends JpaRepository<ScheduleItem, Lon
             @Param("classId") Long classId,
             @Param("year") int year,
             @Param("month") int month);
+
+    @Query("""
+                SELECT si
+                FROM ScheduleItem si
+                JOIN si.classCourse cc
+                WHERE cc.clazz.id IN :classIds
+                AND si.date BETWEEN :start AND :end
+            """)
+    List<ScheduleItem> findByClassIdsAndDateBetween(
+            @Param("classIds") List<Long> classIds,
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end);
 }

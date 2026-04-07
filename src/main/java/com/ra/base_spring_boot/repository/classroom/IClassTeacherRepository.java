@@ -23,4 +23,6 @@ public interface IClassTeacherRepository extends JpaRepository<ClassTeacher, Lon
 
     @EntityGraph(attributePaths = { "clazz", "teacher" })
     List<ClassTeacher> findByTeacherId(Long teacherId);
+
+    long countByTeacherId(Long teacherId);
 }
