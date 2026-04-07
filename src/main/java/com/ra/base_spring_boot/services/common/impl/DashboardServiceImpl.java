@@ -4,12 +4,15 @@ import com.ra.base_spring_boot.dto.DashBoardStats.DashboardStatsDTO;
 import com.ra.base_spring_boot.dto.DashBoardStats.CourseProgressDTO;
 import com.ra.base_spring_boot.dto.DashBoardStats.QuizReportDTO;
 import com.ra.base_spring_boot.dto.DashBoardStats.UserGrowthPointDTO;
+import com.ra.base_spring_boot.dto.DashBoardStats.RevenueGrowthPointDTO;
+import com.ra.base_spring_boot.dto.DashBoardStats.RecentTransactionDTO;
 import com.ra.base_spring_boot.dto.Exam.RecentExamDTO;
 import com.ra.base_spring_boot.dto.resp.UserResponse;
 import com.ra.base_spring_boot.dto.Course.CourseResponseDTO;
 import com.ra.base_spring_boot.dto.LessonQuizzes.LessonQuizResponseDTO;
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.model.constants.RoleName;
+import com.ra.base_spring_boot.model.constants.PaymentStatus;
 import com.ra.base_spring_boot.repository.common.IAssignmentRepository;
 import com.ra.base_spring_boot.repository.classroom.IClassRepository;
 import com.ra.base_spring_boot.repository.course.ICourseRepository;
@@ -19,10 +22,13 @@ import com.ra.base_spring_boot.repository.exam.IExamRepository;
 import com.ra.base_spring_boot.repository.quiz.IQuizResultRepository;
 import com.ra.base_spring_boot.repository.user.IUserCourseRepository;
 import com.ra.base_spring_boot.repository.user.IUserRepository;
+import com.ra.base_spring_boot.repository.registration.IRegistrationRepository;
 import com.ra.base_spring_boot.services.common.IDashboardService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -41,6 +47,7 @@ public class DashboardServiceImpl implements IDashboardService {
         private final IClassRepository classRepo;
         private final IExamAttemptRepository examAttemptRepository;
         private final IExamRepository examRepository;
+        private final IRegistrationRepository registrationRepository;
 
         private double calcGrowth(long current, long previous) {
                 if (previous == 0)
@@ -338,6 +345,43 @@ public class DashboardServiceImpl implements IDashboardService {
                                         .createdAt(exam.getCreatedAt())
                                         .build();
                 }).toList();
+        }
+
+        @Override
+        public List<RevenueGrowthPointDTO> getRevenueGrowthByMonth(int months) {
+                LocalDate now = LocalDate.now();
+                List<RevenueGrowthPointDTO> points = new ArrayList<>();
+
+                for (int i = months - 1; i >= 0; i--) {
+                        LocalDate start = now.minusMonths(i).withDayOfMonth(1);
+                        LocalDateTime startDt = start.atStartOfDay();
+                        LocalDateTime endDt = start
+                                        .withDayOfMonth(start.lengthOfMonth())
+                                        .atTime(23, 59, 59);
+
+                        BigDecimal monthlyRevenue = registrationRepository.sumAmountByPaymentStatusAndDateBetween(
+                                        PaymentStatus.PAID, startDt, endDt);
+
+                        points.add(RevenueGrowthPointDTO.builder()
+                                        .period(start.toString().substring(0, 7)) // yyyy-MM
+                                        .revenue(monthlyRevenue != null ? monthlyRevenue : BigDecimal.ZERO)
+                                        .build());
+                }
+
+                return points;
+        }
+
+        @Override
+        public List<RecentTransactionDTO> getRecentTransactions(int limit) {
+                List<Registration> recent = registrationRepository.findRecentTransactions(PageRequest.of(0, limit));
+                return recent.stream().map(r -> RecentTransactionDTO.builder()
+                                .id("TX" + r.getId())
+                                .user(r.getStudent().getFullName())
+                                .course(r.getCourse().getTitle())
+                                .amount(r.getAmount())
+                                .status(r.getPaymentStatus())
+                                .time(r.getPaymentDate() != null ? r.getPaymentDate() : r.getRegistrationDate())
+                                .build()).collect(Collectors.toList());
         }
 
 }

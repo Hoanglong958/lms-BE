@@ -7,6 +7,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -22,4 +25,10 @@ public interface IRegistrationRepository extends JpaRepository<Registration, Lon
     Optional<Registration> findByStudent_IdAndCourse_Id(Long studentId, Long courseId);
 
     List<Registration> findByCourse_IdAndPaymentStatus(Long courseId, PaymentStatus paymentStatus);
+
+    @Query("SELECT SUM(r.amount) FROM Registration r WHERE r.paymentStatus = :paymentStatus AND r.paymentDate BETWEEN :startDate AND :endDate")
+    BigDecimal sumAmountByPaymentStatusAndDateBetween(@Param("paymentStatus") PaymentStatus paymentStatus, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT r FROM Registration r JOIN FETCH r.student JOIN FETCH r.course ORDER BY r.paymentDate DESC NULLS LAST, r.registrationDate DESC")
+    List<Registration> findRecentTransactions(org.springframework.data.domain.Pageable pageable);
 }
