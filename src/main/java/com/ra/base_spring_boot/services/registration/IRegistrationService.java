@@ -18,6 +18,12 @@ public interface IRegistrationService {
     RegistrationResponseDTO markPaymentSubmitted(Long registrationId, User student);
     
     RegistrationResponseDTO cancelRegistration(Long registrationId, User student);
+
+    RegistrationResponseDTO requestRefund(Long registrationId, User student);
+
+    RegistrationResponseDTO confirmRefund(Long registrationId);
+
+    RegistrationResponseDTO getByTransferRef(String transferRef);
     
     List<RegistrationResponseDTO> confirmBulkPayment(List<Long> registrationIds);
 

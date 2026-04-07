@@ -71,5 +71,7 @@ List<User> findNewUsersSince(@Param("role") RoleName role,
     List<User> findByRoleBetween(@Param("role") RoleName role,
                                  @Param("start") LocalDateTime start,
                                  @Param("end") LocalDateTime end);
+    
+    List<User> findByRole(RoleName role);
     boolean existsByPhoneAndGmailNot(String phone, String gmail);
 }

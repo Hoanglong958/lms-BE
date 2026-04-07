@@ -53,6 +53,20 @@ public class Registration {
     @Builder.Default
     private Boolean paymentSubmitted = false;
 
+    @Column(name = "refund_requested", nullable = false)
+    @Builder.Default
+    private Boolean refundRequested = false;
+
+    @Column(name = "refund_requested_at")
+    private LocalDateTime refundRequestedAt;
+
+    @Column(name = "refund_confirmed", nullable = false)
+    @Builder.Default
+    private Boolean refundConfirmed = false;
+
+    @Column(name = "refund_confirmed_at")
+    private LocalDateTime refundConfirmedAt;
+
     @PrePersist
     public void onCreate() {
         if (registrationDate == null) {
@@ -63,6 +77,12 @@ public class Registration {
         }
         if (paymentSubmitted == null) {
             paymentSubmitted = false;
+        }
+        if (refundRequested == null) {
+            refundRequested = false;
+        }
+        if (refundConfirmed == null) {
+            refundConfirmed = false;
         }
     }
 }

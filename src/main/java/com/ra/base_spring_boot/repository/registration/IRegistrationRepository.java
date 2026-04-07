@@ -26,6 +26,8 @@ public interface IRegistrationRepository extends JpaRepository<Registration, Lon
 
     List<Registration> findByCourse_IdAndPaymentStatus(Long courseId, PaymentStatus paymentStatus);
 
+    Optional<Registration> findByTransferRef(String transferRef);
+
     @Query("SELECT SUM(r.amount) FROM Registration r WHERE r.paymentStatus = :paymentStatus AND r.paymentDate BETWEEN :startDate AND :endDate")
     BigDecimal sumAmountByPaymentStatusAndDateBetween(@Param("paymentStatus") PaymentStatus paymentStatus, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 

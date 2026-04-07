@@ -12,10 +12,12 @@ import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.*;
 import com.ra.base_spring_boot.model.constants.PaymentStatus;
 import com.ra.base_spring_boot.model.constants.NotificationType;
+import com.ra.base_spring_boot.model.constants.RoleName;
 import com.ra.base_spring_boot.repository.classroom.IClassStudentRepository;
 import com.ra.base_spring_boot.repository.course.IClassCourseRepository;
 import com.ra.base_spring_boot.repository.course.ICourseRepository;
 import com.ra.base_spring_boot.repository.registration.IRegistrationRepository;
+import com.ra.base_spring_boot.repository.user.IUserRepository;
 import com.ra.base_spring_boot.services.notification.IUserNotificationService;
 import com.ra.base_spring_boot.services.registration.IRegistrationService;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,7 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,6 +52,7 @@ public class RegistrationServiceImpl implements IRegistrationService {
     private final IClassCourseRepository classCourseRepository;
     private final IClassStudentRepository classStudentRepository;
     private final IUserNotificationService userNotificationService;
+    private final IUserRepository userRepository;
 
     @Override
     @Transactional
@@ -108,8 +112,8 @@ public class RegistrationServiceImpl implements IRegistrationService {
         Registration registration = registrationRepository.findById(registrationId)
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy bản ghi đăng ký!"));
 
-        if (registration.getPaymentStatus() == PaymentStatus.PAID) {
-            throw new HttpBadRequest("Đăng ký này đã được thanh toán trước đó.");
+        if (registration.getPaymentStatus() != PaymentStatus.PENDING) {
+            throw new HttpBadRequest("Chỉ những đăng ký đang chờ thanh toán mới được xác nhận.");
         }
 
         if (!Boolean.TRUE.equals(registration.getPaymentSubmitted())) {
@@ -195,6 +199,61 @@ public class RegistrationServiceImpl implements IRegistrationService {
 
     @Override
     @Transactional
+    public RegistrationResponseDTO requestRefund(Long registrationId, User student) {
+        Registration registration = registrationRepository.findById(registrationId)
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy bản ghi đăng ký!"));
+
+        if (!registration.getStudent().getId().equals(student.getId())) {
+            throw new HttpBadRequest("Bạn không có quyền yêu cầu hoàn tiền cho đăng ký này!");
+        }
+
+        if (registration.getPaymentStatus() != PaymentStatus.PAID) {
+            throw new HttpBadRequest("Chỉ có thể yêu cầu hoàn tiền sau khi đã thanh toán.");
+        }
+
+        LocalDateTime eligibleAt = getRefundEligibleAt(registration);
+        if (eligibleAt == null || LocalDateTime.now().isBefore(eligibleAt)) {
+            throw new HttpBadRequest("Bạn chỉ có thể yêu cầu hoàn tiền sau 3 ngày kể từ ngày thanh toán.");
+        }
+
+        if (Boolean.TRUE.equals(registration.getRefundRequested())) {
+            throw new HttpBadRequest("Bạn đã gửi yêu cầu hoàn tiền trước đó.");
+        }
+
+        registration.setRefundRequested(true);
+        registration.setRefundRequestedAt(LocalDateTime.now());
+        registration.setRefundConfirmed(false);
+        registration.setRefundConfirmedAt(null);
+        registration.setPaymentStatus(PaymentStatus.REFUND_REQUESTED);
+        registrationRepository.save(registration);
+
+        String adminMessage = "Sinh viên " + registration.getStudent().getFullName()
+                + " vừa yêu cầu hoàn tiền cho khóa học " + registration.getCourse().getTitle() + ".";
+        List<User> admins = userRepository.findByRole(RoleName.ROLE_ADMIN);
+        for (User admin : admins) {
+            userNotificationService.sendNotification(
+                    admin,
+                    "Yêu cầu hoàn tiền",
+                    adminMessage,
+                    NotificationType.PAYMENT,
+                    "/admin/registrations"
+            );
+        }
+
+        userNotificationService.sendNotification(
+                student,
+                "Yêu cầu hoàn tiền đã gửi",
+                "Yêu cầu hoàn tiền của bạn cho khóa học \"" + registration.getCourse().getTitle()
+                        + "\" đã đến tay admin. Họ sẽ phản hồi sớm.",
+                NotificationType.PAYMENT,
+                "/registrations"
+        );
+
+        return toDto(registration);
+    }
+
+    @Override
+    @Transactional
     public RegistrationResponseDTO markPaymentSubmitted(Long registrationId, User student) {
         Registration registration = registrationRepository.findById(registrationId)
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy bản ghi đăng ký!"));
@@ -222,6 +281,58 @@ public class RegistrationServiceImpl implements IRegistrationService {
         return registrationIds.stream()
                 .map(this::confirmPayment)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public RegistrationResponseDTO confirmRefund(Long registrationId) {
+        Registration registration = registrationRepository.findById(registrationId)
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy bản ghi đăng ký!"));
+
+        if (registration.getPaymentStatus() != PaymentStatus.REFUND_REQUESTED) {
+            throw new HttpBadRequest("Chỉ có thể xác nhận hoàn tiền cho đăng ký đang chờ xử lý.");
+        }
+
+        // Remove student from any class that the course was mapped to
+        if (registration.getCourse() != null && registration.getCourse().getId() != null) {
+            List<ClassCourse> assignedClasses = classCourseRepository.findByCourse_Id(registration.getCourse().getId());
+            assignedClasses.stream()
+                    .map(ClassCourse::getClazz)
+                    .filter(clazz -> clazz != null && clazz.getId() != null)
+                    .map(clazz -> clazz.getId())
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .forEach(classroomId -> classStudentRepository
+                            .findByClassroomIdAndStudentId(classroomId, registration.getStudent().getId())
+                            .ifPresent(classStudentRepository::delete));
+        }
+
+        registration.setRefundConfirmed(true);
+        registration.setRefundConfirmedAt(LocalDateTime.now());
+        registration.setPaymentStatus(PaymentStatus.REFUNDED);
+        registration.setRefundRequested(false);
+        registration.setRefundRequestedAt(null);
+        registration.setPaymentSubmitted(false);
+        registrationRepository.save(registration);
+
+        userNotificationService.sendNotification(
+                registration.getStudent(),
+                "Hoàn tiền đã được xác nhận",
+                "Admin đã xác nhận hoàn tiền cho khóa học " + registration.getCourse().getTitle()
+                        + ". Bạn sẽ nhận lại tiền trong thời gian sớm nhất.",
+                NotificationType.PAYMENT,
+                "/registrations"
+        );
+
+        return toDto(registration);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public RegistrationResponseDTO getByTransferRef(String transferRef) {
+        Registration registration = registrationRepository.findByTransferRef(transferRef)
+                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy giao dịch với mã chuyển khoản này."));
+        return toDto(registration);
     }
 
     @Override
@@ -395,6 +506,8 @@ public class RegistrationServiceImpl implements IRegistrationService {
     private RegistrationResponseDTO toDto(Registration registration, String enrolledClassName) {
         if (registration == null)
             return null;
+        LocalDateTime eligibleAt = getRefundEligibleAt(registration);
+        boolean canRequestRefund = isRefundRequestAllowed(registration, eligibleAt);
         return RegistrationResponseDTO.builder()
                 .id(registration.getId())
                 .studentId(registration.getStudent() != null ? registration.getStudent().getId() : null)
@@ -410,7 +523,34 @@ public class RegistrationServiceImpl implements IRegistrationService {
                 .note(registration.getNote())
                 .transferRef(registration.getTransferRef())
                 .paymentSubmitted(registration.getPaymentSubmitted())
+                .refundRequested(registration.getRefundRequested())
+                .refundRequestedAt(registration.getRefundRequestedAt())
+                .refundConfirmed(registration.getRefundConfirmed())
+                .refundConfirmedAt(registration.getRefundConfirmedAt())
+                .refundEligibleAt(eligibleAt)
+                .canRequestRefund(canRequestRefund)
                 .enrolledClassName(enrolledClassName)
                 .build();
+    }
+
+    private LocalDateTime getRefundEligibleAt(Registration registration) {
+        if (registration == null || registration.getPaymentDate() == null) {
+            return null;
+        }
+        return registration.getPaymentDate().plusDays(3);
+    }
+
+    private boolean isRefundRequestAllowed(Registration registration, LocalDateTime eligibleAt) {
+        if (registration == null || eligibleAt == null) {
+            return false;
+        }
+        if (registration.getPaymentStatus() != PaymentStatus.PAID) {
+            return false;
+        }
+        if (Boolean.TRUE.equals(registration.getRefundRequested())) {
+            return false;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        return !now.isBefore(eligibleAt);
     }
 }

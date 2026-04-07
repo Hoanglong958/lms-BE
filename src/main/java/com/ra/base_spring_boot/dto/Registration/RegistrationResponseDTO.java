@@ -27,4 +27,10 @@ public class RegistrationResponseDTO {
     private String transferRef;
     private String enrolledClassName; // Tên lớp học đã được thêm vào
     private Boolean paymentSubmitted;
+    private Boolean refundRequested;
+    private LocalDateTime refundRequestedAt;
+    private Boolean refundConfirmed;
+    private LocalDateTime refundConfirmedAt;
+    private LocalDateTime refundEligibleAt;
+    private Boolean canRequestRefund;
 }

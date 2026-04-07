@@ -97,6 +97,19 @@ public class RegistrationController {
                                                 .build());
         }
 
+        @PatchMapping("/{id}/confirm-refund")
+        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+        @Operation(summary = "Admin xác nhận hoàn tiền", description = "Xác nhận hoàn tiền sau khi kiểm tra ngân hàng")
+        public ResponseEntity<?> confirmRefund(@PathVariable Long id) {
+                RegistrationResponseDTO response = registrationService.confirmRefund(id);
+                return ResponseEntity.ok(
+                                ResponseWrapper.builder()
+                                                .status(HttpStatus.OK)
+                                                .code(200)
+                                                .data(response)
+                                                .build());
+        }
+
         @PatchMapping("/{id}/payment-submitted")
         @PreAuthorize("hasAuthority('ROLE_USER')")
         @Operation(summary = "Sinh viên báo đã chuyển khoản", description = "Cho phép sinh viên ghi nhận thanh toán trước khi admin xác nhận")
@@ -118,6 +131,34 @@ public class RegistrationController {
                         @AuthenticationPrincipal MyUserDetails userDetails,
                         @PathVariable Long id) {
                 RegistrationResponseDTO response = registrationService.cancelRegistration(id, userDetails.getUser());
+                return ResponseEntity.ok(
+                                ResponseWrapper.builder()
+                                                .status(HttpStatus.OK)
+                                                .code(200)
+                                                .data(response)
+                                                .build());
+        }
+
+        @PatchMapping("/{id}/request-refund")
+        @PreAuthorize("hasAuthority('ROLE_USER')")
+        @Operation(summary = "Sinh viên yêu cầu hoàn tiền", description = "Cho phép yêu cầu hoàn tiền sau 3 ngày kể từ ngày thanh toán")
+        public ResponseEntity<?> requestRefund(
+                        @AuthenticationPrincipal MyUserDetails userDetails,
+                        @PathVariable Long id) {
+                RegistrationResponseDTO response = registrationService.requestRefund(id, userDetails.getUser());
+                return ResponseEntity.ok(
+                                ResponseWrapper.builder()
+                                                .status(HttpStatus.OK)
+                                                .code(200)
+                                                .data(response)
+                                                .build());
+        }
+
+        @GetMapping("/transfer-ref/{code}")
+        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+        @Operation(summary = "Tìm đăng ký theo mã chuyển khoản", description = "Dùng khi admin đối soát mã chuyển tiền")
+        public ResponseEntity<?> getByTransferRef(@PathVariable("code") String code) {
+                RegistrationResponseDTO response = registrationService.getByTransferRef(code);
                 return ResponseEntity.ok(
                                 ResponseWrapper.builder()
                                                 .status(HttpStatus.OK)
