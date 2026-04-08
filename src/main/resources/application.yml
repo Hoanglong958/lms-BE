@@ -89,12 +89,10 @@ logging:
   level:
     "[org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsManagerConfigurer]": ERROR
 
-payment:
-  bank:
-    id: "970407"                  # Mã ngân hàng VietQR của Techcombank
-    account-no: "19021698833015"   # ⚠ Số tài khoản Techcombank của bạn
-    account-name: "NGUYEN THI VAN"      # Tên chủ tài khoản (VIẾT HOA, không dấu)
-    name: "Techcombank"           # Tên ngân hàng hiển thị
+sepay:
+    webhook-secret: "lms-sepay-webhook-xyz"
+    qr-acc: "VQRQAIDPS9130"
+    qr-bank: "MBBank"
 
 # ========== OLLAMA AI CONFIG ==========
 ollama:

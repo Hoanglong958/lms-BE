@@ -24,6 +24,9 @@ public interface IRegistrationRepository extends JpaRepository<Registration, Lon
 
     Optional<Registration> findByStudent_IdAndCourse_Id(Long studentId, Long courseId);
 
+    @Query("SELECT r FROM Registration r JOIN FETCH r.student JOIN FETCH r.course WHERE UPPER(r.transferRef) = UPPER(:transferRef)")
+    Optional<Registration> findByTransferRefIgnoreCase(@Param("transferRef") String transferRef);
+
     List<Registration> findByCourse_IdAndPaymentStatus(Long courseId, PaymentStatus paymentStatus);
 
     @Query("SELECT SUM(r.amount) FROM Registration r WHERE r.paymentStatus = :paymentStatus AND r.paymentDate BETWEEN :startDate AND :endDate")

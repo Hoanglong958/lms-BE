@@ -49,9 +49,9 @@ public class Registration {
     @Column(name = "transfer_ref", length = 50)
     private String transferRef; // e.g. TUITION-123
 
-    @Column(name = "payment_submitted", nullable = false)
+    @Column(name = "refund_requested", nullable = false)
     @Builder.Default
-    private Boolean paymentSubmitted = false;
+    private Boolean refundRequested = false;
 
     @PrePersist
     public void onCreate() {
@@ -61,8 +61,8 @@ public class Registration {
         if (paymentStatus == null) {
             paymentStatus = PaymentStatus.PENDING;
         }
-        if (paymentSubmitted == null) {
-            paymentSubmitted = false;
+        if (refundRequested == null) {
+            refundRequested = false;
         }
     }
 }

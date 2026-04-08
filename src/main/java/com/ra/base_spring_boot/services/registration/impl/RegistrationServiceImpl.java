@@ -1,17 +1,17 @@
 package com.ra.base_spring_boot.services.registration.impl;
 
 import com.lowagie.text.*;
+import com.lowagie.text.pdf.BaseFont;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
-import com.lowagie.text.pdf.BaseFont;
-import java.io.File;
 import com.ra.base_spring_boot.dto.Registration.RegistrationRequestDTO;
 import com.ra.base_spring_boot.dto.Registration.RegistrationResponseDTO;
+import com.ra.base_spring_boot.dto.Registration.SepayWebhookDTO;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.model.*;
-import com.ra.base_spring_boot.model.constants.PaymentStatus;
 import com.ra.base_spring_boot.model.constants.NotificationType;
+import com.ra.base_spring_boot.model.constants.PaymentStatus;
 import com.ra.base_spring_boot.repository.classroom.IClassStudentRepository;
 import com.ra.base_spring_boot.repository.course.IClassCourseRepository;
 import com.ra.base_spring_boot.repository.course.ICourseRepository;
@@ -31,18 +31,20 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class RegistrationServiceImpl implements IRegistrationService {
+
+    private static final Pattern TRANSFER_REF_PATTERN = Pattern.compile("(?i)(SEPAY|TUITION)(\\d+)");
 
     private final IRegistrationRepository registrationRepository;
     private final ICourseRepository courseRepository;
@@ -71,14 +73,14 @@ public class RegistrationServiceImpl implements IRegistrationService {
 
         registration = registrationRepository.save(registration);
         // Generate unique transfer reference after we have the ID
-        registration.setTransferRef("TUITION" + registration.getId());
+        registration.setTransferRef("SEPAY" + registration.getId());
         registration = registrationRepository.save(registration);
 
         // Send Notification
         userNotificationService.sendNotification(
             student,
             "Đăng ký khóa học thành công",
-            "Bạn đã đăng ký khóa học " + course.getTitle() + ". Vui lòng thực hiện thanh toán để hoàn tất quá trình vào lớp.",
+            "Bạn đã đăng ký khóa học " + course.getTitle() + ". Vui lòng chuyển khoản đúng mã để hệ thống tự động xác nhận và xếp lớp.",
             NotificationType.COURSE_REGISTRATION,
             "/registrations?courseId=" + course.getId() + "&payment=true"
         );
@@ -104,64 +106,48 @@ public class RegistrationServiceImpl implements IRegistrationService {
 
     @Override
     @Transactional
-    public RegistrationResponseDTO confirmPayment(Long registrationId) {
-        Registration registration = registrationRepository.findById(registrationId)
-                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy bản ghi đăng ký!"));
+    public RegistrationResponseDTO processSepayWebhook(SepayWebhookDTO payload) {
+        String transferContent = payload.getTransferContent();
+        String transferRef = extractTransferRef(transferContent);
+        
+        // 1. Try finding by exact transfer_ref (e.g., "SEPAY13117")
+        Registration registration = registrationRepository.findByTransferRefIgnoreCase(transferRef)
+                .orElseGet(() -> {
+                    // 2. Try swapping prefixes (SEPAY <-> TUITION)
+                    String alt = toAltTransferRef(transferRef);
+                    return alt != null ? registrationRepository.findByTransferRefIgnoreCase(alt).orElse(null) : null;
+                });
 
-        if (registration.getPaymentStatus() == PaymentStatus.PAID) {
-            throw new HttpBadRequest("Đăng ký này đã được thanh toán trước đó.");
-        }
-
-        if (!Boolean.TRUE.equals(registration.getPaymentSubmitted())) {
-            throw new HttpBadRequest("Sinh viên chưa báo đã chuyển tiền. Vui lòng chờ xác nhận từ học viên.");
-        }
-
-        registration.setPaymentStatus(PaymentStatus.PAID);
-        registration.setPaymentDate(LocalDateTime.now());
-        registrationRepository.save(registration);
-
-        // Send Payment Success Notification
-        userNotificationService.sendNotification(
-            registration.getStudent(),
-            "Thanh toán thành công",
-            "Cảm ơn bạn đã thanh toán cho khóa học " + registration.getCourse().getTitle() + ".",
-            NotificationType.PAYMENT,
-            "/registrations?courseId=" + registration.getCourse().getId()
-        );
-
-        // Tự động thêm vào lớp học (lấy lớp học đầu tiên được gán cho khóa học này)
-        String enrolledClassName = null;
-        List<ClassCourse> classCourses = classCourseRepository.findByCourse_Id(registration.getCourse().getId());
-        if (!classCourses.isEmpty()) {
-            // Lấy class có ID cao nhất (giả định là lớp mới nhất)
-            com.ra.base_spring_boot.model.Class aClass = classCourses.stream()
-                    .map(ClassCourse::getClazz)
-                    .max((c1, c2) -> c1.getId().compareTo(c2.getId()))
-                    .orElse(null);
-
-            if (aClass != null && !classStudentRepository.existsByClassroomIdAndStudentId(aClass.getId(),
-                    registration.getStudent().getId())) {
-                ClassStudent enrollment = ClassStudent.builder()
-                        .classroom(aClass)
-                        .student(registration.getStudent())
-                        .status(com.ra.base_spring_boot.model.constants.ClassEnrollmentStatus.ACTIVE)
-                        .enrolledAt(LocalDateTime.now())
-                        .build();
-                classStudentRepository.save(enrollment);
-                enrolledClassName = aClass.getClassName(); // Lưu tên lớp đã thêm
-
-                // Send Class Enrollment Notification
-                userNotificationService.sendNotification(
-                    registration.getStudent(),
-                    "Chào mừng bạn đã vào lớp",
-                    "Bạn đã được thêm vào lớp " + enrolledClassName + " cho khóa học " + registration.getCourse().getTitle() + ".",
-                    NotificationType.ACADEMIC,
-                    "/classes/" + aClass.getId()
-                );
+        // 3. Fallback: Try finding by numeric ID if prefix-based search fails
+        if (registration == null) {
+            try {
+                Long id = extractNumericId(transferContent);
+                if (id != null) {
+                    registration = registrationRepository.findById(id).orElse(null);
+                }
+            } catch (Exception e) {
+                // Ignore parsing errors for fallback
             }
         }
 
-        return toDto(registration, enrolledClassName);
+        if (registration == null) {
+            throw new HttpBadRequest("Không tìm thấy đăng ký khớp mã chuyển khoản " + transferRef + ".");
+        }
+
+        if (registration.getPaymentStatus() == PaymentStatus.CANCELLED) {
+            throw new HttpBadRequest("Đăng ký này đã bị hủy, không thể xác nhận thanh toán.");
+        }
+
+        BigDecimal transferAmount = payload.getTransferAmount();
+        if (transferAmount == null) {
+            throw new HttpBadRequest("Webhook SePay không có số tiền giao dịch.");
+        }
+
+        if (registration.getAmount() == null || registration.getAmount().compareTo(transferAmount) != 0) {
+            throw new HttpBadRequest("Số tiền giao dịch không khớp với học phí cần thanh toán.");
+        }
+
+        return completePayment(registration);
     }
 
     @Override
@@ -195,36 +181,6 @@ public class RegistrationServiceImpl implements IRegistrationService {
 
     @Override
     @Transactional
-    public RegistrationResponseDTO markPaymentSubmitted(Long registrationId, User student) {
-        Registration registration = registrationRepository.findById(registrationId)
-                .orElseThrow(() -> new HttpBadRequest("Không tìm thấy bản ghi đăng ký!"));
-
-        if (!registration.getStudent().getId().equals(student.getId())) {
-            throw new HttpBadRequest("Bạn không có quyền cập nhật thanh toán cho đăng ký này!");
-        }
-
-        if (registration.getPaymentStatus() != PaymentStatus.PENDING) {
-            throw new HttpBadRequest("Chỉ đăng ký đang ở trạng thái chờ thanh toán mới có thể thông báo.");
-        }
-
-        if (Boolean.TRUE.equals(registration.getPaymentSubmitted())) {
-            throw new HttpBadRequest("Bạn đã gửi thông báo đã chuyển khoản rồi.");
-        }
-
-        registration.setPaymentSubmitted(true);
-        registrationRepository.save(registration);
-        return toDto(registration);
-    }
-
-    @Override
-    @Transactional
-    public List<RegistrationResponseDTO> confirmBulkPayment(List<Long> registrationIds) {
-        return registrationIds.stream()
-                .map(this::confirmPayment)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     public byte[] exportToExcel() {
         List<Registration> registrations = registrationRepository.findAll();
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -232,7 +188,7 @@ public class RegistrationServiceImpl implements IRegistrationService {
 
             // Header row
             Row headerRow = sheet.createRow(0);
-            String[] headers = { "ID", "Student Name", "Email", "Phone", "Course", "Amount", "Status", "Date", "Sinh viên báo" };
+            String[] headers = { "ID", "Student Name", "Email", "Phone", "Course", "Amount", "Status", "Date", "Transfer Ref" };
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(headers[i]);
@@ -256,7 +212,7 @@ public class RegistrationServiceImpl implements IRegistrationService {
                 row.createCell(6).setCellValue(reg.getPaymentStatus() != null ? reg.getPaymentStatus().name() : "N/A");
                 row.createCell(7).setCellValue(
                         reg.getRegistrationDate() != null ? reg.getRegistrationDate().format(formatter) : "N/A");
-                row.createCell(8).setCellValue(reg.getPaymentSubmitted() != null && reg.getPaymentSubmitted() ? "Có" : "Chưa");
+                row.createCell(8).setCellValue(reg.getTransferRef() != null ? reg.getTransferRef() : "N/A");
             }
 
             workbook.write(out);
@@ -319,8 +275,12 @@ public class RegistrationServiceImpl implements IRegistrationService {
             addTableCell(table, "Ref / Mã tham chiếu:", boldFont);
             addTableCell(table, reg.getTransferRef() != null ? reg.getTransferRef() : "N/A", normalFont);
 
-            addTableCell(table, "Sinh viên báo:", boldFont);
-            addTableCell(table, Boolean.TRUE.equals(reg.getPaymentSubmitted()) ? "Đã gửi" : "Chưa gửi", normalFont);
+            addTableCell(table, "Payment Date / Ngày thanh toán:", boldFont);
+            addTableCell(table,
+                    reg.getPaymentDate() != null
+                            ? reg.getPaymentDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                            : "N/A",
+                    normalFont);
 
             document.add(table);
 
@@ -409,8 +369,95 @@ public class RegistrationServiceImpl implements IRegistrationService {
                 .paymentDate(registration.getPaymentDate())
                 .note(registration.getNote())
                 .transferRef(registration.getTransferRef())
-                .paymentSubmitted(registration.getPaymentSubmitted())
+                .refundRequested(registration.getRefundRequested())
                 .enrolledClassName(enrolledClassName)
                 .build();
+    }
+
+    private RegistrationResponseDTO completePayment(Registration registration) {
+        if (registration.getPaymentStatus() == PaymentStatus.PAID) {
+            return toDto(registration);
+        }
+
+        registration.setPaymentStatus(PaymentStatus.PAID);
+        registration.setPaymentDate(LocalDateTime.now());
+        registrationRepository.save(registration);
+
+        userNotificationService.sendNotification(
+                registration.getStudent(),
+                "Thanh toán thành công",
+                "Hệ thống đã xác nhận thanh toán cho khóa học " + registration.getCourse().getTitle() + ".",
+                NotificationType.PAYMENT,
+                "/registrations?courseId=" + registration.getCourse().getId());
+
+        String enrolledClassName = null;
+        List<ClassCourse> classCourses = classCourseRepository.findByCourse_Id(registration.getCourse().getId());
+        if (!classCourses.isEmpty()) {
+            com.ra.base_spring_boot.model.Class aClass = classCourses.stream()
+                    .map(ClassCourse::getClazz)
+                    .max((c1, c2) -> c1.getId().compareTo(c2.getId()))
+                    .orElse(null);
+
+            if (aClass != null && !classStudentRepository.existsByClassroomIdAndStudentId(
+                    aClass.getId(), registration.getStudent().getId())) {
+                ClassStudent enrollment = ClassStudent.builder()
+                        .classroom(aClass)
+                        .student(registration.getStudent())
+                        .status(com.ra.base_spring_boot.model.constants.ClassEnrollmentStatus.ACTIVE)
+                        .enrolledAt(LocalDateTime.now())
+                        .build();
+                classStudentRepository.save(enrollment);
+                enrolledClassName = aClass.getClassName();
+
+                userNotificationService.sendNotification(
+                        registration.getStudent(),
+                        "Chào mừng bạn đã vào lớp",
+                        "Bạn đã được thêm vào lớp " + enrolledClassName + " cho khóa học "
+                                + registration.getCourse().getTitle() + ".",
+                        NotificationType.ACADEMIC,
+                        "/classes/" + aClass.getId());
+            }
+        }
+
+        return toDto(registration, enrolledClassName);
+    }
+
+    private String extractTransferRef(String transferContent) {
+        if (transferContent == null || transferContent.isBlank()) {
+            throw new HttpBadRequest("Webhook SePay không có nội dung chuyển khoản.");
+        }
+
+        Matcher matcher = TRANSFER_REF_PATTERN.matcher(transferContent);
+        String lastMatch = null;
+        while (matcher.find()) {
+            lastMatch = matcher.group().toUpperCase();
+        }
+
+        if (lastMatch == null) {
+            throw new HttpBadRequest("Không tìm thấy mã thanh toán (SEPAY...) trong nội dung chuyển khoản.");
+        }
+        return lastMatch;
+    }
+
+    private Long extractNumericId(String transferContent) {
+        if (transferContent == null) return null;
+        // Find the sequence of digits matching our pattern
+        Matcher patternMatcher = TRANSFER_REF_PATTERN.matcher(transferContent);
+        Long lastId = null;
+        while (patternMatcher.find()) {
+            lastId = Long.parseLong(patternMatcher.group(2));
+        }
+        return lastId;
+    }
+
+    private String toAltTransferRef(String transferRef) {
+        if (transferRef == null) return null;
+        if (transferRef.toUpperCase().startsWith("SEPAY")) {
+            return "TUITION" + transferRef.substring(5);
+        }
+        if (transferRef.toUpperCase().startsWith("TUITION")) {
+            return "SEPAY" + transferRef.substring(7);
+        }
+        return null;
     }
 }
