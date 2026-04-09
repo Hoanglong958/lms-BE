@@ -64,6 +64,19 @@ jwt:
   expired:
     access: 3600000
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, info
+  endpoint:
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
 server:
   port: 3900
 
