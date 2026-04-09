@@ -56,6 +56,8 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                                 // Chỉ cho phép các endpoint public thuộc auth
                                                 // (login/register/forgot/reset/verify)
+                                                .requestMatchers("/api/v1/registrations/webhook/**")
+                                                .permitAll()
                                                 .requestMatchers(
                                                                 "/api/v1/auth/login",
                                                                 "/api/v1/auth/register",

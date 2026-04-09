@@ -102,6 +102,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 // Public password reset token endpoints (delayed OTP reveal flow)
                 || path.equals("/api/v1/password-reset-tokens/validate")
                 || path.equals("/api/v1/password-reset-tokens/latest") // DEV endpoint: Lấy token mới nhất để test
+                || path.startsWith("/api/v1/registrations/webhook")
                 // Public user endpoints
                 || path.equals("/api/v1/users/check")                // Public uploads
                 || path.equals("/api/v1/uploads")

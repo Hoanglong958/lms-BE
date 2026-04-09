@@ -8,7 +8,15 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "registrations")
+@Table(
+    name = "registrations",
+    uniqueConstraints = {
+        @UniqueConstraint(
+            name = "uk_student_course",
+            columnNames = {"user_id", "course_id"}
+        )
+    }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -49,9 +57,9 @@ public class Registration {
     @Column(name = "transfer_ref", length = 50)
     private String transferRef; // e.g. TUITION-123
 
-    @Column(name = "payment_submitted", nullable = false)
+    @Column(name = "refund_requested", nullable = false)
     @Builder.Default
-    private Boolean paymentSubmitted = false;
+    private Boolean refundRequested = false;
 
     @PrePersist
     public void onCreate() {
@@ -61,8 +69,8 @@ public class Registration {
         if (paymentStatus == null) {
             paymentStatus = PaymentStatus.PENDING;
         }
-        if (paymentSubmitted == null) {
-            paymentSubmitted = false;
+        if (refundRequested == null) {
+            refundRequested = false;
         }
     }
 }
