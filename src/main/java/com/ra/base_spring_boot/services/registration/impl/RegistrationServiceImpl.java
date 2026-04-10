@@ -18,6 +18,8 @@ import com.ra.base_spring_boot.repository.course.ICourseRepository;
 import com.ra.base_spring_boot.repository.registration.IRegistrationRepository;
 import com.ra.base_spring_boot.services.notification.IUserNotificationService;
 import com.ra.base_spring_boot.services.registration.IRegistrationService;
+import com.ra.base_spring_boot.utils.StringUtils;
+import com.ra.base_spring_boot.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.usermodel.Cell;
@@ -81,7 +83,7 @@ public RegistrationResponseDTO register(User student, RegistrationRequestDTO dto
         registration.setPaymentStatus(PaymentStatus.PENDING);
         registration.setAmount(course.getTuitionFee() != null
                 ? course.getTuitionFee() : BigDecimal.ZERO);
-        registration.setNote(dto.getNote());
+        registration.setNote(StringUtils.emptyToNull(dto.getNote()));
         registration.setRegistrationDate(LocalDateTime.now());
         registration.setPaymentDate(null);
         registration.setRefundRequested(false);
@@ -92,7 +94,7 @@ public RegistrationResponseDTO register(User student, RegistrationRequestDTO dto
                 .amount(course.getTuitionFee() != null
                         ? course.getTuitionFee() : BigDecimal.ZERO)
                 .paymentStatus(PaymentStatus.PENDING)
-                .note(dto.getNote())
+                .note(StringUtils.emptyToNull(dto.getNote()))
                 .build();
     }
 
@@ -456,7 +458,8 @@ public RegistrationResponseDTO register(User student, RegistrationRequestDTO dto
     }
 
     private String extractTransferRef(String transferContent) {
-        if (transferContent == null || transferContent.isBlank()) {
+        String content = StringUtils.emptyToNull(transferContent);
+        if (content == null) {
             throw new HttpBadRequest("Webhook SePay không có nội dung chuyển khoản.");
         }
 

@@ -9,8 +9,10 @@ import java.util.ArrayList;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import com.ra.base_spring_boot.utils.PaginationUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -161,13 +163,7 @@ public class PostServiceImpl implements IPostService {
     @Transactional(readOnly = true)
     public Page<PostResponseDTO> searchPostsAdvanced(String q, String tagName, String status, int page, int size,
             String sort) {
-        Sort sortObj;
-        String[] sortParts = sort.split(",");
-        if (sortParts.length == 2) {
-            sortObj = Sort.by(Sort.Direction.fromString(sortParts[1]), sortParts[0]);
-        } else {
-            sortObj = Sort.by(Sort.Direction.DESC, "createdAt");
-        }
+        Pageable pageable = PaginationUtils.createPageable(page, size, sort, "createdAt");
 
         Specification<Post> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -200,7 +196,7 @@ public class PostServiceImpl implements IPostService {
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
 
-        return postRepository.findAll(spec, PageRequest.of(page, size, sortObj))
+        return postRepository.findAll(spec, pageable)
                 .map(this::toPostResponseDTO);
     }
 

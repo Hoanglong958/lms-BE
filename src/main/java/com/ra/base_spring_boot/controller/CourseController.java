@@ -21,9 +21,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import com.ra.base_spring_boot.utils.SecurityUtils;
+import com.ra.base_spring_boot.utils.PaginationUtils;
 
 @RestController
 @RequestMapping("/api/v1/courses")
@@ -148,16 +148,8 @@ public class CourseController {
                         @Parameter(description = "Sắp xếp, ví dụ: createdAt,desc hoặc title,asc") @RequestParam(value = "sort", defaultValue = "createdAt,desc") String sort,
                         @Parameter(description = "Lọc theo trạng thái đăng ký (ALL, NONE, PENDING, PAID, CANCELLED)") @RequestParam(value = "regStatus", defaultValue = "ALL") String regStatus) {
 
-                Sort sortObj;
-                String[] sortParts = sort.split(",");
-                if (sortParts.length == 2) {
-                        sortObj = Sort.by(Sort.Direction.fromString(sortParts[1]), sortParts[0]);
-                } else {
-                        sortObj = Sort.by(Sort.Direction.DESC, "createdAt");
-                }
-                Pageable pageable = PageRequest.of(page, size, sortObj);
-
-                Long studentId = getCurrentUserId();
+                Pageable pageable = PaginationUtils.createPageable(page, size, sort, "createdAt");
+                Long studentId = SecurityUtils.getCurrentUserId();
                 Page<CourseResponseDTO> result;
 
                 if (studentId != null && regStatus != null && !regStatus.equalsIgnoreCase("ALL")) {
@@ -184,7 +176,7 @@ public class CourseController {
                         @Parameter(description = "Trang bắt đầu từ 0") @RequestParam(value = "page", defaultValue = "0") int page,
                         @Parameter(description = "Kích thước trang") @RequestParam(value = "size", defaultValue = "10") int size) {
 
-                Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+                Pageable pageable = PaginationUtils.createPageable(page, size, null, "createdAt");
                 Page<CourseResponseDTO> result = courseService.search(q, pageable);
 
                 return ResponseEntity.ok(
@@ -195,12 +187,5 @@ public class CourseController {
                                                 .build());
         }
 
-        private Long getCurrentUserId() {
-                org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
-                                .getContext().getAuthentication();
-                if (auth != null && auth.getPrincipal() instanceof MyUserDetails) {
-                        return ((MyUserDetails) auth.getPrincipal()).getUser().getId();
-                }
-                return null;
-        }
+        // Removed local getCurrentUserId in favor of SecurityUtils
 }

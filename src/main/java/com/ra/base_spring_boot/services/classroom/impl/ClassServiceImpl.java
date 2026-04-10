@@ -19,9 +19,7 @@ import com.ra.base_spring_boot.services.notification.IUserNotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
+import com.ra.base_spring_boot.utils.SecurityUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -94,7 +92,7 @@ public class ClassServiceImpl implements IClassService {
     @Override
     public ClassroomResponseDTO findById(Long id) {
         Class aClass = getClassroom(Objects.requireNonNull(id, "id must not be null"));
-        if (!isAdmin() && Boolean.FALSE.equals(aClass.getIsActive())) {
+        if (!SecurityUtils.isAdmin() && Boolean.FALSE.equals(aClass.getIsActive())) {
             throw new HttpBadRequest("Không tìm thấy lớp học với id = " + id);
         }
         return toClassroomDto(aClass);
@@ -102,7 +100,7 @@ public class ClassServiceImpl implements IClassService {
 
     @Override
     public List<ClassroomResponseDTO> findAll() {
-        List<Class> classes = isAdmin()
+        List<Class> classes = SecurityUtils.isAdmin()
                 ? classroomRepository.findAll()
                 : classroomRepository.findByIsActive(true);
         return classes.stream()
@@ -113,7 +111,7 @@ public class ClassServiceImpl implements IClassService {
     @Override
     public Page<ClassroomResponseDTO> findAll(Pageable pageable) {
         Pageable safePageable = Objects.requireNonNull(pageable, "pageable must not be null");
-        Page<Class> page = isAdmin()
+        Page<Class> page = SecurityUtils.isAdmin()
                 ? classroomRepository.findAll(safePageable)
                 : classroomRepository.findByIsActive(true, safePageable);
         return page
@@ -124,7 +122,7 @@ public class ClassServiceImpl implements IClassService {
     public Page<ClassroomResponseDTO> search(String keyword, Pageable pageable) {
         String kw = keyword == null ? "" : keyword.trim();
         Pageable safePageable = Objects.requireNonNull(pageable, "pageable must not be null");
-        Page<Class> page = isAdmin()
+        Page<Class> page = SecurityUtils.isAdmin()
                 ? classroomRepository.findByClassNameContainingIgnoreCase(kw, safePageable)
                 : classroomRepository.findByClassNameContainingIgnoreCaseAndIsActive(kw, true, safePageable);
         return page.map(this::toClassroomDto);
@@ -452,12 +450,7 @@ public class ClassServiceImpl implements IClassService {
                 .build();
     }
 
-    private boolean isAdmin() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth != null && auth.getAuthorities() != null && auth.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .anyMatch("ROLE_ADMIN"::equals);
-    }
+    // Local isAdmin helper removed in favor of SecurityUtils
 
     private ClassStatus calculateStatus(Class aClass) {
         LocalDate today = LocalDate.now();

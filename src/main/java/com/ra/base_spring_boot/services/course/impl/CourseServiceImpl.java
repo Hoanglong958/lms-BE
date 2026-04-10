@@ -12,10 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-
+import com.ra.base_spring_boot.utils.SecurityUtils;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -87,10 +84,10 @@ public class CourseServiceImpl implements ICourseService {
     public CourseResponseDTO findById(Long id) {
         Course course = courseRepository.findById(Objects.requireNonNull(id, "id must not be null"))
                 .orElseThrow(() -> new HttpBadRequest("Không tìm thấy khóa học với id = " + id));
-        if (!isAdmin() && Boolean.FALSE.equals(course.getIsActive())) {
+        if (!SecurityUtils.isAdmin() && Boolean.FALSE.equals(course.getIsActive())) {
             throw new HttpBadRequest("Không tìm thấy khóa học với id = " + id);
         }
-        if (!isAdmin() && !classCourseRepository.existsByCourse_Id(course.getId())) {
+        if (!SecurityUtils.isAdmin() && !classCourseRepository.existsByCourse_Id(course.getId())) {
             throw new HttpBadRequest("Không tìm thấy khóa học với id = " + id);
         }
 
@@ -99,7 +96,7 @@ public class CourseServiceImpl implements ICourseService {
 
     @Override
     public List<CourseResponseDTO> findAll() {
-        List<Course> courses = isAdmin()
+        List<Course> courses = SecurityUtils.isAdmin()
                 ? courseRepository.findAll()
                 : courseRepository.findActiveAndAssigned();
         return courses
@@ -110,7 +107,7 @@ public class CourseServiceImpl implements ICourseService {
 
     @Override
     public Page<CourseResponseDTO> findAll(Pageable pageable) {
-        Page<Course> page = isAdmin()
+        Page<Course> page = SecurityUtils.isAdmin()
                 ? courseRepository.findAll(pageable)
                 : courseRepository.findActiveAndAssigned(pageable);
         return page
@@ -120,7 +117,7 @@ public class CourseServiceImpl implements ICourseService {
     @Override
     public Page<CourseResponseDTO> search(String keyword, Pageable pageable) {
         String kw = keyword == null ? "" : keyword.trim();
-        Page<Course> page = isAdmin()
+        Page<Course> page = SecurityUtils.isAdmin()
                 ? courseRepository.findByTitleContainingIgnoreCase(kw, pageable)
                 : courseRepository.searchActiveAssignedByTitle(kw, pageable);
         return page.map(this::toDto);
@@ -140,9 +137,9 @@ public class CourseServiceImpl implements ICourseService {
             }
         }
         
-        Boolean isActive = isAdmin() ? null : true;
+        Boolean isActive = SecurityUtils.isAdmin() ? null : true;
 
-        boolean requireAssignment = !isAdmin();
+        boolean requireAssignment = !SecurityUtils.isAdmin();
         Page<Course> page = courseRepository.findWithRegistrationStatus(studentId, kw, st, statusEnum, isActive, requireAssignment, pageable);
         return page.map(this::toDto);
     }
@@ -164,12 +161,7 @@ public class CourseServiceImpl implements ICourseService {
                 .build();
     }
 
-    private boolean isAdmin() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth != null && auth.getAuthorities() != null && auth.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .anyMatch("ROLE_ADMIN"::equals);
-    }
+    // Local isAdmin removed in favor of SecurityUtils
 
     private CourseLevel parseLevel(String rawLevel) {
         if (rawLevel == null || rawLevel.trim().isEmpty()) {

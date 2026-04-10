@@ -11,8 +11,7 @@ import com.ra.base_spring_boot.dto.questions.QuestionResponseDTO;
 import lombok.RequiredArgsConstructor;
 import com.ra.base_spring_boot.repository.user.IUserRepository;
 import com.ra.base_spring_boot.model.constants.RoleName;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import com.ra.base_spring_boot.utils.SecurityUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,13 +42,7 @@ public class ExamServiceImpl implements IExamService {
         private final com.ra.base_spring_boot.repository.course.IClassCourseRepository classCourseRepository;
         private final IUserNotificationService userNotificationService;
 
-        private User getCurrentUser() {
-                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-                if (authentication != null && authentication.getPrincipal() instanceof MyUserDetails) {
-                        return ((MyUserDetails) authentication.getPrincipal()).getUser();
-                }
-                throw new HttpBadRequest("Không xác định được người dùng hiện tại");
-        }
+    // Removed local getCurrentUser in favor of SecurityUtils
 
         private boolean hasAccessToExam(Exam exam, User user) {
                 if (user.getRole() == RoleName.ROLE_ADMIN || user.getRole() == RoleName.ROLE_TEACHER) {
@@ -224,7 +217,8 @@ public class ExamServiceImpl implements IExamService {
                 Exam exam = examRepository.findById(examId)
                                 .orElseThrow(() -> new RuntimeException("Exam not found"));
 
-                User currentUser = getCurrentUser();
+                User currentUser = SecurityUtils.getCurrentUser(userRepository)
+                                .orElseThrow(() -> new HttpBadRequest("Không xác định được người dùng hiện tại"));
                 if (!hasAccessToExam(exam, currentUser)) {
                         throw new HttpBadRequest(
                                         "Bạn không có quyền truy cập kỳ thi này vì chưa đăng ký khóa học/lớp học tương ứng.");
@@ -238,7 +232,8 @@ public class ExamServiceImpl implements IExamService {
         @Override
         @Transactional(readOnly = true)
         public List<ExamResponseDTO> getAllExams() {
-                User currentUser = getCurrentUser();
+                User currentUser = SecurityUtils.getCurrentUser(userRepository)
+                                .orElseThrow(() -> new HttpBadRequest("Không xác định được người dùng hiện tại"));
 
                 return examRepository.findAll()
                                 .stream()
@@ -329,7 +324,8 @@ public class ExamServiceImpl implements IExamService {
         @Override
         @Transactional(readOnly = true)
         public List<ExamResponseDTO> getExamsByClass(Long classId) {
-                User currentUser = getCurrentUser();
+                User currentUser = SecurityUtils.getCurrentUser(userRepository)
+                                .orElseThrow(() -> new HttpBadRequest("Không xác định được người dùng hiện tại"));
                 if (currentUser.getRole() == RoleName.ROLE_USER) {
                         if (!classStudentRepository.existsByClassroomIdAndStudentId(classId, currentUser.getId())) {
                                 throw new HttpBadRequest("Bạn không có quyền truy cập vì không thuộc lớp học này.");
@@ -376,7 +372,8 @@ public class ExamServiceImpl implements IExamService {
         @Override
         @Transactional(readOnly = true)
         public List<ExamResponseDTO> getExamsByCourse(Long courseId) {
-                User currentUser = getCurrentUser();
+                User currentUser = SecurityUtils.getCurrentUser(userRepository)
+                                .orElseThrow(() -> new HttpBadRequest("Không xác định được người dùng hiện tại"));
                 if (currentUser.getRole() == RoleName.ROLE_USER) {
                         var registrations = registrationRepository.findByStudent_Id(currentUser.getId());
                         boolean enrolledInCourse = registrations.stream()
