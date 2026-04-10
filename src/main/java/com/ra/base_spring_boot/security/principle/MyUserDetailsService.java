@@ -1,7 +1,7 @@
 package com.ra.base_spring_boot.security.principle;
 
 import com.ra.base_spring_boot.model.User;
-import com.ra.base_spring_boot.repository.IUserRepository;
+import com.ra.base_spring_boot.repository.user.IUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

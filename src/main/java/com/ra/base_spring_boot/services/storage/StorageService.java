@@ -4,5 +4,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface StorageService {
     String storeImage(MultipartFile file);
+
     String storeVideo(MultipartFile file);
+
+    String storeFile(MultipartFile file);
 }

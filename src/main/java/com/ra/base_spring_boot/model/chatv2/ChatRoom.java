@@ -29,13 +29,19 @@ public class ChatRoom {
     @Column(name = "created_by")
     private Long createdBy;
 
+    @OneToMany(mappedBy = "room", fetch = FetchType.LAZY)
+    private java.util.List<ChatRoomMember> members;
+
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @PrePersist
     public void prePersist() {
-        if (id == null) id = UUID.randomUUID();
-        if (createdAt == null) createdAt = LocalDateTime.now();
-        if (type == null) type = ChatRoomType.ONE_TO_ONE;
+        if (id == null)
+            id = UUID.randomUUID();
+        if (createdAt == null)
+            createdAt = LocalDateTime.now();
+        if (type == null)
+            type = ChatRoomType.ONE_TO_ONE;
     }
 }

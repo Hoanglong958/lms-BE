@@ -4,6 +4,7 @@ import com.ra.base_spring_boot.model.constants.CourseLevel;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -34,10 +35,18 @@ public class Course {
     @Column(nullable = false)
     private int totalSessions;
 
+    @Column(name = "tuition_fee", precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal tuitionFee = BigDecimal.ZERO;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
     private CourseLevel level = CourseLevel.BEGINNER;
+
+    @Column(name = "is_active", columnDefinition = "boolean default true")
+    @Builder.Default
+    private Boolean isActive = true;
 
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     @Builder.Default

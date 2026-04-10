@@ -32,7 +32,7 @@ public class DashboardStatsDTO {
     @Data
     @Builder
     public static class GrowthItem {
-        private long value;
+        private double value;
         private double growthPercentage;
     }
 }

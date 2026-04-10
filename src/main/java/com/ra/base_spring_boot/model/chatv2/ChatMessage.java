@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -20,6 +22,7 @@ public class ChatMessage {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore // Avoid LazyInitializationException during JSON serialization
     private ChatRoom room;
 
     @Column(name = "sender_id", nullable = false)
@@ -44,10 +47,21 @@ public class ChatMessage {
     @Builder.Default
     private boolean isDeleted = false;
 
+    @OneToMany(
+            mappedBy = "message",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    @Builder.Default
+    private Set<ChatMessageRead> readReceipts = new HashSet<>();
+
     @PrePersist
     public void prePersist() {
-        if (id == null) id = UUID.randomUUID();
-        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (id == null)
+            id = UUID.randomUUID();
+        if (createdAt == null)
+            createdAt = LocalDateTime.now();
     }
 
     @PreUpdate

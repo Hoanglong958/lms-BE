@@ -3,5 +3,6 @@ package com.ra.base_spring_boot.model.constants;
 public enum ExamStatus {
     UPCOMING,
     ONGOING,
-    ENDED
+    COMPLETED,
+    CANCELLED
 }

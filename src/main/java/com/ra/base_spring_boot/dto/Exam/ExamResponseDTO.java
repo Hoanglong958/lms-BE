@@ -28,6 +28,10 @@ public class ExamResponseDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    private Long courseId;
+    private Long classId;
+    private String creatorName;
+
     private List<QuestionResponseDTO> questions;
 
 }

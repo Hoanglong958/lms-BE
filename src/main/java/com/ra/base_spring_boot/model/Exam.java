@@ -39,6 +39,13 @@ public class Exam {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 
+    private Long courseId;
+    private Long classId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "creator_id")
+    private User creator;
+
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private ExamStatus status = ExamStatus.UPCOMING;
@@ -48,25 +55,34 @@ public class Exam {
 
     private LocalDateTime updatedAt;
 
+    public ExamStatus getStatus() {
+        if (this.status == ExamStatus.CANCELLED) {
+            return ExamStatus.CANCELLED;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (startTime != null && now.isBefore(startTime)) {
+            return ExamStatus.UPCOMING;
+        }
+        if (endTime != null && now.isAfter(endTime)) {
+            return ExamStatus.COMPLETED;
+        }
+        if (startTime != null) {
+            return ExamStatus.ONGOING;
+        }
+
+        return this.status;
+    }
+
     // ================== EXAM QUESTIONS ==================
     @Builder.Default
-    @OneToMany(
-            mappedBy = "exam",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-    )
-    @JsonIgnore   // <-- FIX QUAN TRỌNG (tránh lỗi JSON + Lazy + vòng lặp)
+    @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore // <-- FIX QUAN TRỌNG (tránh lỗi JSON + Lazy + vòng lặp)
     private List<ExamQuestion> examQuestions = new ArrayList<>();
 
     // ================== EXAM ATTEMPTS ==================
     @Builder.Default
-    @OneToMany(
-            mappedBy = "exam",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-    )
+    @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<ExamAttempt> examAttempts = new ArrayList<>();
 

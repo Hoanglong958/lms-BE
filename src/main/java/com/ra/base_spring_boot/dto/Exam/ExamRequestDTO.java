@@ -24,5 +24,8 @@ public class ExamRequestDTO {
     private boolean autoAddQuestions; // nếu true lấy tất cả
     private List<Long> questionIds;
 
+    private Long courseId;
+    private Long classId;
+    private Long creatorId;
 
 }

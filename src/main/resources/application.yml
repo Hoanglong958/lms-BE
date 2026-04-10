@@ -1,6 +1,12 @@
 spring:
   application:
     name: base_spring_boot
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+
 
   servlet:
     multipart:
@@ -58,6 +64,19 @@ jwt:
   expired:
     access: 3600000
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, info
+  endpoint:
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
 server:
   port: 3900
 
@@ -68,9 +87,9 @@ app:
     sendOnAdminCreate: true
 
 cloudinary:
-  cloud-name: dtbbrlnyc
-  api-key: 936751274181751
-  api-secret: ja4CTEXqeT9YD38oJHItIwiktW0
+  cloud-name: dhlngvmj5
+  api-key: 451186165751151
+  api-secret: YHZVyKDzQhp73vVM32iNj7ngYM4
 
 external:
   api:
@@ -78,6 +97,18 @@ external:
     connect-timeout: 5000
     read-timeout: 10000
 
+
 logging:
   level:
     "[org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsManagerConfigurer]": ERROR
+
+sepay:
+    webhook-secret: "lms-sepay-webhook-xyz"
+    qr-acc: "VQRQAIDPS9130"
+    qr-bank: "MBBank"
+
+# ========== OLLAMA AI CONFIG ==========
+ollama:
+  base-url: http://localhost:11434
+  model: qwen2.5:3b
+

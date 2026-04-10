@@ -29,8 +29,7 @@ public class CloudinaryStorageService implements StorageService {
                     "folder", folder,
                     "public_id", publicId,
                     "resource_type", "image",
-                    "overwrite", true
-            );
+                    "overwrite", true);
             Map<?, ?> result = cloudinary.uploader().upload(file.getBytes(), options);
             Object secureUrl = result.get("secure_url");
             Object url = result.get("url");
@@ -49,8 +48,7 @@ public class CloudinaryStorageService implements StorageService {
                     "folder", folder,
                     "public_id", publicId,
                     "resource_type", "video",
-                    "overwrite", true
-            );
+                    "overwrite", true);
 
             Map<?, ?> result;
             long size = file.getSize();
@@ -67,5 +65,24 @@ public class CloudinaryStorageService implements StorageService {
             throw new RuntimeException("Upload video lên Cloudinary thất bại", e);
         }
     }
-}
 
+    @Override
+    public String storeFile(MultipartFile file) {
+        String folder = "uploads/files/" + LocalDate.now();
+        String publicId = UUID.randomUUID().toString();
+        try {
+            Map<String, Object> options = Map.of(
+                    "folder", folder,
+                    "public_id", publicId,
+                    "resource_type", "auto", // "auto" lets Cloudinary detect the type (image, video, raw)
+                    "overwrite", true);
+
+            Map<?, ?> result = cloudinary.uploader().upload(file.getBytes(), options);
+            Object secureUrl = result.get("secure_url");
+            Object url = result.get("url");
+            return secureUrl != null ? secureUrl.toString() : (url != null ? url.toString() : null);
+        } catch (IOException e) {
+            throw new RuntimeException("Upload file lên Cloudinary thất bại", e);
+        }
+    }
+}

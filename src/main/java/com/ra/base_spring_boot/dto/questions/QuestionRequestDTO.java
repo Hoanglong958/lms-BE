@@ -20,7 +20,6 @@ public class QuestionRequestDTO {
 
     private List<String> options;// Map<String, String> từ frontend
 
-    @NotBlank(message = "Correct answer is required")
     private String correctAnswer;
 
     private String explanation;
