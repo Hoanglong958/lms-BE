@@ -201,13 +201,27 @@ public class ClassServiceImpl implements IClassService {
     }
 
     @Override
-    public List<ClassStudentResponseDTO> findClassesByStudent(Long studentId) {
-        return classStudentRepository
+    public Page<ClassStudentResponseDTO> findClassesByStudent(Long studentId, Pageable pageable) {
+        List<ClassStudentResponseDTO> all = classStudentRepository
                 .findByStudentIdWithRelations(Objects.requireNonNull(studentId, "studentId must not be null"))
                 .stream()
                 .filter(cs -> Boolean.TRUE.equals(cs.getClassroom().getIsActive()))
+                .sorted((cs1, cs2) -> {
+                     if(cs1.getEnrolledAt() != null && cs2.getEnrolledAt() != null) return cs2.getEnrolledAt().compareTo(cs1.getEnrolledAt());
+                     return 0;
+                })
                 .map(this::toStudentDto)
                 .toList();
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), all.size());
+        List<ClassStudentResponseDTO> pageContent;
+        if (start > all.size()) {
+             pageContent = java.util.Collections.emptyList();
+        } else {
+             pageContent = all.subList(start, end);
+        }
+        return new org.springframework.data.domain.PageImpl<>(pageContent, pageable, all.size());
     }
 
     @Override

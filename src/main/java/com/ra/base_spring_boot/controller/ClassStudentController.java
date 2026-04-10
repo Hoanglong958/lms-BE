@@ -52,7 +52,11 @@ public class ClassStudentController {
     @GetMapping("/students/by-student")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_TEACHER','ROLE_USER')")
     @Operation(summary = "Danh sách lớp học của học viên")
-    public ResponseEntity<List<ClassStudentResponseDTO>> listClassesByStudent(@RequestParam Long studentId) {
+    public ResponseEntity<org.springframework.data.domain.Page<ClassStudentResponseDTO>> listClassesByStudent(
+            @RequestParam Long studentId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean isAdminOrTeacher = auth != null && auth.getAuthorities() != null && auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -70,7 +74,8 @@ public class ClassStudentController {
             }
         }
 
-        return ResponseEntity.ok(classroomService.findClassesByStudent(studentId));
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        return ResponseEntity.ok(classroomService.findClassesByStudent(studentId, pageable));
     }
 }
 

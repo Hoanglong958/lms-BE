@@ -11,10 +11,8 @@ import java.util.Optional;
 
 public interface IExamRepository extends JpaRepository<Exam, Long> {
 
-    @Override
     @EntityGraph(attributePaths = "examQuestions")
-    @NonNull
-    List<Exam> findAll();
+    List<Exam> findAllByOrderByCreatedAtDesc();
 
     @Override
     @EntityGraph(attributePaths = "examQuestions")
@@ -22,14 +20,14 @@ public interface IExamRepository extends JpaRepository<Exam, Long> {
     Optional<Exam> findById(@NonNull Long id);
 
     @EntityGraph(attributePaths = "examQuestions")
-    List<Exam> findByCreatedAtAfter(LocalDateTime createdAt);
+    List<Exam> findByCreatedAtAfterOrderByCreatedAtDesc(LocalDateTime createdAt);
 
     @EntityGraph(attributePaths = "examQuestions")
-    List<Exam> findByClassId(Long classId);
+    List<Exam> findByClassIdOrderByCreatedAtDesc(Long classId);
 
     @EntityGraph(attributePaths = "examQuestions")
-    List<Exam> findByCourseId(Long courseId);
+    List<Exam> findByCourseIdOrderByCreatedAtDesc(Long courseId);
 
     @EntityGraph(attributePaths = "examQuestions")
-    List<Exam> findByCourseIdIn(List<Long> courseIds);
+    List<Exam> findByCourseIdInOrderByCreatedAtDesc(List<Long> courseIds);
 }

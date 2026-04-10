@@ -256,6 +256,7 @@ public class ExamServiceImpl implements IExamService {
                                         return true;
                                 })
                                 .map(this::mapToResponse)
+                                .sorted((e1, e2) -> e2.getCreatedAt().compareTo(e1.getCreatedAt()))
                                 .collect(Collectors.toList());
         }
 
@@ -363,6 +364,7 @@ public class ExamServiceImpl implements IExamService {
                                         return true;
                                 })
                                 .map(this::mapToResponse)
+                                .sorted((e1, e2) -> e2.getCreatedAt().compareTo(e1.getCreatedAt()))
                                 .collect(Collectors.toList());
         }
 
@@ -400,6 +402,7 @@ public class ExamServiceImpl implements IExamService {
                                         return true;
                                 })
                                 .map(this::mapToResponse)
+                                .sorted((e1, e2) -> e2.getCreatedAt().compareTo(e1.getCreatedAt()))
                                 .collect(Collectors.toList());
         }
 }

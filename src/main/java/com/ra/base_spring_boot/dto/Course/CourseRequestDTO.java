@@ -20,6 +20,7 @@ public class CourseRequestDTO {
     private int totalSessions; // tổng số buổi học
 
     @Schema(example = "https://example.com/course-image.jpg")
+    @com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = com.ra.base_spring_boot.utils.ImageUrlDeserializer.class)
     private String imageUrl;
 
     @Schema(example = "1000000.00")

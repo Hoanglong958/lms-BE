@@ -18,6 +18,7 @@ public class PostRequestDTO {
     private String content;
 
     @Schema(example = "https://example.com/course-image.jpg")
+    @com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = com.ra.base_spring_boot.utils.ImageUrlDeserializer.class)
     private String imageUrl;
 
     private Long authorId; // id của user tạo bài
