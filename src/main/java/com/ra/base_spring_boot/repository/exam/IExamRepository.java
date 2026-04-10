@@ -23,11 +23,23 @@ public interface IExamRepository extends JpaRepository<Exam, Long> {
     List<Exam> findByCreatedAtAfterOrderByCreatedAtDesc(LocalDateTime createdAt);
 
     @EntityGraph(attributePaths = "examQuestions")
+    List<Exam> findByCreatedAtAfter(LocalDateTime createdAt);
+
+    @EntityGraph(attributePaths = "examQuestions")
     List<Exam> findByClassIdOrderByCreatedAtDesc(Long classId);
+
+    @EntityGraph(attributePaths = "examQuestions")
+    List<Exam> findByClassId(Long classId);
 
     @EntityGraph(attributePaths = "examQuestions")
     List<Exam> findByCourseIdOrderByCreatedAtDesc(Long courseId);
 
     @EntityGraph(attributePaths = "examQuestions")
+    List<Exam> findByCourseId(Long courseId);
+
+    @EntityGraph(attributePaths = "examQuestions")
     List<Exam> findByCourseIdInOrderByCreatedAtDesc(List<Long> courseIds);
+
+    @EntityGraph(attributePaths = "examQuestions")
+    List<Exam> findByCourseIdIn(List<Long> courseIds);
 }
