@@ -176,6 +176,25 @@ public class CourseController {
                                                 .build());
         }
 
+        @GetMapping("/search")
+        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER', 'ROLE_TEACHER')")
+        @Operation(summary = "Tìm kiếm khóa học", description = "Tìm kiếm khóa học theo từ khóa trong tiêu đề")
+        public ResponseEntity<?> searchCourses(
+                        @Parameter(description = "Từ khóa tìm kiếm") @RequestParam(value = "q", required = false) String q,
+                        @Parameter(description = "Trang bắt đầu từ 0") @RequestParam(value = "page", defaultValue = "0") int page,
+                        @Parameter(description = "Kích thước trang") @RequestParam(value = "size", defaultValue = "10") int size) {
+
+                Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+                Page<CourseResponseDTO> result = courseService.search(q, pageable);
+
+                return ResponseEntity.ok(
+                                ResponseWrapper.builder()
+                                                .status(HttpStatus.OK)
+                                                .code(200)
+                                                .data(result)
+                                                .build());
+        }
+
         private Long getCurrentUserId() {
                 org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
                                 .getContext().getAuthentication();
