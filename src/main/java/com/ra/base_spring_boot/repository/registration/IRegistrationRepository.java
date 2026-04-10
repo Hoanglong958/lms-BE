@@ -16,13 +16,24 @@ import java.util.Optional;
 @Repository
 public interface IRegistrationRepository extends JpaRepository<Registration, Long> {
 
-    @Query("SELECT r FROM Registration r JOIN FETCH r.student JOIN FETCH r.course WHERE r.student.id = :studentId")
+    @Query("SELECT r FROM Registration r JOIN FETCH r.student JOIN FETCH r.course WHERE r.student.id = :studentId ORDER BY r.paymentDate DESC NULLS LAST, r.registrationDate DESC")
     List<Registration> findByStudent_Id(@Param("studentId") Long studentId);
+
 
     @Query("SELECT r FROM Registration r JOIN FETCH r.student JOIN FETCH r.course")
     List<Registration> findAll();
 
-    Optional<Registration> findByStudent_IdAndCourse_Id(Long studentId, Long courseId);
+    List<Registration> findByStudent_IdAndCourse_Id(Long studentId, Long courseId);
+
+    @Query("""
+            SELECT r
+            FROM Registration r
+            JOIN FETCH r.student
+            JOIN FETCH r.course
+            WHERE UPPER(r.transferRef) = UPPER(:transferRef)
+            ORDER BY r.id DESC
+            """)
+    List<Registration> findAllByTransferRefIgnoreCase(@Param("transferRef") String transferRef);
 
     List<Registration> findByCourse_IdAndPaymentStatus(Long courseId, PaymentStatus paymentStatus);
 

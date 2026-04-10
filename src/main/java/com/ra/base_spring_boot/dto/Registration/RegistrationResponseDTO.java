@@ -26,5 +26,5 @@ public class RegistrationResponseDTO {
     private String note;
     private String transferRef;
     private String enrolledClassName; // Tên lớp học đã được thêm vào
-    private Boolean paymentSubmitted;
+    private Boolean refundRequested;
 }

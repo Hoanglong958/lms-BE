@@ -22,7 +22,10 @@ public class JwtEntryPoint implements AuthenticationEntryPoint
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException
     {
         String path = request.getRequestURI();
+        String authHeader = request.getHeader("Authorization");
         String message = authException.getMessage();
+        log.error("❌ [JwtEntryPoint] Unauthorized access to: {}. Auth Header: {}. Error: {}", 
+            path, (authHeader != null ? "Present" : "Missing"), message);
         
         // Thông báo lỗi rõ ràng hơn
         String errorMessage;

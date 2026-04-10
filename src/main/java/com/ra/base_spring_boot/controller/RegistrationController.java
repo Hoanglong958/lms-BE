@@ -1,7 +1,9 @@
 package com.ra.base_spring_boot.controller;
 
+import com.ra.base_spring_boot.config.SepayProperties;
 import com.ra.base_spring_boot.dto.Registration.RegistrationRequestDTO;
 import com.ra.base_spring_boot.dto.Registration.RegistrationResponseDTO;
+import com.ra.base_spring_boot.dto.Registration.SepayWebhookDTO;
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
@@ -9,7 +11,7 @@ import com.ra.base_spring_boot.services.registration.IRegistrationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/registrations")
 @RequiredArgsConstructor
@@ -28,18 +31,7 @@ import java.util.Map;
 public class RegistrationController {
 
         private final IRegistrationService registrationService;
-
-        @Value("${payment.bank.id:970422}")
-        private String bankId;
-
-        @Value("${payment.bank.account-no:8888888888}")
-        private String accountNo;
-
-        @Value("${payment.bank.account-name:TRUONG HOC ONLINE}")
-        private String accountName;
-
-        @Value("${payment.bank.name:MB Bank}")
-        private String bankName;
+        private final SepayProperties sepayProperties;
 
         @PostMapping
         @PreAuthorize("hasAuthority('ROLE_USER')")
@@ -84,33 +76,6 @@ public class RegistrationController {
                                                 .build());
         }
 
-        @PatchMapping("/{id}/confirm-payment")
-        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-        @Operation(summary = "Admin xác nhận thanh toán", description = "Chuyển trạng thái sang PAID và tự động thêm sinh viên vào lớp")
-        public ResponseEntity<?> confirmPayment(@PathVariable Long id) {
-                RegistrationResponseDTO response = registrationService.confirmPayment(id);
-                return ResponseEntity.ok(
-                                ResponseWrapper.builder()
-                                                .status(HttpStatus.OK)
-                                                .code(200)
-                                                .data(response)
-                                                .build());
-        }
-
-        @PatchMapping("/{id}/payment-submitted")
-        @PreAuthorize("hasAuthority('ROLE_USER')")
-        @Operation(summary = "Sinh viên báo đã chuyển khoản", description = "Cho phép sinh viên ghi nhận thanh toán trước khi admin xác nhận")
-        public ResponseEntity<?> markPaymentSubmitted(@AuthenticationPrincipal MyUserDetails userDetails,
-                                                      @PathVariable Long id) {
-                RegistrationResponseDTO response = registrationService.markPaymentSubmitted(id, userDetails.getUser());
-                return ResponseEntity.ok(
-                                ResponseWrapper.builder()
-                                                .status(HttpStatus.OK)
-                                                .code(200)
-                                                .data(response)
-                                                .build());
-        }
-
         @PatchMapping("/{id}/cancel")
         @PreAuthorize("hasAuthority('ROLE_USER')")
         @Operation(summary = "Sinh viên hủy đăng ký", description = "Chuyển trạng thái sang CANCELLED nếu đang ở PENDING")
@@ -126,32 +91,55 @@ public class RegistrationController {
                                                 .build());
         }
 
-        @PatchMapping("/bulk-confirm")
-        @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-        @Operation(summary = "Admin xác nhận thanh toán hàng loạt", description = "Chuyển trạng thái sang PAID cho nhiều bản ghi")
-        public ResponseEntity<?> confirmBulkPayment(@RequestBody List<Long> ids) {
-                List<RegistrationResponseDTO> response = registrationService.confirmBulkPayment(ids);
-                return ResponseEntity.ok(
-                                ResponseWrapper.builder()
-                                                .status(HttpStatus.OK)
-                                                .code(200)
-                                                .data(response)
-                                                .build());
-        }
-
         @GetMapping("/bank-info")
         @PreAuthorize("isAuthenticated()")
-        @Operation(summary = "Lấy thông tin ngân hàng để thanh toán")
+        @Operation(summary = "Lấy thông tin SePay/VietQR để thanh toán")
         public ResponseEntity<?> getBankInfo() {
                 return ResponseEntity.ok(
                                 ResponseWrapper.builder()
                                                 .status(HttpStatus.OK)
                                                 .code(200)
                                                 .data(Map.of(
-                                                                "bankId", bankId,
-                                                                "accountNo", accountNo,
-                                                                "accountName", accountName,
-                                                                "bankName", bankName))
+                                                                "qrAcc", sepayProperties.getQrAcc(),
+                                                                "qrBank", sepayProperties.getQrBank()))
+                                                .build());
+        }
+
+        @GetMapping("/webhook/sepay")
+        @Operation(summary = "Kiểm tra trạng thái Webhook SePay")
+        public ResponseEntity<?> checkWebhookStatus() {
+                return ResponseEntity.ok(Map.of("status", "online", "message", "SePay Webhook endpoint is ready for POST requests"));
+        }
+
+        @PostMapping("/webhook/sepay")
+        @Operation(summary = "Webhook SePay xác nhận thanh toán", description = "Public endpoint để SePay gửi giao dịch và tự động xác nhận học phí")
+        public ResponseEntity<?> handleSepayWebhook(
+                        @RequestHeader(value = "Authorization", required = false) String token,
+                        @RequestBody SepayWebhookDTO payload) {
+                log.info("🔔 [SePay Webhook] Received request with Authorization header: {}", 
+                    (token != null) ? (token.length() > 10 ? token.substring(0, 10) + "..." : "present") : "null");
+                
+                if (!isValidSepayToken(token)) {
+                        log.warn("❌ [SePay Webhook] Validation failed for Authorization header");
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                                        ResponseWrapper.builder()
+                                                        .status(HttpStatus.UNAUTHORIZED)
+                                                        .code(401)
+                                                        .data("Invalid SePay webhook token")
+                                                        .build());
+                }
+
+                RegistrationResponseDTO response = registrationService.processSepayWebhook(payload);
+                return ResponseEntity.ok(
+                                ResponseWrapper.builder()
+                                                .status(HttpStatus.OK)
+                                                .code(200)
+                                                .data(Map.of(
+                                                                "registrationId", response.getId(),
+                                                                "paymentStatus", response.getPaymentStatus(),
+                                                                "paymentDate", response.getPaymentDate(),
+                                                                "enrolledClassName", response.getEnrolledClassName(),
+                                                                "transferRef", response.getTransferRef()))
                                                 .build());
         }
 
@@ -175,5 +163,49 @@ public class RegistrationController {
                                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=invoice_" + id + ".pdf")
                                 .contentType(MediaType.APPLICATION_PDF)
                                 .body(data);
+        }
+
+        private boolean isValidSepayToken(String token) {
+                String secret = sepayProperties.getWebhookSecret();
+                
+                if (secret == null || secret.isBlank()) {
+                        log.error("🛑 [SePay Webhook] No webhook secret configured in application.yml!");
+                        return false;
+                }
+                secret = secret.trim();
+                
+                if (token == null || token.isBlank()) {
+                        log.warn("⚠️ [SePay Webhook] No Authorization token provided in request header");
+                        return false;
+                }
+ 
+                String normalizedToken = token.trim();
+
+                // Accept common auth schemes:
+                // - Authorization: Bearer <secret>
+                // - Authorization: Apikey <secret>
+                // - Authorization: <secret>
+                String[] parts = normalizedToken.split("\\s+", 2);
+                if (parts.length == 2) {
+                        String scheme = parts[0].replace(":", "");
+                        if ("Bearer".equalsIgnoreCase(scheme)
+                                        || "Apikey".equalsIgnoreCase(scheme)
+                                        || "ApiKey".equalsIgnoreCase(scheme)) {
+                                normalizedToken = parts[1].trim();
+                        }
+                }
+
+                // Defensive: some proxies concatenate duplicate headers using commas.
+                int commaIndex = normalizedToken.indexOf(',');
+                if (commaIndex > 0) {
+                        normalizedToken = normalizedToken.substring(0, commaIndex).trim();
+                }
+                
+                boolean match = secret.equals(normalizedToken);
+                if (!match) {
+                    log.warn("🚫 [SePay Webhook] Token mismatch");
+                }
+                
+                return match;
         }
 }
